@@ -1,16 +1,15 @@
-import path from 'path'
-import webpack from 'webpack'
+var path = require('path');
+var webpack = require('webpack');
 
-export default {
-	devtools: 'eval-source-map',
+module.exports = {
 	entry: [
 		'webpack-hot-middleware/client', 
-		path.join(__dirname, '/client/index.js')
+		path.join(__dirname, '/client/app.js')
 	],
-	output: {
-		path: '/',
-		publicPath: '/'
-	},
+    output: {
+        path: path.resolve(__dirname, 'public'),
+        filename: 'bundle.js'
+    },
 	plugins: [
 		new webpack.NoErrorsPlugin(),
 		new webpack.optimize.OccurenceOrderPlugin(),
@@ -20,12 +19,12 @@ export default {
 		loaders: [
 			{
 				test: /\.js$/,
-				include: path.join(__dirname, 'client'),
+				include: path.join(__dirname, '/client'),
 				loaders: ['react-hot', 'babel']
 			}
 		]
 	},
 	resolve: {
-		extentions: ['', '.js']
+		extentions: ['', '.js', '.jsx']
 	}
-}
+};

@@ -6,7 +6,7 @@
     <link rel="stylesheet" href="../public/css/bootstrap.min.css">
     <link rel="stylesheet" href="../public/css/bootstrap-grid.min.css">
     <link rel="stylesheet" href="../public/css/bootstrap-reboot.min.css">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.2.0/dist/leaflet.css"/>
+    <link rel="stylesheet" href="../public/css/leaflet.css"/>
     <link rel="stylesheet" href="../public/css/custom.css"/>
     <!--dist-css-->
 
@@ -27,10 +27,10 @@
     <div class="collapse navbar-collapse" id="navbarsExampleDefault">
         <ul class="navbar-nav mr-auto">
             <!--<li class="nav-item active">-->
-            <!--<a class="nav-link" href="#">Home <span class="sr-only">(current)</span></a>-->
+                <!--<a class="nav-link" href="#">Home <span class="sr-only">(current)</span></a>-->
             <!--</li>-->
             <!--<li class="nav-item">-->
-            <!--<a class="nav-link" href="#">Link</a>-->
+                <!--<a class="nav-link" href="#">Link</a>-->
             <!--</li>-->
             <!--<li class="nav-item">-->
             <!--<a class="nav-link disabled" href="#">Disabled</a>-->
@@ -54,18 +54,11 @@
 
 <main role="main" class="container">
     <div style="padding-top: 5rem;">
-        <div class="col-md-4 offset-4" style="padding: 3rem 1.5rem; text-align: center;">
-            <form>
-                <h4>Here you can add your sensor:</h4>
-                <label for="inputName" class="sr-only">Sensor name</label>
-                <input type="text" id="inputName" class="form-control margin-top-3" placeholder="Enter sensor name" required="" autofocus="">
-                <label for="inputLongitude" class="sr-only">Password</label>
-                <input type="text" id="inputLongitude" class="form-control margin-top-3" placeholder="Longitude" required="">
-                <label for="inputLatitude" class="sr-only">Password</label>
-                <input type="text" id="inputLatitude" class="form-control margin-top-3" placeholder="Latitude" required="">
-                <button class="btn btn-lg btn-success btn-block margin-top-3" type="submit">Send</button>
-            </form>
-        </div>
+        <!--<div style="padding: 3rem 1.5rem; text-align: center;">-->
+            <!--<h1>Hack4Climate</h1>-->
+            <!--<p class="lead">Starter HTML based on bootstrap.v4</p>-->
+        <!--</div>-->
+        <div id="map"></div>
     </div>
 </main>
 <!-- /.container -->
@@ -78,8 +71,11 @@
         integrity="sha384-DztdAPBWPRXSA/3eYEEUWrWCy7G5KFbe8fFjk5JAIxUYHKkDx6Qin1DkWx51bBrb"
         crossorigin="anonymous"></script>
 <script src="../public/js/bootstrap.bundle.min.js"></script>
-<script src="https://unpkg.com/leaflet@1.2.0/dist/leaflet.js"></script>
+<script src="../public/js/leaflet.js"></script>
+<script src="../public/js/heatmap.min.js"></script>
+<script src="../public/js/leaflet.heatmap.js"></script>
 <script src="../public/js/custom.js"></script>
 <!--dist-js-->
+
 </body>
 </html>
