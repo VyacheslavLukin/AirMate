@@ -28,4 +28,4 @@ class Index extends React.Component {
     }
 }
 
-export default App;
+export default Index;
