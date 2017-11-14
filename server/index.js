@@ -8,13 +8,16 @@ import webpackConfig from '../webpack.config.dev';
 
 let app = express();
 
-const compiler = webpack(webpackConfig)
+const compiler = webpack(webpackConfig);
 
 app.use(webpackMiddleware(compiler, {
 	hot:true,
 	publicPath: webpackConfig.output.publicPath,
-	noInfo: true 
+	noInfo: true
 }));
+
+app.use('/static', express.static('public'));
+
 app.use(webpackHotMiddleware(compiler));
 
 app.get('/*', (req,res) => {
