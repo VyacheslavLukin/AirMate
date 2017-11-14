@@ -30,10 +30,9 @@ services:
       BIGCHAINDB_DATABASE_PORT: 27017
       BIGCHAINDB_SERVER_BIND: 0.0.0.0:9984
       BIGCHAINDB_WSSERVER_HOST: 0.0.0.0
-    expose:
-      - "9984"
     ports:
      - "9984:9984"
+     - "9985:9985"
     volumes:
       - ./bigchaindb_data:/data
       - ./init:/init
