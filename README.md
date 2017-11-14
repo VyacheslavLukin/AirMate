@@ -6,9 +6,9 @@ You need nodejs and docker installed on your machine in order to be able to work
 3. ```npm start```
 4. ```PROFIT!!!```
 
-#API description
+# API description
 
-##Response structure
+## Response structure
 
 ```
 {
@@ -24,10 +24,10 @@ You need nodejs and docker installed on your machine in order to be able to work
 * Message - any string to be shown in case of error
 * Error - error object containing details regarding the error 
 
-##Methods
-###GET /api/layers - get list of the available layers
+## Methods
+### GET /api/layers - get list of the available layers
 
-####Reponse
+#### Reponse
 ```
 {
     “status”: “success”,
@@ -43,8 +43,8 @@ You need nodejs and docker installed on your machine in order to be able to work
 }
 ```
 
-###GET /api/layers/{layer-name} - get data for specific layer
-####Reponse
+### GET /api/layers/{layer-name} - get data for specific layer
+#### Reponse
 ```
 {
     “status”: “success”,
@@ -58,8 +58,8 @@ You need nodejs and docker installed on your machine in order to be able to work
 }
 ```
 
-###GET /api/profile - get user data
-####Reponse
+### GET /api/profile - get user data
+#### Reponse
 ```
 {
     “status”: “success”,
@@ -70,8 +70,8 @@ You need nodejs and docker installed on your machine in order to be able to work
     }
 }
 ```
-###POST /api/profile - set user data
-####Request
+### POST /api/profile - set user data
+#### Request
 ```
 {
     	"name":"string", //name of the person
@@ -79,13 +79,13 @@ You need nodejs and docker installed on your machine in order to be able to work
     	"key": "some API key", //developer key to access the API
 }
 ```
-####Response:
+#### Response:
 ```
 Same as for GET
 ```
 
-###GET /api/buy - buy 100 requests
-####Reponse
+### GET /api/buy - buy 100 requests
+#### Reponse
 ```
 {
     “status”: “success”,
@@ -96,8 +96,8 @@ Same as for GET
 }
 ```
 
-###GET /api/sensors - list your sensors
-####Reponse
+### GET /api/sensors - list your sensors
+#### Reponse
 ```
 {
     “status”: “success”,
