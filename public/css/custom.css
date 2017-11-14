@@ -2,11 +2,19 @@
     text-align: center;
 }
 
-#map {
-    margin-top: 3rem;
-    height: 400px;
+body, html, #app, #map, .app-wrapper {
+    height: 100% !important;
+    width: 100% !important;
 }
 
 .margin-top-3 {
     margin-top: 0.3rem;
+}
+
+#leaflet-buttons-wrapper {
+    position: absolute;
+    bottom: 1rem;
+    left: 1rem;
+    width: 10rem;
+    z-index: 1000;
 }
