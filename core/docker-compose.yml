@@ -18,6 +18,26 @@ services:
       MYSQL_PASSWORD: innosoft
       MYSQL_ROOT_PASSWORD: innosoft
 
+  bigchaindb:
+    restart: always
+    image: bigchaindb/bigchaindb
+#    entrypoint: /bin/bash
+#    command: /init/init_bigchain.sh
+    command: start
+    ports:
+     - "9984:9984"
+    volumes:
+      - ./bigchaindb_data:/data
+      - ./init:/init
+    links:
+      - mongodb
+    depends_on:
+      - mongodb
+
+  mongodb:
+    restart: always
+    image: mongo
+
 volumes:
   mysql:
     driver: local
