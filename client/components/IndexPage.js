@@ -1,8 +1,12 @@
 import React from "react";
 import HeatmapOverlay from "leaflet-heatmap"
+import {makeApiGet} from "../common/Api";
 
 export default class IndexPage extends React.Component {
     componentDidMount() {
+        makeApiGet('/api/getData').then((data) => {
+
+        });
         // Heatmap
         let testData = {
                 max: 8,

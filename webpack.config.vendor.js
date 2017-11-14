@@ -40,7 +40,7 @@ module.exports = {
             require.resolve("node-noop")
         ), // Workaround for https://github.com/andris9/encoding/issues/16
         new webpack.DllPlugin({
-            path: path.join(__dirname, "public", "[name]-manifest.json"),
+            path: path.join(__dirname, "public", "dist", "[name]-manifest.json"),
             name: "[name]_[hash]"
         })
     ]

@@ -1,0 +1,60 @@
+{
+    "meta": {
+        "name": "openaq-api",
+        "license": "CC BY 4.0",
+        "website": "https://docs.openaq.org/",
+        "page": 1,
+        "limit": 1000,
+        "found": 1169507
+    },
+    "results": [
+        {
+            "location": "DENW179",
+            "parameter": "pm25",
+            "date": {
+                "utc": "2017-11-14T15:00:00.000Z",
+                "local": "2017-11-14T16:00:00+01:00"
+            },
+            "value": 8.23,
+            "unit": "µg/m³",
+            "coordinates": {
+                "latitude": 51.448762,
+                "longitude": 7.582295
+            },
+            "country": "DE",
+            "city": "Nordrhein-Westfalen"
+        },
+        {
+            "location": "DENW074",
+            "parameter": "pm25",
+            "date": {
+                "utc": "2017-11-14T15:00:00.000Z",
+                "local": "2017-11-14T16:00:00+01:00"
+            },
+            "value": 12.72,
+            "unit": "µg/m³",
+            "coordinates": {
+                "latitude": 50.883475,
+                "longitude": 6.469363
+            },
+            "country": "DE",
+            "city": "Nordrhein-Westfalen"
+        },
+        {
+            "location": "DENW071",
+            "parameter": "pm25",
+            "date": {
+                "utc": "2017-11-14T15:00:00.000Z",
+                "local": "2017-11-14T16:00:00+01:00"
+            },
+            "value": 12.53,
+            "unit": "µg/m³",
+            "coordinates": {
+                "latitude": 51.249211,
+                "longitude": 6.732383
+            },
+            "country": "DE",
+            "city": "Nordrhein-Westfalen"
+        }
+    ]
+}
