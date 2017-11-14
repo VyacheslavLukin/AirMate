@@ -24,6 +24,14 @@ services:
 #    entrypoint: /bin/bash
 #    command: /init/init_bigchain.sh
     command: start
+    environment:
+      BIGCHAINDB_DATABASE_BACKEND: mongodb
+      BIGCHAINDB_DATABASE_HOST: mongodb
+      BIGCHAINDB_DATABASE_PORT: 27017
+      BIGCHAINDB_SERVER_BIND: 0.0.0.0:9984
+      BIGCHAINDB_WSSERVER_HOST: 0.0.0.0
+    expose:
+      - "9984"
     ports:
      - "9984:9984"
     volumes:
@@ -33,11 +41,23 @@ services:
       - mongodb
     depends_on:
       - mongodb
+    networks:
+      - dev-network
 
   mongodb:
     restart: always
     image: mongo
+    ports:
+      - "27017"
+    command: mongod --replSet=bigchain-rs
+    networks:
+      - dev-network
 
 volumes:
   mysql:
     driver: local
+
+networks:
+  dev-network:
+    driver: bridge
+
