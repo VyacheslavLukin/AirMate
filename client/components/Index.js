@@ -1,12 +1,12 @@
 import React from "react";
 
-class App extends React.Component {
+class Index extends React.Component {
     render() {
         return (
             <div>
                 <nav className="navbar navbar-expand-md navbar-dark bg-dark fixed-top">
                     <a className="offset-5 col-sm-2 navbar-brand text-align-center" href="#">
-                        <img src="../dist/img/baum.svg" height="80px"/>
+                        <img src="/static/img/baum.svg" height="80px"/>
                     </a>
                     <button className="navbar-toggler" type="button" data-toggle="collapse"
                             data-target="#navbarsExampleDefault"
@@ -16,7 +16,9 @@ class App extends React.Component {
                 </nav>
 
                 <main role="main" className="container">
-                    <div style="padding-top: 5rem;">
+                    <div style={{
+                        "paddingTop": "5rem"
+                    }}>
                         {/*Map rendering*/}
                         <div id="map"/>
                     </div>
