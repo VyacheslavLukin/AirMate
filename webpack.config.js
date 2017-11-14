@@ -7,12 +7,10 @@ module.exports = {
 		path.join(__dirname, '/client/app.js')
 	],
     output: {
-        path: path.resolve(__dirname, 'public'),
+        path: path.resolve(__dirname, 'public', 'dist'),
         filename: 'bundle.js'
     },
 	plugins: [
-		new webpack.NoErrorsPlugin(),
-		new webpack.optimize.OccurenceOrderPlugin(),
 		new webpack.HotModuleReplacementPlugin()
 	],
 	module: {
@@ -20,11 +18,11 @@ module.exports = {
 			{
 				test: /\.js$/,
 				include: path.join(__dirname, '/client'),
-				loaders: ['react-hot', 'babel']
+				loaders: ['react-hot-loader', 'babel-loader']
 			}
 		]
 	},
 	resolve: {
-		extentions: ['', '.js', '.jsx']
+		extensions: ['.js', '.jsx']
 	}
 };

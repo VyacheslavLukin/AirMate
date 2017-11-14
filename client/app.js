@@ -1,8 +1,8 @@
 import React from "react";
 import {render} from "react-dom";
-import Index from "./components/Index";
+import IndexPage from "./components/IndexPage";
 
 render(
-    <Index/>,
+    <IndexPage/>,
     document.getElementById('app')
 );
