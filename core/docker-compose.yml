@@ -1,0 +1,23 @@
+version: '2'
+
+services:
+  mysql:
+    restart: always
+    image: mysql:5.7
+    expose:
+      - "3306"
+    ports:
+     - "3306:3306"
+    volumes:
+      - ./config:/etc/mysql/conf.d:ro
+      - mysql:/var/lib/mysql
+      - ./config/:/docker-entrypoint-initdb.d
+    environment:
+      LANG: "C.UTF-8"
+      MYSQL_USER: innosoft
+      MYSQL_PASSWORD: innosoft
+      MYSQL_ROOT_PASSWORD: innosoft
+
+volumes:
+  mysql:
+    driver: local
