@@ -1,0 +1,8 @@
+.text-align-center {
+    text-align: center;
+}
+
+#map {
+    margin-top: 3rem;
+    height: 400px;
+}
