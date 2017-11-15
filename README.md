@@ -122,3 +122,12 @@ Code and model approaches adapted from: (1) https://dspace.mit.edu/handle/1721.1
     * with Conda: conda install tqdm
 * install latex
     * inn ubuntu: sudo apt-get install texlive-full 
+
+## Databases
+We have 3 databases for backend part, that is
+* MySQL (for front-end)
+* MongoDB (for sensors)
+* BigchainDB (add blockchain part to MongoDB)
+
+In order to start all of them, just use docker compose:
+in *./core*  execute `docker-compose up -d`
