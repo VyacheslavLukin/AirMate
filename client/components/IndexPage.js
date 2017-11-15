@@ -233,8 +233,8 @@ export default class IndexPage extends React.Component {
             // this.heatmapLayer.setData(data);
         }
 
-        let rawDataClass = (this.state.showRawData) ? "btn btn-block btn-success" : "btn btn-block btn-outline-success";
-        let modelDataClass = (this.state.showModelData) ? "btn btn-block btn-success" : "btn btn-block btn-outline-success";
+        let rawDataClass = (!this.state.showRawData) ? "btn btn-block btn-success" : "btn btn-block btn-outline-success";
+        let modelDataClass = (!this.state.showModelData) ? "btn btn-block btn-success" : "btn btn-block btn-outline-success";
 
         let rawDataValue = (this.state.showRawData) ? "Hide raw data" : "Show raw data";
         let modelDataValue = (this.state.showModelData) ? "Hide model data" : "Show model data";

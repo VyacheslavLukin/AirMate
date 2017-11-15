@@ -8,10 +8,10 @@ export default class Navbar extends React.Component {
                     height: "100%"
                 }}/>
                 <ul className="navbar-nav mr-auto">
-                    <li className="nav-item active">
+                    <li className="nav-item">
                         <Link className="nav-link" to="/personal">Personal <span className="sr-only">(current)</span></Link>
                     </li>
-                    <li className="nav-item">
+                    <li className="nav-item active">
                         <Link className="nav-link" to="/">Home <span className="sr-only">(current)</span></Link>
                     </li>
                 </ul>
