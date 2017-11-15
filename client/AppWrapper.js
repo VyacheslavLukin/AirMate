@@ -1,7 +1,11 @@
-import React, { Component } from "react";
+import React, {Component} from "react";
+import Navbar from "./components/Navbar";
 
 export default class AppWrapper extends Component {
     render() {
-        return <div>{this.props.children}</div>;
+        return <div className="app-wrapper">
+            <Navbar/>
+            {this.props.children}
+        </div>;
     }
 }

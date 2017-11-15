@@ -7,9 +7,14 @@ export default class IndexPage extends React.Component {
         super(state, props);
 
         this.state = {
-            max: 0,
-            min: -100,
-            points: []
+            max: -1000,
+            min: 1000,
+
+            rawPoints: [],
+            modelPoints: [],
+
+            showRawData: true,
+            showModelData: false,
         };
 
         this.baseLayer;
@@ -28,8 +33,8 @@ export default class IndexPage extends React.Component {
         );
 
         let cfg = {
-            radius: 0.1,
-            maxOpacity: .8,
+            radius: 0.08,
+            maxOpacity: 0.8,
             scaleRadius: true,
             useLocalExtrema: false,
             latField: 'lat',
@@ -47,13 +52,24 @@ export default class IndexPage extends React.Component {
             layers: [this.baseLayer, this.heatmapLayer]
         });
 
-        makeApiGet('/api/getData').then((data) => {
+        if (this.state.showRawData) {
+            this.makeApiCall('/api/getRawData', 'rawPoints');
+        }
+
+        if (this.state.showModelData) {
+            this.makeApiCall('/api/getModelData', 'modelPoints');
+        }
+    }
+
+    makeApiCall(url, typeOfData) {
+        makeApiGet(url).then((data) => {
             let min = this.state.min;
             let max = this.state.max;
+
             const points = data.results.map(entry => {
                 if (entry.value > max) {
                     max = entry.value;
-                } else if (entry.value < min ) {
+                } else if (entry.value < min) {
                     min = entry.value;
                 }
 
@@ -64,46 +80,83 @@ export default class IndexPage extends React.Component {
                 }
             });
 
-            this.setState(
-                Object.assign({}, {
-                    min: min,
-                    max: max,
-                    points: points
-                })
-            );
+            let newState = Object.assign({}, this.state, { min, max });
+            newState[typeOfData] = points;
+            this.setState(newState);
         });
     }
 
+    getData(buttonName) {
+        let url, points;
+
+        switch (buttonName) {
+            case "showRawData":
+                url = '/api/getRawData';
+                points = 'rawPoints';
+                break;
+            default:
+                url = '/api/getModelData';
+                points = 'modelPoints';
+                break;
+        }
+
+        this.makeApiCall(url, points);
+    }
+
+    toggleButton(buttonName) {
+        let newState = Object.assign({}, this.state);
+        newState[buttonName] = !newState[buttonName];
+
+        this.getData(buttonName);
+
+        this.setState(newState);
+    }
+
+    prepareData() {
+        let result = [];
+
+        if (this.state.showRawData) {
+            result = result.concat(this.state.rawPoints);
+        }
+
+        if (this.state.showModelData) {
+            result = result.concat(this.state.modelPoints);
+        }
+
+        return result;
+    }
+
     render() {
+
         let data = {
             max: this.state.max,
             min: this.state.min,
-            data: this.state.points
+            data: this.prepareData()
         };
 
         this.heatmapLayer.setData(data);
 
-        return (
-            <div>
-                <nav className="navbar navbar-expand-md navbar-dark bg-dark fixed-top">
-                    <a className="offset-5 col-sm-2 navbar-brand text-align-center" href="#">
-                        <img src="/static/img/baum.svg" height="80px"/>
-                    </a>
-                    <button className="navbar-toggler" type="button" data-toggle="collapse"
-                            data-target="#navbarsExampleDefault"
-                            aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="Toggle navigation">
-                        <span className="navbar-toggler-icon"/>
-                    </button>
-                </nav>
+        let rawDataClass = (this.state.showRawData) ? "btn btn-block btn-success" : "btn btn-block btn-outline-success";
+        let modelDataClass = (this.state.showModelData) ? "btn btn-block btn-success" : "btn btn-block btn-outline-success";
 
-                <main role="main" className="container">
-                    <div style={{
-                        "paddingTop": "5rem"
-                    }}>
-                        {/*Map rendering*/}
-                        <div id="map"/>
-                    </div>
-                </main>
+        let rawDataValue = (this.state.showRawData) ? "Hide raw data" : "Show raw data";
+        let modelDataValue = (this.state.showModelData) ? "Hide model data" : "Show model data";
+
+        return (
+            <div className="app-wrapper">
+                <div id="map"/>
+                <div id="leaflet-buttons-wrapper">
+                    <input type="button" className={rawDataClass} value={rawDataValue}
+                           onClick={() => {
+                               this.toggleButton("showRawData");
+                           }}
+                    />
+                    <input type="button" className={modelDataClass} value={modelDataValue}
+                           onClick={() => {
+                               this.toggleButton("showModelData");
+                           }}
+                    />
+                </div>
             </div>
         );
     }

@@ -21,8 +21,12 @@ app.use('/static', express.static('public'));
 app.use(webpackHotMiddleware(compiler));
 
 // Api
-app.get('/api/getData', (req, res) => {
-    res.sendFile(path.join(__dirname, '../sampleData.json'));
+app.get('/api/getRawData', (req, res) => {
+    res.sendFile(path.join(__dirname, '../sampleRawData.json'));
+});
+
+app.get('/api/getModelData', (req, res) => {
+    res.sendFile(path.join(__dirname, '../sampleModelData.json'));
 });
 
 // Index
