@@ -27,7 +27,7 @@ app.get('/api/getRawData', (req, res) => {
 });
 
 app.get('/api/getModelData', (req, res) => {
-    res.sendFile(path.join(__dirname, '../sampleModelData.json'));
+    res.sendFile(path.join(__dirname, '../sampleRectangularData.json'));
 });
 
 // Index

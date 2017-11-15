@@ -7,6 +7,11 @@
     height: 15%
 }
 
+.navbar-nav {
+    position: absolute;
+    right: 50px;
+}
+
 body, html, #app, #map, .app-wrapper {
     height: 100% !important;
     width: 100% !important;

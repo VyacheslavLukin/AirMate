@@ -67,6 +67,61 @@ export default class IndexPage extends React.Component {
         }
     }
 
+    componentWillUnmount() {
+        this.map = null;
+    }
+
+    getAndParseRawData() {
+        makeApiGet('/api/getRawData').then((data) => {
+            let min = this.state.min;
+            let max = this.state.max;
+
+            const points = data.results.map(entry => {
+                if (entry.value > max) {
+                    max = entry.value;
+                } else if (entry.value < min) {
+                    min = entry.value;
+                }
+
+                return {
+                    lat: entry.coordinates.latitude,
+                    lng: entry.coordinates.longitude,
+                    count: entry.value
+                }
+            });
+
+            let newState = Object.assign({}, this.state, {min, max});
+            newState['rawPoints'] = points;
+            this.setState(newState);
+        });
+    }
+
+    getAndParseModelData() {
+        makeApiGet('/api/getModelData').then((data) => {
+            let min = this.state.min;
+            let max = this.state.max;
+
+            const shapes = data.results.map(entry => {
+                if (entry.value > max) {
+                    max = entry.value;
+                } else if (entry.value < min) {
+                    min = entry.value;
+                }
+
+                return {
+                    lat: entry.coordinates.latitude,
+                    lng: entry.coordinates.longitude,
+                    count: entry.value
+                }
+            });
+
+            let newState = Object.assign({}, this.state, {min, max});
+            newState['modelPoints'] = shapes;
+            this.setState(newState);
+        });
+    }
+
+
     makeApiCall(url, typeOfData) {
         makeApiGet(url).then((data) => {
             let min = this.state.min;
@@ -93,20 +148,14 @@ export default class IndexPage extends React.Component {
     }
 
     getData(buttonName) {
-        let url, points;
-
         switch (buttonName) {
             case "showRawData":
-                url = '/api/getRawData';
-                points = 'rawPoints';
+                this.getAndParseRawData();
                 break;
             default:
-                url = '/api/getModelData';
-                points = 'modelPoints';
+                this.getAndParseModelData();
                 break;
         }
-
-        this.makeApiCall(url, points);
     }
 
     toggleButton(buttonName) {
@@ -151,13 +200,30 @@ export default class IndexPage extends React.Component {
                 }).addTo(this.map);
             })
         } else {
-            let data = {
-                max: this.state.max,
-                min: this.state.min,
-                data: this.prepareData()
-            };
+            this.state.rawPoints.map(point => {
+                let color = this.getDotColor(point.count);
+                L.polygon([point.lat, point.lng], {
+                    radius: 100,
+                    color: color,
+                    fillColor: color,
+                    fill: 1,
+                    fillOpacity: 0.3,
+                    opacity: 0.3
+                }).addTo(this.map);
+            });
 
-            this.heatmapLayer.setData(data);
+            // create a red polygon from an array of LatLng points
+            var latlngs = [[37, -109.05], [41, -109.03], [41, -102.05], [37, -102.04]];
+            var polygon = L.polygon(latlngs, {color: 'red'}).addTo(map);
+// zoom the map to the polygon
+            map.fitBounds(polygon.getBounds());
+            // let data = {
+            //     max: this.state.max,
+            //     min: this.state.min,
+            //     data: this.prepareData()
+            // };
+            //
+            // this.heatmapLayer.setData(data);
         }
 
         let rawDataClass = (this.state.showRawData) ? "btn btn-block btn-success" : "btn btn-block btn-outline-success";
