@@ -1,6 +1,7 @@
 import React from "react";
 import HeatmapOverlay from "leaflet-heatmap";
 import {makeApiGet} from "../common/Api";
+import {numberToColorRgb} from "../common/Utils";
 
 export default class IndexPage extends React.Component {
     constructor(state, props) {
@@ -47,10 +48,15 @@ export default class IndexPage extends React.Component {
 
     componentDidMount() {
         this.map = new L.Map('map', {
+            zoomControl: false,
             center: new L.LatLng(50.7343800, 7.0954900),
             zoom: 5,
             layers: [this.baseLayer, this.heatmapLayer]
         });
+
+        L.control.zoom({
+            position: 'bottomright'
+        }).addTo(this.map);
 
         if (this.state.showRawData) {
             this.makeApiCall('/api/getRawData', 'rawPoints');
@@ -80,7 +86,7 @@ export default class IndexPage extends React.Component {
                 }
             });
 
-            let newState = Object.assign({}, this.state, { min, max });
+            let newState = Object.assign({}, this.state, {min, max});
             newState[typeOfData] = points;
             this.setState(newState);
         });
@@ -126,15 +132,33 @@ export default class IndexPage extends React.Component {
         return result;
     }
 
+    getDotColor(value) {
+        let percent = Math.floor(value * 100 / Math.abs(this.state.max - this.state.min));
+        return numberToColorRgb(100 - percent);
+    }
+
     render() {
+        if (this.state.showRawData) {
+            this.state.rawPoints.map(point => {
+                let color = this.getDotColor(point.count);
+                L.circle([point.lat, point.lng], {
+                    radius: 100,
+                    color: color,
+                    fillColor: color,
+                    fill: 1,
+                    fillOpacity: 0.3,
+                    opacity: 0.3
+                }).addTo(this.map);
+            })
+        } else {
+            let data = {
+                max: this.state.max,
+                min: this.state.min,
+                data: this.prepareData()
+            };
 
-        let data = {
-            max: this.state.max,
-            min: this.state.min,
-            data: this.prepareData()
-        };
-
-        this.heatmapLayer.setData(data);
+            this.heatmapLayer.setData(data);
+        }
 
         let rawDataClass = (this.state.showRawData) ? "btn btn-block btn-success" : "btn btn-block btn-outline-success";
         let modelDataClass = (this.state.showModelData) ? "btn btn-block btn-success" : "btn btn-block btn-outline-success";

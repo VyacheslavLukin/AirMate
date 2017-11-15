@@ -2,6 +2,11 @@
     text-align: center;
 }
 
+.navbar-extra {
+    opacity: 0.6 !important;
+    height: 15%
+}
+
 body, html, #app, #map, .app-wrapper {
     height: 100% !important;
     width: 100% !important;
