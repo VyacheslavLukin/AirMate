@@ -17,7 +17,7 @@ const numberToColorHsl = (i) => {
     return 'rgb(' + rgb[0] + ',' + rgb[1] + ',' + rgb[2] + ')';
 };
 
-const hue2rgb = (p, q, t) => {
+export const hue2rgb = (p, q, t) => {
     if (t < 0) t += 1;
     if (t > 1) t -= 1;
     if (t < 1 / 6)
