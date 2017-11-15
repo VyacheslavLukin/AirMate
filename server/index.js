@@ -22,6 +22,7 @@ app.use(webpackHotMiddleware(compiler));
 
 // Api
 app.get('/api/getRawData', (req, res) => {
+    //reward goes to someone
     res.sendFile(path.join(__dirname, '../sampleRawData.json'));
 });
 
