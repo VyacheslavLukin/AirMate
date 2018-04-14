@@ -1,3 +1,11 @@
 {
-	"presets": ["es2015", "react"]
+	"presets": [
+		"env",
+		"react",
+		"flow",
+		"stage-0"
+	],
+	"plugins": [
+		"transform-runtime"
+	]
 }

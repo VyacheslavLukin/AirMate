@@ -2,17 +2,17 @@ import React from "react";
 import {render} from "react-dom";
 import {createBrowserHistory} from "history";
 import {Router} from "react-router";
-import * as RoutesModule from "./Routes.js";
+import * as RoutesModule from "./Routes";
 
-let routes = RoutesModule.routes;
+const {routes} = RoutesModule;
 
 const history = createBrowserHistory();
 
 function renderApp() {
-    render(
-        <Router history={history} children={routes}/>,
-        document.getElementById("app")
-    );
+  render(
+    <Router history={history} children={routes} />,
+    document.getElementById("app"),
+  );
 }
 
 renderApp();

@@ -4,7 +4,7 @@ var webpack = require('webpack');
 module.exports = {
     entry: [
         'webpack-hot-middleware/client',
-        path.join(__dirname, '/client/app.js')
+        path.join(__dirname, '/client/app.jsx')
     ],
     output: {
         path: path.resolve(__dirname, 'public', 'dist'),
@@ -16,7 +16,7 @@ module.exports = {
     module: {
         loaders: [
             {
-                test: /\.js$/,
+                test: /\.jsx?$/,
                 include: path.join(__dirname, '/client'),
                 loaders: ['react-hot-loader', 'babel-loader']
             }
