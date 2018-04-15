@@ -1,4 +1,4 @@
-# #Hack4Climate - Innosoft. 
+# AirMate
 #### Green Sensing: Smart Sensing: Global Distributed GHG and Local Pollutant Sensing Networks for Climate Accountability
 You need nodejs and docker installed on your machine in order to be able to work with a project
 

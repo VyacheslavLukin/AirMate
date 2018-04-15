@@ -19,6 +19,7 @@ def main():
     with open('cleanRawData.json', 'w') as fh:
         json.dump(result, fh)
 
+
 if __name__ == "__main__":
     main()
     check = json.load(open('cleanRawData.json'))

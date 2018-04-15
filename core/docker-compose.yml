@@ -1,4 +1,4 @@
-version: '2'
+version: '3'
 
 services:
   mysql:
@@ -21,8 +21,6 @@ services:
   bigchaindb:
     restart: always
     image: bigchaindb/bigchaindb
-#    entrypoint: /bin/bash
-#    command: /init/init_bigchain.sh
     command: start
     environment:
       BIGCHAINDB_DATABASE_BACKEND: mongodb
@@ -40,6 +38,18 @@ services:
       - mongodb
     depends_on:
       - mongodb
+    networks:
+      - dev-network
+
+  tendermint:
+    image: tendermint/tendermint
+    restart: always
+    ports:
+      - "46657"
+#    command: init
+    command: node --proxy_app=dummy
+    volumes:
+      - ./tendermint:/tendermint/
     networks:
       - dev-network
 
