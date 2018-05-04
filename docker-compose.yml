@@ -1,0 +1,32 @@
+version: '3'
+
+services:
+  openaq:
+    restart: always
+    image: airmate:latest
+    container_name: airmate_openaq
+    command: bash -c "./wait_for_postgres.sh postgres && python3 /api/data_layer/openaq_watchdog.py"
+    env_file: .env
+    networks:
+      - dev
+
+  postgres:
+    restart: always
+    container_name: airmate_dev_db
+    image: airmate_db
+    env_file: .env
+    networks:
+      - dev
+
+  api:
+    image: airmate:latest
+    container_name: airmate_dev_api
+    command: bash -c "./wait_for_postgres.sh postgres && python3 /api/data_layer/start_api.py"
+    env_file: .env
+    depends_on:
+      - postgres
+    networks:
+      - dev
+
+networks:
+  dev:
