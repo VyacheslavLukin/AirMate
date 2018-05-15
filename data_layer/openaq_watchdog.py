@@ -7,7 +7,7 @@ from data_layer.api.db_model import Openaq
 from bigchaindb_driver import BigchainDB
 from bigchaindb_driver.crypto import generate_keypair
 
-bdb_root_url = 'http://localhost:9984'
+bdb_root_url = 'http://172.17.0.1:9984'
 bdb = BigchainDB(bdb_root_url)
 tokens = {'app_id': 'openaq_id', 'app_key': 'openaq_key'}
 bdb = BigchainDB(bdb_root_url, headers=tokens)

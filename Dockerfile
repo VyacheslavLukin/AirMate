@@ -8,3 +8,4 @@ WORKDIR /api
 COPY requirements.txt /api/requirements.txt
 RUN pip3 install -r requirements.txt
 COPY . /api
+RUN export PYTHONPATH=/api

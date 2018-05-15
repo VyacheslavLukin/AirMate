@@ -5,7 +5,7 @@ services:
     restart: always
     image: airmate:latest
     container_name: airmate_openaq
-    command: bash -c "./wait_for_postgres.sh postgres && python3 /api/data_layer/openaq_watchdog.py"
+    command: bash -c "./wait_for_postgres.sh postgres && PYTHONPATH=/api python3 data_layer/openaq_watchdog.py"
     env_file: .env
     networks:
       - dev
@@ -15,13 +15,15 @@ services:
     container_name: airmate_dev_db
     image: airmate_db
     env_file: .env
+    ports:
+      - "5432:5432"
     networks:
       - dev
 
   api:
     image: airmate:latest
     container_name: airmate_dev_api
-    command: bash -c "./wait_for_postgres.sh postgres && python3 /api/data_layer/start_api.py"
+    command: bash -c "./wait_for_postgres.sh postgres && PYTHONPATH=/api python3 data_layer/start_api.py"
     env_file: .env
     depends_on:
       - postgres

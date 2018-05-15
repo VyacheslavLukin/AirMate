@@ -1,6 +1,5 @@
 from data_layer.api import api
 from data_layer.openaq_watchdog import retrieve_from_bigchain
-import json
 
 
 @api.route('/get_sensor_data/<sensor_id>')
