@@ -15,4 +15,4 @@ class Openaq(db.Model):
         self.update_time = update_time
 
     def __repr__(self):
-        return '<title {}'.format(self.name)
+        return '<sensor_id {}'.format(self.sensor_id)

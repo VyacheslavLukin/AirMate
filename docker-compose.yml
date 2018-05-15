@@ -22,8 +22,13 @@ services:
 
   api:
     image: airmate:latest
+    restart: always
     container_name: airmate_dev_api
     command: bash -c "./wait_for_postgres.sh postgres && PYTHONPATH=/api python3 data_layer/start_api.py"
+    volumes:
+      - ${PWD}:/api
+    ports:
+      - "5000:5000"
     env_file: .env
     depends_on:
       - postgres

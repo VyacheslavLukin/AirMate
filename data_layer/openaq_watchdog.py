@@ -3,6 +3,8 @@ from datetime import datetime
 from time import sleep
 from data_layer.api import db
 from data_layer.api.db_model import Openaq
+import json
+from sqlalchemy import desc
 
 from bigchaindb_driver import BigchainDB
 from bigchaindb_driver.crypto import generate_keypair
@@ -60,11 +62,9 @@ def save_to_postgres(provider, sensor_id, txid):
 
 
 def retrieve_from_bigchain(sensor_id):
-    db_record = Openaq.query.filter_by(sensor_id=sensor_id).first()
-    print("db_record - {}".format(db_record))
-    txid = db_record[1]
-    print("txid = {}".format(txid))
-    return bdb.transactions.retrieve(txid)
+    db_record = Openaq.query.order_by(desc(Openaq.update_time)).filter_by(sensor_id=sensor_id).first()
+    txid = db_record.transaction_id
+    return json.dumps(bdb.transactions.retrieve(txid))
 
 
 if __name__ == '__main__':
