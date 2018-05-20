@@ -1,9 +1,10 @@
 import requests
+import json
 from datetime import datetime
 from time import sleep
 from data_layer.api import db
-from data_layer.api.db_model import Openaq
-import json
+from db.db_model import Openaq
+from db.db_model import Sensor
 from sqlalchemy import desc
 
 from bigchaindb_driver import BigchainDB
@@ -62,12 +63,28 @@ def save_to_postgres(provider, sensor_id, txid):
 
 
 def retrieve_from_bigchain(sensor_id):
-    db_record = Openaq.query.order_by(desc(Openaq.update_time)).filter_by(sensor_id=sensor_id).first()
-    txid = db_record.transaction_id
-    return json.dumps(bdb.transactions.retrieve(txid))
+    bdb_record = Openaq.query.order_by(desc(Openaq.update_time)).filter_by(sensor_id=sensor_id).first()
+    postgresdb_record = Sensor.query.get(sensor_id)
+    return json.dumps({
+        "longitude": postgresdb_record.longitude,
+        "latitude": postgresdb_record.latitude,
+        "data": {
+          "transaction": bdb_record.transaction_id,
+          "timestamp": str(bdb_record.update_time),
+          "measures": postgresdb_record.measures,
+        }
+    })
 
 
 if __name__ == '__main__':
+
+    longitude = 55.7507163,
+    latitude = 48.741309,
+    measure = {"co2": 1.0},
+    pdb = Sensor(latitude, longitude, measure)
+    db.session.add(pdb)
+    db.session.commit()
+
     while True:
         measurement = get_latest_data(country="RU", location="Гобелевская")
         txid = save_to_bigchain(measurement)

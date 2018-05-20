@@ -17,10 +17,19 @@ class Openaq(db.Model):
     def __repr__(self):
         return '<sensor_id {}'.format(self.sensor_id)
 
+
 class Sensor(db.Model):
     __tablename__ = "sensors"
 
     id = db.Column(db.Integer, primary_key=True)
     latitude = db.Column(db.Float, nullable=False)
     longitude = db.Column(db.Float, nullable=False)
-    measures = db.JSON
+    measures = db.Column(db.JSON)
+
+    def __init__(self, latitude, longitude, measure):
+        self.latitude = latitude
+        self.longitude = longitude
+        self.measures = measure
+
+    def __repr__(self):
+        return '<sensor_id {}'.format(self.id)
