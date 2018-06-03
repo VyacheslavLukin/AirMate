@@ -25,7 +25,6 @@ class Sensor(db.Model):
     sensor_id = db.Column(db.String, nullable=False)
     longitude = db.Column(db.Float, nullable=False)
     latitude = db.Column(db.Float, nullable=False)
-    measures = db.Column(db.JSON)
 
     def __init__(self, sensor_id, latitude, longitude):
         self.sensor_id = sensor_id

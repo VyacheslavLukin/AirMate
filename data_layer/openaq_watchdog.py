@@ -73,25 +73,24 @@ def save_to_postgres(provider, sensor_id, txid):
 
 
 def retrieve_from_bigchain(sensor_id):
-    bdb_record = Openaq.query.order_by(desc(Openaq.update_time)).filter_by(sensor_id=sensor_id).first()
+    openaq_record = Openaq.query.order_by(desc(Openaq.update_time)).filter_by(sensor_id=sensor_id).first()
     postgresdb_record = Sensor.query.filter_by(sensor_id=sensor_id).first()
+    bdb_record = bdb.transactions.retrieve(openaq_record.transaction_id)
     return json.dumps({
         "longitude": postgresdb_record.longitude,
         "latitude": postgresdb_record.latitude,
-        "data": {
-            "transaction": bdb_record.transaction_id,
-            "timestamp": str(bdb_record.update_time),
-            "measures": bdb_record,
-        }
+        "transaction": openaq_record.transaction_id,
+        "timestamp": str(openaq_record.update_time),
+        "measures": bdb_record['asset'],
     })
 
 
-def get_sensors_list():
-    return  [x.sensor_id for x in Sensor.query.all()]
+def get_list_of_available_sensors():
+    return json.dumps([x.sensor_id for x in Sensor.query.all()])
 
 
 if __name__ == '__main__':
-    available_sensors_list = get_sensors_list()
+    available_sensors_list = [x.sensor_id for x in Sensor.query.all()]
     while True:
         city_data = get_latest_data(country="DE", city="Berlin")
         for location in city_data:
