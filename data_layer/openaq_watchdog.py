@@ -86,7 +86,15 @@ def retrieve_from_bigchain(sensor_id):
 
 
 def get_list_of_available_sensors():
-    return json.dumps([x.sensor_id for x in Sensor.query.all()])
+    sensors = Sensor.query.all()
+    result = list()
+    for item in sensors:
+        single_item = dict()
+        single_item['id'] = item.sensor_id
+        single_item['latitude'] = item.latitude
+        single_item['longitude'] = item.longitude
+        result.append(single_item)
+    return json.dumps(result)
 
 
 if __name__ == '__main__':
