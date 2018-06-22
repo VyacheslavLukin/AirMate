@@ -41,7 +41,7 @@ def save_to_bigchain(data):
     metadata = {'data_provider': 'openaq'}
     sensor = {
         'data': {
-            'location': data
+            'location': data.to_json()
         }
     }
     prepared_creation_tx = bdb.transactions.prepare(

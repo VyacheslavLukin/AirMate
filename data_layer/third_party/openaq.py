@@ -1,6 +1,7 @@
 import json
 import copy
 from datetime import datetime
+import json
 
 
 class OpenaqInterface:
@@ -46,3 +47,13 @@ class OpenaqInterface:
             time_list.append(datetime.strptime(record['lastUpdated'], "%Y-%m-%dT%H:%M:%S.%fZ"))
         sorted(time_list)
         return datetime.strftime(time_list[0], "%Y-%m-%dT%H:%M:%S.%fZ")
+
+    def to_json(self):
+        return json.dumps({
+            'location': self.location,
+            'country': self.country,
+            'city': self.city,
+            'latitude': self.coordinates['latitude'],
+            'longitude': self.coordinates['longitude'],
+            'measures': self.measurements
+        })
