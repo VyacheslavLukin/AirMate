@@ -5,7 +5,7 @@ class Openaq(db.Model):
     __tablename__ = 'openaq_data'
 
     id = db.Column(db.Integer, primary_key=True)
-    sensor_id = db.Column(db.Integer, nullable=False)
+    sensor_id = db.Column(db.String, nullable=False)
     transaction_id = db.Column(db.String, nullable=False)
     update_time = db.Column(db.DateTime, nullable=False)
 
@@ -22,14 +22,14 @@ class Sensor(db.Model):
     __tablename__ = "sensors"
 
     id = db.Column(db.Integer, primary_key=True)
-    latitude = db.Column(db.Float, nullable=False)
+    sensor_id = db.Column(db.String, nullable=False)
     longitude = db.Column(db.Float, nullable=False)
-    measures = db.Column(db.JSON)
+    latitude = db.Column(db.Float, nullable=False)
 
-    def __init__(self, latitude, longitude, measure):
+    def __init__(self, sensor_id, latitude, longitude):
+        self.sensor_id = sensor_id
         self.latitude = latitude
         self.longitude = longitude
-        self.measures = measure
 
     def __repr__(self):
         return '<sensor_id {}'.format(self.id)

@@ -7,8 +7,10 @@ from db.db_model import Openaq
 from db.db_model import Sensor
 from sqlalchemy import desc
 
+from data_layer.sensors_management import add_sensor
 from bigchaindb_driver import BigchainDB
 from bigchaindb_driver.crypto import generate_keypair
+from data_layer.third_party.openaq import OpenaqInterface
 
 bdb_root_url = 'http://172.17.0.1:9984'
 bdb = BigchainDB(bdb_root_url)
@@ -19,19 +21,27 @@ url = "https://api.openaq.org/v1/latest"
 airmate = generate_keypair()
 
 
-def get_latest_data(country, location):
+def get_latest_data(country, city):
     api_request = "https://api.openaq.org/v1/latest?country=" + country + \
-                  "&location=" + location
+                  "&city=" + city
     raw_data = requests.get(api_request)
     json_data = raw_data.json()
-    return json_data['results']
+    results = list()
+    for location_record in json_data['results']:
+        results.append(OpenaqInterface(name=location_record["location"],
+                                       city=location_record["city"],
+                                       country=location_record['country'],
+                                       coordinates=location_record['coordinates'],
+                                       measurements=location_record['measurements'])
+                       )
+    return results
 
 
 def save_to_bigchain(data):
     metadata = {'data_provider': 'openaq'}
     sensor = {
         'data': {
-            'sensor': data
+            'location': data
         }
     }
     prepared_creation_tx = bdb.transactions.prepare(
@@ -63,32 +73,33 @@ def save_to_postgres(provider, sensor_id, txid):
 
 
 def retrieve_from_bigchain(sensor_id):
-    bdb_record = Openaq.query.order_by(desc(Openaq.update_time)).filter_by(sensor_id=sensor_id).first()
-    postgresdb_record = Sensor.query.get(sensor_id)
+    openaq_record = Openaq.query.order_by(desc(Openaq.update_time)).filter_by(sensor_id=sensor_id).first()
+    postgresdb_record = Sensor.query.filter_by(sensor_id=sensor_id).first()
+    bdb_record = bdb.transactions.retrieve(openaq_record.transaction_id)
     return json.dumps({
         "longitude": postgresdb_record.longitude,
         "latitude": postgresdb_record.latitude,
-        "data": {
-          "transaction": bdb_record.transaction_id,
-          "timestamp": str(bdb_record.update_time),
-          "measures": postgresdb_record.measures,
-        }
+        "transaction": openaq_record.transaction_id,
+        "timestamp": str(openaq_record.update_time),
+        "measures": bdb_record['asset'],
     })
 
 
+def get_list_of_available_sensors():
+    return json.dumps([x.sensor_id for x in Sensor.query.all()])
+
+
 if __name__ == '__main__':
-
-    longitude = 55.7507163,
-    latitude = 48.741309,
-    measure = {"co2": 1.0},
-    pdb = Sensor(latitude, longitude, measure)
-    db.session.add(pdb)
-    db.session.commit()
-
+    available_sensors_list = [x.sensor_id for x in Sensor.query.all()]
     while True:
-        measurement = get_latest_data(country="RU", location="Гобелевская")
-        txid = save_to_bigchain(measurement)
-        sensor_id = 1
-        if save_to_postgres(provider="openaq", sensor_id=sensor_id, txid=txid):
-            print("Saved data for sensor_id={}, with transaction={}".format(sensor_id, txid))
-        sleep(10)
+        city_data = get_latest_data(country="DE", city="Berlin")
+        for location in city_data:
+            txid = save_to_bigchain(location)
+            sensor_id = location.location
+            if sensor_id not in available_sensors_list:
+                add_sensor(sensor_id,
+                           latitude=location.coordinates['latitude'],
+                           longitude=location.coordinates['longitude'])
+            if save_to_postgres(provider="openaq", sensor_id=sensor_id, txid=txid):
+                print("Saved data for sensor_id={}, with transaction={}".format(sensor_id, txid))
+            sleep(10)
