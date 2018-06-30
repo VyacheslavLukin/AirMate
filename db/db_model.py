@@ -21,7 +21,6 @@ class Openaq(db.Model):
 class Sensor(db.Model):
     __tablename__ = "sensors"
 
-    id = db.Column(db.Integer, primary_key=True)
     sensor_id = db.Column(db.String, nullable=False, primary_key=True)
     longitude = db.Column(db.Float, nullable=False)
     latitude = db.Column(db.Float, nullable=False)

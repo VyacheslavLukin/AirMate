@@ -61,15 +61,22 @@ def save_to_bigchain(data):
 
 
 def save_to_postgres(provider, sensor_id, txid):
-    bdb_transaction = Openaq(sensor_id, txid, datetime.utcnow())
-    try:
-        db.session.add(bdb_transaction)
+    record = Openaq.query.filter_by(sensor_id=sensor_id).first()
+    if record:
+        record.transaction_id = txid
+        record.update_time = datetime.utcnow()
         db.session.commit()
-    except:
-        print("Unable to save transaction ", txid)
-        raise
     else:
-        return True
+        try:
+            bdb_transaction = Openaq(sensor_id, txid, datetime.utcnow())
+            db.session.add(bdb_transaction)
+            db.session.commit()
+        except Exception as e:
+            print("Unable to save transaction ", txid)
+            raise
+        else:
+         return True
+    return True
 
 
 def retrieve_from_bigchain(sensor_id):
