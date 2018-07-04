@@ -2,4 +2,5 @@
 web/node_modules/
 npm-debug.log
 public/web/dist/*
+public/dist/*
 **.pyc
