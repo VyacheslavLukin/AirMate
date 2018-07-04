@@ -61,7 +61,7 @@
 /******/ 	
 /******/ 	
 /******/ 	var hotApplyOnUpdate = true;
-/******/ 	var hotCurrentHash = "bd970a9216518b19188d"; // eslint-disable-line no-unused-vars
+/******/ 	var hotCurrentHash = "816511ed705f8f4d0abb"; // eslint-disable-line no-unused-vars
 /******/ 	var hotRequestTimeout = 10000;
 /******/ 	var hotCurrentModuleData = {};
 /******/ 	var hotCurrentChildModule; // eslint-disable-line no-unused-vars
@@ -45755,6 +45755,8 @@ var IndexPage = function (_React$Component) {
       showRawData: false,
       showModelData: false
     };
+
+    _this.onMapClick = _this.onMapClick.bind(_this);
     return _this;
   }
 
@@ -45819,42 +45821,29 @@ var IndexPage = function (_React$Component) {
     value: function componentDidMount() {
       var _this2 = this;
 
-      this.map = new L.Map("map", {
-        zoomControl: false,
-        center: new L.LatLng(55.7517163, 48.747309),
-        zoom: 13,
-        layers: [this.baseLayer, this.heatmapLayer, this.geoJSONLayer]
+      (0, _Api.makeApiGet)('http://localhost:5000/get_sensors_list').then(function (data) {
+        _this2.map = new L.Map("map", {
+          zoomControl: false,
+          center: new L.LatLng(data[0].latitude, data[0].longitude),
+          zoom: 10,
+          layers: [_this2.baseLayer, _this2.heatmapLayer, _this2.geoJSONLayer]
+        });
+
+        var dataToSave = {};
+
+        data.forEach(function (item) {
+          var temp = L.marker([item.latitude, item.longitude]).addTo(_this2.map).on('click', _this2.onMapClick);
+
+          temp._icon.id = item.id;
+          dataToSave[item.id] = item;
+        });
+
+        _this2.setState({
+          data: dataToSave
+        });
       });
 
-      var data = [{
-        longitude: 55.7517163,
-        latitude: 48.747309,
-        data: {
-          transaction: "0x62d3fba50e9b648af6d19a4b456959d26f4fe66af0489e8060d23667b5781bf2",
-          timestamp: new Date(),
-          co2: 1.0
-        }
-      }, {
-        longitude: 55.7527163,
-        latitude: 48.757309,
-        data: {
-          transaction: "0x62d3fba50e9b648af6d19a4b456959d26f4fe66af0489e8060d23667b5781bf2",
-          timestamp: new Date(),
-          co2: 1.0
-        }
-      }, {
-        longitude: 55.7507163,
-        latitude: 48.741309,
-        data: {
-          transaction: "0x62d3fba50e9b648af6d19a4b456959d26f4fe66af0489e8060d23667b5781bf2",
-          timestamp: new Date(),
-          co2: 1.0
-        }
-      }];
-
-      data.forEach(function (item) {
-        L.marker([item.longitude, item.latitude]).addTo(_this2.map).bindPopup("\u0428\u0438\u0440\u043E\u0442\u0430: " + item.latitude + "<br>\u0414\u043E\u043B\u0433\u043E\u0442\u0430: " + item.longitude + "<br>\n\u0425\u044D\u0448 \u0442\u0440\u0430\u043D\u0437\u0430\u043A\u0446\u0438\u0438: " + item.data.transaction + "<br>\u0414\u0430\u0442\u0430: " + item.data.timestamp + "<br>CO2: " + item.data.co2, { maxWidth: 560 });
-      });
+      this.popup = L.popup({ maxWidth: 560 });
 
       L.control.zoom({
         position: "bottomright"
@@ -45869,6 +45858,31 @@ var IndexPage = function (_React$Component) {
       }
     }
   }, {
+    key: "onMapClick",
+    value: function onMapClick(e) {
+      var _this3 = this;
+
+      var currentItem = this.state.data[e.target._icon.id];
+      // console.log(currentItem);
+      // console.log(e);
+
+      (0, _Api.makeApiGet)("http://localhost:5000/get_sensor_data/" + currentItem.id).then(function (data) {
+        console.log(data);
+
+        var measures = JSON.parse(data.measures.data.location);
+        measures = measures.measures;
+        console.log(measures);
+
+        var measuresString = '';
+
+        for (var i = 0; i < measures.length; i++) {
+          measuresString += measures[i].parameter + ": " + measures[i].value + " " + measures[i].unit + "<br>";
+        }
+
+        _this3.popup.setLatLng(e.target._latlng).setContent("ID: " + currentItem.id + "<br>\n\u0425\u044D\u0448 \u0442\u0440\u0430\u043D\u0437\u0430\u043A\u0446\u0438\u0438: " + data.transaction + "<br>\n\u0428\u0438\u0440\u043E\u0442\u0430: " + currentItem.latitude + "<br>\n\u0414\u043E\u043B\u0433\u043E\u0442\u0430: " + currentItem.longitude + "<br>\n" + measuresString).openOn(_this3.map);
+      });
+    }
+  }, {
     key: "componentWillUnmount",
     value: function componentWillUnmount() {
       this.map = null;
@@ -45876,11 +45890,11 @@ var IndexPage = function (_React$Component) {
   }, {
     key: "getAndParseRawData",
     value: function getAndParseRawData() {
-      var _this3 = this;
+      var _this4 = this;
 
       (0, _Api.makeApiGet)("/api/getRawData").then(function (data) {
-        var min = _this3.state.min;
-        var max = _this3.state.max;
+        var min = _this4.state.min;
+        var max = _this4.state.max;
 
         var points = data.results.map(function (entry) {
           if (entry.value > max) {
@@ -45896,15 +45910,15 @@ var IndexPage = function (_React$Component) {
           };
         });
 
-        var newState = (0, _assign2.default)({}, _this3.state, { min: min, max: max });
+        var newState = (0, _assign2.default)({}, _this4.state, { min: min, max: max });
         newState.rawPoints = points;
-        _this3.setState(newState);
+        _this4.setState(newState);
       });
     }
   }, {
     key: "getAndParseModelData",
     value: function getAndParseModelData() {
-      var _this4 = this;
+      var _this5 = this;
 
       (0, _Api.makeApiGet)("/api/getModelData").then(function (data) {
         // let min = this.state.min;
@@ -45924,9 +45938,9 @@ var IndexPage = function (_React$Component) {
         //     }
         // });
 
-        var newState = (0, _assign2.default)({}, _this4.state);
+        var newState = (0, _assign2.default)({}, _this5.state);
         newState.modelPoints = data;
-        _this4.setState(newState);
+        _this5.setState(newState);
       });
     }
   }, {

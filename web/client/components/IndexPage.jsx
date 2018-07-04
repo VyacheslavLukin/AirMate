@@ -17,6 +17,8 @@ export default class IndexPage extends React.Component {
       showRawData: false,
       showModelData: false,
     };
+
+    this.onMapClick = this.onMapClick.bind(this);
   }
 
   componentWillMount() {
@@ -97,57 +99,32 @@ export default class IndexPage extends React.Component {
   }
 
   componentDidMount() {
-    this.map = new L.Map("map", {
-      zoomControl: false,
-      center: new L.LatLng(55.7517163, 48.747309),
-      zoom: 13,
-      layers: [this.baseLayer, this.heatmapLayer, this.geoJSONLayer],
+
+    makeApiGet('http://localhost:5000/get_sensors_list').then(data => {
+        this.map = new L.Map("map", {
+            zoomControl: false,
+            center: new L.LatLng(data[0].latitude, data[0].longitude),
+            zoom: 10,
+            layers: [this.baseLayer, this.heatmapLayer, this.geoJSONLayer],
+        });
+
+        let dataToSave = {};
+
+        data.forEach(item => {
+            let temp = L.marker([item.latitude, item.longitude])
+                .addTo(this.map)
+                .on('click', this.onMapClick);
+
+            temp._icon.id = item.id;
+            dataToSave[item.id] = item;
+        });
+
+        this.setState({
+            data: dataToSave
+        })
     });
 
-    const data = [
-      {
-        longitude: 55.7517163,
-        latitude: 48.747309,
-        data: {
-          transaction:
-            "0x62d3fba50e9b648af6d19a4b456959d26f4fe66af0489e8060d23667b5781bf2",
-          timestamp: new Date(),
-          co2: 1.0,
-        },
-      },
-      {
-        longitude: 55.7527163,
-        latitude: 48.757309,
-        data: {
-          transaction:
-            "0x62d3fba50e9b648af6d19a4b456959d26f4fe66af0489e8060d23667b5781bf2",
-          timestamp: new Date(),
-          co2: 1.0,
-        },
-      },
-      {
-        longitude: 55.7507163,
-        latitude: 48.741309,
-        data: {
-          transaction:
-            "0x62d3fba50e9b648af6d19a4b456959d26f4fe66af0489e8060d23667b5781bf2",
-          timestamp: new Date(),
-          co2: 1.0,
-        },
-      },
-    ];
-
-    data.forEach(item => {
-      L.marker([item.longitude, item.latitude])
-        .addTo(this.map)
-        .bindPopup(
-          `Широта: ${item.latitude}<br>Долгота: ${item.longitude}<br>
-Хэш транзакции: ${item.data.transaction}<br>Дата: ${
-            item.data.timestamp
-          }<br>CO2: ${item.data.co2}`,
-          {maxWidth: 560},
-        );
-    });
+    this.popup = L.popup({ maxWidth: 560 });
 
     L.control
       .zoom({
@@ -162,6 +139,36 @@ export default class IndexPage extends React.Component {
     if (this.state.showModelData) {
       this.getAndParseModelData();
     }
+  }
+
+  onMapClick(e) {
+    let currentItem = this.state.data[e.target._icon.id];
+    // console.log(currentItem);
+    // console.log(e);
+
+    makeApiGet(`http://localhost:5000/get_sensor_data/${currentItem.id}`).then(data => {
+        console.log(data);
+
+        let measures = JSON.parse(data.measures.data.location);
+        measures = measures.measures;
+        console.log(measures);
+
+        let measuresString = '';
+
+        for (let i = 0; i < measures.length; i++) {
+            measuresString += `${measures[i].parameter}: ${measures[i].value} ${measures[i].unit}<br>`
+        }
+
+        this.popup
+            .setLatLng(e.target._latlng)
+            .setContent(
+                `ID: ${currentItem.id}<br>
+Хэш транзакции: ${data.transaction}<br>
+Широта: ${currentItem.latitude}<br>
+Долгота: ${currentItem.longitude}<br>
+${measuresString}`)
+            .openOn(this.map);
+    });
   }
 
   componentWillUnmount() {
