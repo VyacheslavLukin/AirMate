@@ -1,6 +1,5 @@
 .idea/
 web/node_modules/
 npm-debug.log
-public/web/dist/*
-public/dist/*
+web/public/dist/*
 **.pyc

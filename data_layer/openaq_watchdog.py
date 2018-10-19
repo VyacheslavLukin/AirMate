@@ -13,7 +13,6 @@ from bigchaindb_driver.crypto import generate_keypair
 from data_layer.third_party.openaq import OpenaqInterface
 
 bdb_root_url = 'http://172.17.0.1:9984'
-bdb = BigchainDB(bdb_root_url)
 tokens = {'app_id': 'openaq_id', 'app_key': 'openaq_key'}
 bdb = BigchainDB(bdb_root_url, headers=tokens)
 
@@ -75,7 +74,7 @@ def save_to_postgres(provider, sensor_id, txid):
             print("Unable to save transaction ", txid)
             raise
         else:
-         return True
+            return True
     return True
 
 
