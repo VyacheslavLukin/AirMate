@@ -6,7 +6,7 @@ module.exports = {
         modules: false
     },
     resolve: {
-        extensions: [".js"]
+        extensions: [".js", ".jsx"]
     },
     entry: {
         vendor: [

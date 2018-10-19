@@ -108,6 +108,12 @@ export default class IndexPage extends React.Component {
             layers: [this.baseLayer, this.heatmapLayer, this.geoJSONLayer],
         });
 
+        L.control
+        .zoom({
+            position: "bottomright",
+        })
+        .addTo(this.map);
+
         let dataToSave = {};
 
         data.forEach(item => {
@@ -125,12 +131,6 @@ export default class IndexPage extends React.Component {
     });
 
     this.popup = L.popup({ maxWidth: 560 });
-
-    L.control
-      .zoom({
-        position: "bottomright",
-      })
-      .addTo(this.map);
 
     if (this.state.showRawData) {
       this.getAndParseRawData();
