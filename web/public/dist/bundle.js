@@ -61,7 +61,7 @@
 /******/ 	
 /******/ 	
 /******/ 	var hotApplyOnUpdate = true;
-/******/ 	var hotCurrentHash = "9bdd620fac22e0628e8e"; // eslint-disable-line no-unused-vars
+/******/ 	var hotCurrentHash = "2a136453676c3770a693"; // eslint-disable-line no-unused-vars
 /******/ 	var hotRequestTimeout = 10000;
 /******/ 	var hotCurrentModuleData = {};
 /******/ 	var hotCurrentChildModule; // eslint-disable-line no-unused-vars
@@ -29941,7 +29941,7 @@ function renderApp() {
 
 renderApp();
 
-/* REACT HOT LOADER */ }).call(this); } finally { if (true) { (function () { var foundReactClasses = module.hot.data && module.hot.data.foundReactClasses || false; if (module.exports && module.makeHot) { var makeExportsHot = __webpack_require__(34); if (makeExportsHot(module, __webpack_require__(4))) { foundReactClasses = true; } var shouldAcceptModule = true && foundReactClasses; if (shouldAcceptModule) { module.hot.accept(function (err) { if (err) { console.error("Cannot apply hot update to " + "app.jsx" + ": " + err.message); } }); } } module.hot.dispose(function (data) { data.makeHot = module.makeHot; data.foundReactClasses = foundReactClasses; }); })(); } }
+/* REACT HOT LOADER */ }).call(this); } finally { if (true) { (function () { var foundReactClasses = module.hot.data && module.hot.data.foundReactClasses || false; if (module.exports && module.makeHot) { var makeExportsHot = __webpack_require__(34); if (makeExportsHot(module, __webpack_require__(4))) { foundReactClasses = true; } var shouldAcceptModule = true && foundReactClasses; if (shouldAcceptModule) { module.hot.accept(function (err) { if (err) { console.error("Cannot apply hot update to " + "App.jsx" + ": " + err.message); } }); } } module.hot.dispose(function (data) { data.makeHot = module.makeHot; data.foundReactClasses = foundReactClasses; }); })(); } }
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(23)(module)))
 
 /***/ }),
@@ -45829,6 +45829,10 @@ var IndexPage = function (_React$Component) {
           layers: [_this2.baseLayer, _this2.heatmapLayer, _this2.geoJSONLayer]
         });
 
+        L.control.zoom({
+          position: "bottomright"
+        }).addTo(_this2.map);
+
         var dataToSave = {};
 
         data.forEach(function (item) {
@@ -45844,10 +45848,6 @@ var IndexPage = function (_React$Component) {
       });
 
       this.popup = L.popup({ maxWidth: 560 });
-
-      L.control.zoom({
-        position: "bottomright"
-      }).addTo(this.map);
 
       if (this.state.showRawData) {
         this.getAndParseRawData();
