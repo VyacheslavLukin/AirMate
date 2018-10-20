@@ -1,5 +1,6 @@
 import requests
 import json
+import os
 from datetime import datetime
 from time import sleep
 from data_layer.api import db
@@ -106,14 +107,18 @@ def get_list_of_available_sensors():
 if __name__ == '__main__':
     available_sensors_list = [x.sensor_id for x in Sensor.query.all()]
     while True:
-        city_data = get_latest_data(country="DE", city="Berlin")
-        for location in city_data:
-            txid = save_to_bigchain(location)
-            sensor_id = location.location
-            if sensor_id not in available_sensors_list:
-                add_sensor(sensor_id,
-                           latitude=location.coordinates['latitude'],
-                           longitude=location.coordinates['longitude'])
-            if save_to_postgres(provider="openaq", sensor_id=sensor_id, txid=txid):
-                print("Saved data for sensor_id={}, with transaction={}".format(sensor_id, txid))
-            sleep(10)
+        with open(os.path.join(os.path.abspath(__file__), 'third_party', 'data_src.json')) as src:
+            country_city = json.load(src)
+
+        for sCountry, lCities in country_city:
+            for sCity in lCities:
+                city_data = get_latest_data(country=sCountry, city=sCity)
+                for location in city_data:
+                    txid = save_to_bigchain(location)
+                    sensor_id = location.location
+                    if sensor_id not in available_sensors_list:
+                        add_sensor(sensor_id,
+                                   latitude=location.coordinates['latitude'],
+                                   longitude=location.coordinates['longitude'])
+                    if save_to_postgres(provider="openaq", sensor_id=sensor_id, txid=txid):
+                        print("Saved data for sensor_id={}, with transaction={}".format(sensor_id, txid))
