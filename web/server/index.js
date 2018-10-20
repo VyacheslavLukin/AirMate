@@ -9,6 +9,25 @@ let app = express();
 
 const compiler = webpack(webpackConfig);
 
+//CORS
+app.use(function(req, res, next) {
+    let allowedOrigins = [
+        'http://localhost:3000',
+        'http://localhost:5000',
+        'http://87.117.178.114:3000',
+        'http://87.117.178.114:5000',
+        'http://map.earth.airmate:3000',
+        'http://map.earth.airmate:5000'
+    ];
+    let origin = req.headers.origin;
+    if(allowedOrigins.indexOf(origin) > -1){
+        res.setHeader('Access-Control-Allow-Origin', origin);
+    }
+    res.header("Access-Control-Allow-Origin", "*");
+    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+    return next();
+});
+
 app.use(webpackMiddleware(compiler, {
     hot: true,
     publicPath: webpackConfig.output.publicPath,
@@ -19,13 +38,6 @@ app.use(webpackMiddleware(compiler, {
 app.use('/static', express.static('public'));
 
 app.use(webpackHotMiddleware(compiler));
-
-//CORS
-app.use(function(req, res, next) {
-    res.header("Access-Control-Allow-Origin", "*");
-    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
-    next();
-});
 
 // Api
 app.get('/api/getRawData', (req, res) => {
