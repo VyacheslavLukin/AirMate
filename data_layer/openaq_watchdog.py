@@ -107,7 +107,7 @@ def get_list_of_available_sensors():
 if __name__ == '__main__':
     available_sensors_list = [x.sensor_id for x in Sensor.query.all()]
     while True:
-        with open(os.path.join(os.path.abspath(__file__), 'third_party', 'data_src.json')) as src:
+        with open(os.path.join(os.path.abspath(__file__), 'third_party'), 'data_src.json') as src:
             country_city = json.load(src)
 
         for sCountry, lCities in country_city:
