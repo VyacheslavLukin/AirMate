@@ -20,6 +20,13 @@ app.use('/static', express.static('public'));
 
 app.use(webpackHotMiddleware(compiler));
 
+//CORS
+app.use(function(req, res, next) {
+    res.header("Access-Control-Allow-Origin", "*");
+    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+    next();
+});
+
 // Api
 app.get('/api/getRawData', (req, res) => {
     //reward goes to someones waves wallet who's data we gather
