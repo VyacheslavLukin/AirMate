@@ -110,6 +110,7 @@ if __name__ == '__main__':
         with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'third_party', 'data_src.json'), 'r') as src:
             country_city = json.load(src)
 
+        print(country_city)
         for sCountry, lCities in country_city:
             for sCity in lCities:
                 city_data = get_latest_data(country=sCountry, city=sCity)
