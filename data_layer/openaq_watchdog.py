@@ -124,4 +124,4 @@ if __name__ == '__main__':
                     if save_to_postgres(provider="openaq", sensor_id=sensor_id, txid=txid):
                         print("Saved data for city={},  sensor_id={}, with transaction={}".format(
                             sCity, sensor_id, txid))
-                    sleep(10)
+                    sleep(5)
