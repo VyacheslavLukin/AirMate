@@ -16,10 +16,13 @@ app.use(function(req, res, next) {
         'http://localhost:5000',
         'http://87.117.178.114:3000',
         'http://87.117.178.114:5000',
-        'http://map.earth.airmate:3000',
-        'http://map.earth.airmate:5000'
+        'http://map.airmate.earth:3000',
+        'http://map.airmate.earth:5000'
     ];
+
     let origin = req.headers.origin;
+    console.log(origin);
+
     if(allowedOrigins.indexOf(origin) > -1){
         res.setHeader('Access-Control-Allow-Origin', origin);
     }
@@ -28,11 +31,11 @@ app.use(function(req, res, next) {
     return next();
 });
 
-app.use(webpackMiddleware(compiler, {
-    hot: true,
-    publicPath: webpackConfig.output.publicPath,
-    noInfo: true
-}));
+// app.use(webpackMiddleware(compiler, {
+//     hot: true,
+//     publicPath: webpackConfig.output.publicPath,
+//     noInfo: true
+// }));
 
 // Static
 app.use('/static', express.static('public'));
