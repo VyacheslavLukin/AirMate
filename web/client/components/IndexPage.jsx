@@ -99,38 +99,37 @@ export default class IndexPage extends React.Component {
   }
 
   componentDidMount() {
+    makeApiGet("http://map.airmate.earth:5000/get_sensors_list").then(data => {
+      this.map = new L.Map("map", {
+        zoomControl: false,
+        center: new L.LatLng(data[0].latitude, data[0].longitude),
+        zoom: 10,
+        layers: [this.baseLayer, this.heatmapLayer, this.geoJSONLayer],
+      });
 
-    makeApiGet('http://map.airmate.earth:5000/get_sensors_list').then(data => {
-        this.map = new L.Map("map", {
-            zoomControl: false,
-            center: new L.LatLng(data[0].latitude, data[0].longitude),
-            zoom: 10,
-            layers: [this.baseLayer, this.heatmapLayer, this.geoJSONLayer],
-        });
-
-        L.control
+      L.control
         .zoom({
-            position: "bottomright",
+          position: "bottomright",
         })
         .addTo(this.map);
 
-        let dataToSave = {};
+      const dataToSave = {};
 
-        data.forEach(item => {
-            let temp = L.marker([item.latitude, item.longitude])
-                .addTo(this.map)
-                .on('click', this.onMapClick);
+      data.forEach(item => {
+        const temp = L.marker([item.latitude, item.longitude])
+          .addTo(this.map)
+          .on("click", this.onMapClick);
 
-            temp._icon.id = item.id;
-            dataToSave[item.id] = item;
-        });
+        temp._icon.id = item.id;
+        dataToSave[item.id] = item;
+      });
 
-        this.setState({
-            data: dataToSave
-        })
+      this.setState({
+        data: dataToSave,
+      });
     });
 
-    this.popup = L.popup({ maxWidth: 560 });
+    this.popup = L.popup({maxWidth: 560});
 
     if (this.state.showRawData) {
       this.getAndParseRawData();
@@ -142,32 +141,37 @@ export default class IndexPage extends React.Component {
   }
 
   onMapClick(e) {
-    let currentItem = this.state.data[e.target._icon.id];
+    const currentItem = this.state.data[e.target._icon.id];
     // console.log(currentItem);
     // console.log(e);
 
-    makeApiGet(`http://map.airmate.earth:5000/get_sensor_data/${currentItem.id}`).then(data => {
-        console.log(data);
+    makeApiGet(
+      `http://map.airmate.earth:5000/get_sensor_data/${currentItem.id}`,
+    ).then(data => {
+      console.log(data);
 
-        let measures = JSON.parse(data.measures.data.location);
-        measures = measures.measures;
-        console.log(measures);
+      let measures = JSON.parse(data.measures.data.location);
+      measures = measures.measures;
+      console.log(measures);
 
-        let measuresString = '';
+      let measuresString = "";
 
-        for (let i = 0; i < measures.length; i++) {
-            measuresString += `${measures[i].parameter}: ${measures[i].value} ${measures[i].unit}<br>`
-        }
+      for (let i = 0; i < measures.length; i++) {
+        measuresString += `${measures[i].parameter}: ${measures[i].value} ${
+          measures[i].unit
+        }<br>`;
+      }
 
-        this.popup
-            .setLatLng(e.target._latlng)
-            .setContent(
-                `ID: ${currentItem.id}<br>
+      this.popup
+        .setLatLng(e.target._latlng)
+        .setContent(
+          `ID: ${currentItem.id}<br>
 Хэш транзакции: ${data.transaction}<br>
 Широта: ${currentItem.latitude}<br>
 Долгота: ${currentItem.longitude}<br>
-${measuresString}`)
-            .openOn(this.map);
+${measuresString}`,
+        )
+        .openOn(this.map);
     });
   }
 
