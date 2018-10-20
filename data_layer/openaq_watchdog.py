@@ -122,3 +122,4 @@ if __name__ == '__main__':
                                    longitude=location.coordinates['longitude'])
                     if save_to_postgres(provider="openaq", sensor_id=sensor_id, txid=txid):
                         print("Saved data for sensor_id={}, with transaction={}".format(sensor_id, txid))
+                    sleep(10)
