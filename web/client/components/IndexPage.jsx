@@ -99,7 +99,7 @@ export default class IndexPage extends React.Component {
   }
 
   componentDidMount() {
-    makeApiGet("http://map.airmate.earth:5000/get_sensors_list").then(data => {
+    makeApiGet("http://87.117.178.114:5000/get_sensors_list").then(data => {
       this.map = new L.Map("map", {
         zoomControl: false,
         center: new L.LatLng(data[0].latitude, data[0].longitude),
@@ -146,7 +146,7 @@ export default class IndexPage extends React.Component {
     // console.log(e);
 
     makeApiGet(
-      `http://map.airmate.earth:5000/get_sensor_data/${currentItem.id}`,
+      `http://87.117.178.114:5000/get_sensor_data/${currentItem.id}`,
     ).then(data => {
       console.log(data);
 
