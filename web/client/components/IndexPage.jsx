@@ -166,9 +166,9 @@ export default class IndexPage extends React.Component {
         .setLatLng(e.target._latlng)
         .setContent(
           `ID: ${currentItem.id}<br>
-Хэш транзакции: ${data.transaction}<br>
-Широта: ${currentItem.latitude}<br>
-Долгота: ${currentItem.longitude}<br>
+Transaction hash: ${data.transaction}<br>
+Latitude: ${currentItem.latitude}<br>
+Longitude: ${currentItem.longitude}<br>
 ${measuresString}`,
         )
         .openOn(this.map);
