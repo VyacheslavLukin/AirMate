@@ -1,3 +1,7 @@
+# Copyright BigchainDB GmbH and BigchainDB contributors
+# SPDX-License-Identifier: (Apache-2.0 AND CC-BY-4.0)
+# Code is Apache-2.0 and docs are CC-BY-4.0
+
 from queue import Empty
 from collections import defaultdict
 from multiprocessing import Queue
@@ -67,7 +71,7 @@ class Exchange:
         """
 
         try:
-            self.started_queue.get_nowait()
+            self.started_queue.get(timeout=1)
             raise RuntimeError('Cannot create a new subscriber queue while Exchange is running.')
         except Empty:
             pass

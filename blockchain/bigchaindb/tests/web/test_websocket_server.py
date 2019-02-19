@@ -1,28 +1,14 @@
+# Copyright BigchainDB GmbH and BigchainDB contributors
+# SPDX-License-Identifier: (Apache-2.0 AND CC-BY-4.0)
+# Code is Apache-2.0 and docs are CC-BY-4.0
+
 import asyncio
 import json
 import queue
-import random
 import threading
 from unittest.mock import patch
 
 import pytest
-
-pytestmark = pytest.mark.tendermint
-
-
-@pytest.fixture
-def _block(b, request):
-    from bigchaindb.models import Transaction
-    total = getattr(request, 'param', 1)
-    transactions = [
-        Transaction.create(
-            [b.me],
-            [([b.me], 1)],
-            metadata={'msg': random.random()},
-        ).sign([b.me_private])
-        for _ in range(total)
-    ]
-    return b.create_block(transactions)
 
 
 class MockWebSocket:
@@ -31,6 +17,38 @@ class MockWebSocket:
 
     def send_str(self, s):
         self.received.append(s)
+
+
+def test_eventify_block_works_with_any_transaction():
+    from bigchaindb.web.websocket_server import eventify_block
+    from bigchaindb.common.crypto import generate_key_pair
+    from bigchaindb.lib import Transaction
+
+    alice = generate_key_pair()
+
+    tx = Transaction.create([alice.public_key],
+                            [([alice.public_key], 1)])\
+                    .sign([alice.private_key])
+    tx_transfer = Transaction.transfer(tx.to_inputs(),
+                                       [([alice.public_key], 1)],
+                                       asset_id=tx.id)\
+                             .sign([alice.private_key])
+
+    block = {'height': 1,
+             'transactions': [tx, tx_transfer]}
+
+    expected_events = [{
+            'height': 1,
+            'asset_id': tx.id,
+            'transaction_id': tx.id
+        }, {
+            'height': 1,
+            'asset_id': tx_transfer.asset['id'],
+            'transaction_id': tx_transfer.id
+        }]
+
+    for event, expected in zip(eventify_block(block), expected_events):
+        assert event == expected
 
 
 @asyncio.coroutine
@@ -117,8 +135,7 @@ def test_websocket_string_event(test_client, loop):
 
 
 @asyncio.coroutine
-@pytest.mark.parametrize('_block', (10,), indirect=('_block',), ids=('block',))
-def test_websocket_block_event(b, _block, test_client, loop):
+def test_websocket_block_event(b, test_client, loop):
     from bigchaindb import events
     from bigchaindb.web.websocket_server import init_app, POISON_PILL, EVENTS_ENDPOINT
     from bigchaindb.models import Transaction
@@ -132,7 +149,7 @@ def test_websocket_block_event(b, _block, test_client, loop):
     app = init_app(event_source, loop=loop)
     client = yield from test_client(app)
     ws = yield from client.ws_connect(EVENTS_ENDPOINT)
-    block = {'height': 1, 'transactions': [tx.to_dict()]}
+    block = {'height': 1, 'transactions': [tx]}
     block_event = events.Event(events.EventTypes.BLOCK_VALID, block)
 
     yield from event_source.put(block_event)
@@ -140,16 +157,15 @@ def test_websocket_block_event(b, _block, test_client, loop):
     for tx in block['transactions']:
         result = yield from ws.receive()
         json_result = json.loads(result.data)
-        assert json_result['transaction_id'] == tx['id']
+        assert json_result['transaction_id'] == tx.id
         # Since the transactions are all CREATEs, asset id == transaction id
-        assert json_result['asset_id'] == tx['id']
+        assert json_result['asset_id'] == tx.id
         assert json_result['height'] == block['height']
 
     yield from event_source.put(POISON_PILL)
 
 
 @pytest.mark.skip('Processes are not stopping properly, and the whole test suite would hang')
-@pytest.mark.genesis
 def test_integration_from_webapi_to_websocket(monkeypatch, client, loop):
     # XXX: I think that the `pytest-aiohttp` plugin is sparkling too much
     # magic in the `asyncio` module: running this test without monkey-patching
@@ -165,6 +181,8 @@ def test_integration_from_webapi_to_websocket(monkeypatch, client, loop):
     import aiohttp
 
     from bigchaindb.common import crypto
+    # TODO processes does not exist anymore, when reactivating this test it
+    # will fail because of this
     from bigchaindb import processes
     from bigchaindb.models import Transaction
 

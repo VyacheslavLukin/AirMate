@@ -1,3 +1,7 @@
+# Copyright BigchainDB GmbH and BigchainDB contributors
+# SPDX-License-Identifier: (Apache-2.0 AND CC-BY-4.0)
+# Code is Apache-2.0 and docs are CC-BY-4.0
+
 """Generic backend database interfaces expected by BigchainDB.
 
 The interfaces in this module allow BigchainDB to be agnostic about its
@@ -7,7 +11,6 @@ configuration or the ``BIGCHAINDB_DATABASE_BACKEND`` environment variable.
 """
 
 # Include the backend interfaces
-from bigchaindb.backend import admin, changefeed, schema, query  # noqa
+from bigchaindb.backend import schema, query  # noqa
 
 from bigchaindb.backend.connection import connect  # noqa
-from bigchaindb.backend.changefeed import get_changefeed  # noqa

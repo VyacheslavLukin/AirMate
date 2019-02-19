@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-#
+# Copyright BigchainDB GmbH and BigchainDB contributors
+# SPDX-License-Identifier: (Apache-2.0 AND CC-BY-4.0)
+# Code is Apache-2.0 and docs are CC-BY-4.0
+
 # BigchainDB documentation build configuration file, created by
 # sphinx-quickstart on Thu Sep 29 11:13:27 2016.
 #
@@ -13,7 +15,8 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
-import wget # is for real!
+import wget  # is for real!
+import datetime
 
 from os import rename, remove
 from recommonmark.parser import CommonMarkParser
@@ -38,7 +41,7 @@ from recommonmark.parser import CommonMarkParser
 import sphinx_rtd_theme
 
 extensions = [
-    'sphinx.ext.autosectionlabel',
+#    'sphinx.ext.autosectionlabel',
 ]
 
 # Get remote files to here.
@@ -49,7 +52,6 @@ try:
     remove('cross-project-policies/shared-workspace.md')
     remove('cross-project-policies/release-process.md')
     remove('cross-project-policies/python-style-guide.md')
-    remove('cross-project-policies/js-style-guide.md')
 except:
     print('done')
 
@@ -68,9 +70,6 @@ get_old_new('https://raw.githubusercontent.com/bigchaindb/bigchaindb/master/RELE
 
 get_old_new('https://raw.githubusercontent.com/bigchaindb/bigchaindb/master/PYTHON_STYLE_GUIDE.md',
             'PYTHON_STYLE_GUIDE.md', 'cross-project-policies/python-style-guide.md')
-
-get_old_new('https://raw.githubusercontent.com/ascribe/javascript/master/README.md',
-            'README.md','cross-project-policies/js-style-guide.md')
 
 suppress_warnings = ['misc.highlighting_failure']
 
@@ -98,7 +97,8 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'Contributing to BigchainDB'
-copyright = '2017, BigchainDB Contributors'
+now = datetime.datetime.now()
+copyright = str(now.year) + ', BigchainDB Contributors'
 author = 'BigchainDB Contributors'
 
 # The version info for the project you're documenting, acts as replacement for

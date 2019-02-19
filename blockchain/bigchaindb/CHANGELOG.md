@@ -1,3 +1,9 @@
+<!---
+Copyright BigchainDB GmbH and BigchainDB contributors
+SPDX-License-Identifier: (Apache-2.0 AND CC-BY-4.0)
+Code is Apache-2.0 and docs are CC-BY-4.0
+--->
+
 # Change Log (Release Notes)
 
 All _notable_ changes to this project will be documented in this file (`CHANGELOG.md`).
@@ -15,7 +21,287 @@ For reference, the possible headings are:
 * **Fixed** for any bug fixes.
 * **Security** to invite users to upgrade in case of vulnerabilities.
 * **External Contributors** to list contributors outside of BigchainDB GmbH.
+* **Known Issues**
 * **Notes**
+
+## [2.0 Beta 9] - 2018-11-27
+
+### Changed
+
+Removed support for TLSv1 and TLSv1.1 in all NGINX config files. Kept support for TLSv1.2 and added support for TLSv1.3. [Pull Request #2601](https://github.com/bigchaindb/bigchaindb/pull/2601)
+
+### Fixed
+
+Fixed two issues with schema validation. Pull requests [#2606](https://github.com/bigchaindb/bigchaindb/pull/2606) & [#2607](https://github.com/bigchaindb/bigchaindb/pull/2607)
+
+### External Contributors
+
+[@gamjapark](https://github.com/gamjapark) and team translated all the [BigchainDB root docs](https://docs.bigchaindb.com/en/latest/korean/index.html) into Korean. [Pull Request #2603](https://github.com/bigchaindb/bigchaindb/pull/2603)
+
+## [2.0 Beta 8] - 2018-11-03
+
+### Changed
+
+* Revised the [Simple Deployment Template](http://docs.bigchaindb.com/projects/server/en/latest/simple-deployment-template/index.html) in the docs. Added NGINX to the mix. Pull Requests [#2578](https://github.com/bigchaindb/bigchaindb/pull/2578) and [#2579](https://github.com/bigchaindb/bigchaindb/pull/2579)
+* Revised `nginx/nginx.conf` to enable CORS. [Pull Request #2580](https://github.com/bigchaindb/bigchaindb/pull/2580)
+
+### Fixed
+
+* Fixed a typo in the Kubernetes ConfigMap template. [Pull Request #2583](https://github.com/bigchaindb/bigchaindb/pull/2583)
+
+### External Contributors
+
+[@gamjapark](https://github.com/gamjapark) translated the main `README.md` file into Korean. [Pull Request #2592](https://github.com/bigchaindb/bigchaindb/pull/2592)
+
+## [2.0 Beta 7] - 2018-09-28
+
+Tag name: v2.0.0b7
+
+### Added
+
+Completed the implementation of chain-migration elections (BEP-42). Pull requests [#2553](https://github.com/bigchaindb/bigchaindb/pull/2553), [#2556](https://github.com/bigchaindb/bigchaindb/pull/2556), [#2558](https://github.com/bigchaindb/bigchaindb/pull/2558), [#2563](https://github.com/bigchaindb/bigchaindb/pull/2563) and [#2566](https://github.com/bigchaindb/bigchaindb/pull/2566)
+
+### Changed
+
+* Code that used the Python driver's (deprecated) transactions.send() method now uses its transactions.send_commit() method instead. [Pull request #2547](https://github.com/bigchaindb/bigchaindb/pull/2547)
+* Code that implied pluggable "consensus" now implies pluggable transaction "validation" (a more accurate word). [Pull request #2561](https://github.com/bigchaindb/bigchaindb/pull/2561)
+
+### Removed
+
+Benchmark logs. [Pull request #2565](https://github.com/bigchaindb/bigchaindb/pull/2565)
+
+### Fixed
+
+A bug caused by an incorrect MongoDB query. [Pull request #2567](https://github.com/bigchaindb/bigchaindb/pull/2567)
+
+### Notes
+
+There's now better documentation about logs, log rotation, and the `server.bind` config setting. Pull requests [#2546](https://github.com/bigchaindb/bigchaindb/pull/2546) and [#2575](https://github.com/bigchaindb/bigchaindb/pull/2575)
+
+## [2.0 Beta 6] - 2018-09-17
+
+Tag name: v2.0.0b6
+
+### Added
+
+* [New documentation about privacy and handling private data](https://docs.bigchaindb.com/en/latest/private-data.html). [Pull request #2437](https://github.com/bigchaindb/bigchaindb/pull/2437)
+* New documentation about log rotation. Also rotate Tendermint logs if started using Monit. [Pull request #2528](https://github.com/bigchaindb/bigchaindb/pull/2528)
+* Began implementing one of the migration strategies outlined in [BEP-42](https://github.com/bigchaindb/BEPs/tree/master/42). That involved creating a more general-purpose election process and commands. Pull requests [#2488](https://github.com/bigchaindb/bigchaindb/pull/2488), [#2495](https://github.com/bigchaindb/bigchaindb/pull/2495), [#2498](https://github.com/bigchaindb/bigchaindb/pull/2498), [#2515](https://github.com/bigchaindb/bigchaindb/pull/2515), [#2535](https://github.com/bigchaindb/bigchaindb/pull/2535)
+* Used memoization to avoid doing some validation checks multiple times. [Pull request #2490](https://github.com/bigchaindb/bigchaindb/pull/2490)
+* Created an all-in-one Docker image containing BigchainDB Server, Tendermint and MongoDB. It was created for a particular user and is not recommended for production use unless you really know what you're doing. [Pull request #2424](https://github.com/bigchaindb/bigchaindb/pull/2424)
+
+### Changed
+
+* The supported versions of Tendermint are now hard-wired into BigchainDB Server: it checks to see what version the connected Tendermint has, and if it's not compatible, BigchainDB Server exits with an error message. [Pull request #2541](https://github.com/bigchaindb/bigchaindb/pull/2541)
+* The docs no longer say to install the highest version of Tendermint: they say to install a specific version. [Pull request #2524](https://github.com/bigchaindb/bigchaindb/pull/2524)
+* The setup docs include more recommended settings for `config.toml`. [Pull request #2516](https://github.com/bigchaindb/bigchaindb/pull/2516)
+* The process to add, remove or update the voting power of a validator at run time (using the `bigchaindb upsert-validator` subcommands) was completely changed and is now fully working. See [issue #2372](https://github.com/bigchaindb/bigchaindb/issues/2372) and all the pull requests it references. Pull requests [#2439](https://github.com/bigchaindb/bigchaindb/pull/2439) and [#2440](https://github.com/bigchaindb/bigchaindb/pull/2440)
+* The license on the documentation was changed from CC-BY-SA-4 to CC-BY-4. [Pull request #2427](https://github.com/bigchaindb/bigchaindb/pull/2427)
+* Re-activated and/or updated some unit tests that had been deacivated during the migration to Tendermint. Pull requests [#2390](https://github.com/bigchaindb/bigchaindb/pull/2390), [#2415](https://github.com/bigchaindb/bigchaindb/pull/2415), [#2452](https://github.com/bigchaindb/bigchaindb/pull/24), [#2456](https://github.com/bigchaindb/bigchaindb/pull/2456)
+* Updated RapidJSON to a newer, faster version. [Pull request #2470](https://github.com/bigchaindb/bigchaindb/pull/2470)
+* The Java driver is now officially supported. [Pull request #2478](https://github.com/bigchaindb/bigchaindb/pull/2478)
+* The MongoDB indexes on transaction id and block height were changed to be [unique indexes](https://docs.mongodb.com/manual/core/index-unique/). [Pull request #2492](https://github.com/bigchaindb/bigchaindb/pull/2492)
+* Updated the required `cryptoconditions` package to a newer one. [Pull request #2494](https://github.com/bigchaindb/bigchaindb/pull/2494)
+
+### Removed
+
+* Removed some old code and tests. Pull requests
+  [#2374](https://github.com/bigchaindb/bigchaindb/pull/2374),
+  [#2452](https://github.com/bigchaindb/bigchaindb/pull/2452),
+  [#2474](https://github.com/bigchaindb/bigchaindb/pull/2474),
+  [#2476](https://github.com/bigchaindb/bigchaindb/pull/2476),
+  [#2491](https://github.com/bigchaindb/bigchaindb/pull/2491)
+
+### Fixed
+
+* Fixed the Events API so that it only sends valid transactions to subscribers. Also changed how it works internally, so now it is more reliable. [Pull request #2529](https://github.com/bigchaindb/bigchaindb/pull/2529)
+* Fixed a bug where MongoDB database initialization would abort if a collection already existed. [Pull request #2520](https://github.com/bigchaindb/bigchaindb/pull/2520)
+* Fixed a unit test that was failing randomly. [Pull request #2423](https://github.com/bigchaindb/bigchaindb/pull/2423)
+* Fixed the validator curl port. [Pull request #2447](https://github.com/bigchaindb/bigchaindb/pull/2447)
+* Fixed an error in the docs about the HTTP POST /transactions endpoint. [Pull request #2481](https://github.com/bigchaindb/bigchaindb/pull/2481)
+* Fixed a unit test that could loop forever. [Pull requqest #2486](https://github.com/bigchaindb/bigchaindb/pull/2486)
+* Fixed a bug when validating a CREATE + TRANSFER. [Pull request #2487](https://github.com/bigchaindb/bigchaindb/pull/2487)
+* Fixed the HTTP response when posting a transaction in commit mode. [Pull request #2510](https://github.com/bigchaindb/bigchaindb/pull/2510)
+* Fixed a crash that happened when attempting to restart BigchainDB at Tendermint block height 1. [Pull request#2519](https://github.com/bigchaindb/bigchaindb/pull/2519)
+
+### External Contributors
+
+@danacr - [Pull request #2447](https://github.com/bigchaindb/bigchaindb/pull/2447)
+
+### Notes
+
+The docs section titled "Production Deployment Template" was renamed to "Kubernetes Deployment Template" and we no longer consider it the go-to deployment template. The "Simple Deployment Template" is simpler, easier to understand, and less expensive (unless you are with an organization that already has a big Kubernetes cluster).
+
+## [2.0 Beta 5] - 2018-08-01
+
+Tag name: v2.0.0b5
+
+### Changed
+
+* Supported version of Tendermint `0.22.3` -> `0.22.8`. [Pull request #2429](https://github.com/bigchaindb/bigchaindb/pull/2429).
+
+### Fixed
+
+* Stateful validation raises a DoubleSpend exception if there is any other transaction that spends the same output(s) even if it has the same transaction ID. [Pull request #2422](https://github.com/bigchaindb/bigchaindb/pull/2422).
+
+## [2.0 Beta 4] - 2018-07-30
+
+Tag name: v2.0.0b4
+
+### Added
+
+- Added scripts for creating a configuration to manage processes with Monit. [Pull request #2410](https://github.com/bigchaindb/bigchaindb/pull/2410).
+
+### Fixed
+
+- Redundant asset and metadata queries were removed. [Pull request #2409](https://github.com/bigchaindb/bigchaindb/pull/2409).
+- Signal handling was fixed for BigchainDB processes. [Pull request #2395](https://github.com/bigchaindb/bigchaindb/pull/2395).
+- Some of the abruptly closed sockets that used to stay in memory are being cleaned up now. [Pull request 2408](https://github.com/bigchaindb/bigchaindb/pull/2408).
+- Fixed the bug when WebSockets powering Events API became unresponsive. [Pull request #2413](https://github.com/bigchaindb/bigchaindb/pull/2413).
+
+### Notes:
+
+* The instructions on how to write a BEP were simplified. [Pull request #2347](https://github.com/bigchaindb/bigchaindb/pull/2347).
+* A section about troubleshooting was added to the network setup guide. [Pull request #2398](https://github.com/bigchaindb/bigchaindb/pull/2398).
+* Some of the core code was given a better package structure. [Pull request #2401](https://github.com/bigchaindb/bigchaindb/pull/2401).
+* Some of the previously disabled unit tests were re-enabled and updated. Pull requests [#2404](https://github.com/bigchaindb/bigchaindb/pull/2404) and [#2402](https://github.com/bigchaindb/bigchaindb/pull/2402).
+* Some building blocks for dynamically adding new validators were introduced. [Pull request #2392](https://github.com/bigchaindb/bigchaindb/pull/2392).
+
+## [2.0 Beta 3] - 2018-07-18
+
+Tag name: v2.0.0b3
+
+### Fixed
+
+Fixed a bug in transaction validation. For some more-complex situations, it would say that a valid transaction was invalid. This bug was actually fixed before; it was [issue #1271](https://github.com/bigchaindb/bigchaindb/issues/1271). The unit test for it was turned off while we integrated Tendermint. Then the query implementation code got changed, reintroducing the bug, but the unit test was off so the bug wasn't caught. When we turned the test back on, shortly after releasing Beta 2, it failed, unveiling the bug. [Pull request #2389](https://github.com/bigchaindb/bigchaindb/pull/2389)
+
+## [2.0 Beta 2] - 2018-07-16
+
+Tag name: v2.0.0b2
+
+### Added
+
+* Added new configuration settings `tendermint.host` and `tendermint.port`. [Pull request #2342](https://github.com/bigchaindb/bigchaindb/pull/2342)
+* Added tests to ensure that BigchainDB gracefully handles "nasty" strings in keys and values. [Pull request #2334](https://github.com/bigchaindb/bigchaindb/pull/2334)
+* Added a new logging handler to capture benchmark stats to a separate file. [Pull request #2349](https://github.com/bigchaindb/bigchaindb/pull/2349)
+
+### Changed
+
+* Changed the names of BigchainDB processes (Python processes) to include 'bigchaindb', so they are easier to spot and find. [Pull request #2354](https://github.com/bigchaindb/bigchaindb/pull/2354)
+* Updated all code to support the latest version of Tendermint. Note that the BigchainDB ABCI server now listens to port 26657 instead of 46657. Pull requests [#2375](https://github.com/bigchaindb/bigchaindb/pull/2375) and [#2380](https://github.com/bigchaindb/bigchaindb/pull/2380)
+
+### Removed
+
+Removed all support and code for the old backlog_reassign_delay setting. [Pull request #2332](https://github.com/bigchaindb/bigchaindb/pull/2332)
+
+### Fixed
+
+* Fixed a bug that sometimes arose when using Docker Compose. (Tendermint would freeze.) [Pull request #2341](https://github.com/bigchaindb/bigchaindb/pull/2341)
+* Fixed a bug in the code that creates a MongoDB index for the "id" in the transactions collection. It works now, and performance is improved. [Pull request #2378](https://github.com/bigchaindb/bigchaindb/pull/2378)
+* The logging server would keep runnning in some tear-down scenarios. It doesn't do that any more. [Pull request #2304](https://github.com/bigchaindb/bigchaindb/pull/2304)
+
+### External Contributors
+
+@hrntknr - [Pull request #2331](https://github.com/bigchaindb/bigchaindb/pull/2331)
+
+### Known Issues
+
+The `bigchaindb upsert-validator` subcommand is not working yet, but a solution ([BEP-21](https://github.com/bigchaindb/BEPs/tree/master/21)) has been finalized and will be implemented before we release the final BigchainDB 2.0.
+
+### Notes
+
+* A lot of old/dead code was deleted. Pull requests
+[#2319](https://github.com/bigchaindb/bigchaindb/pull/2319),
+[#2338](https://github.com/bigchaindb/bigchaindb/pull/2338),
+[#2357](https://github.com/bigchaindb/bigchaindb/pull/2357),
+[#2365](https://github.com/bigchaindb/bigchaindb/pull/2365),
+[#2366](https://github.com/bigchaindb/bigchaindb/pull/2366),
+[#2368](https://github.com/bigchaindb/bigchaindb/pull/2368) and
+[#2374](https://github.com/bigchaindb/bigchaindb/pull/2374)
+* Improved the documentation page "How to setup a BigchainDB Network". [Pull Request #2312](https://github.com/bigchaindb/bigchaindb/pull/2312)
+
+## [2.0 Beta 1] - 2018-06-01
+
+Tag name: v2.0.0b1
+
+### Fixed
+
+* Fixed a bug that arose with some code that treated transactions-waiting-for-block-inclusion as if they were already stored in MongoDB (i.e. already in a block). [Pull request #2318](https://github.com/bigchaindb/bigchaindb/pull/2318)
+* If a user asked for a block and it happened to be an empty block, BigchainDB returned 404 Not Found, as if the block did not exist. Now it returns a 200 OK with a block containing no transactions, i.e. an empty block. [Pull request #2321](https://github.com/bigchaindb/bigchaindb/pull/2321)
+
+### Known Issues
+
+* An issue was found with the `bigchaindb upsert-validator` command. A solution was proposed in [BEP-19](https://github.com/bigchaindb/BEPs/pull/45) and is being implemented in [pull request #2314](https://github.com/bigchaindb/bigchaindb/pull/2314)
+* If you run BigchainDB locally using `make start` (i.e. using Docker Compose) and then you put the node under heavy write load, Tendermint can become unresponsive and running `make stop` can hang.
+* There seems to be one or more issues with Tendermint when it is put under heavy load (i.e. even when BigchainDB isn't involved). See Tendermint issues [#1394](https://github.com/tendermint/tendermint/issues/1394), [#1642](https://github.com/tendermint/tendermint/issues/1642) and [#1661](https://github.com/tendermint/tendermint/issues/1661)
+
+### Notes
+
+* There's a [new docs page](https://docs.bigchaindb.com/projects/server/en/v2.0.0b1/simple-network-setup.html) about how to set up a network where each node uses a single virtual machine.
+* We checked, and BigchainDB 2.0 Beta 1 works with MongoDB 3.6 (and 3.4).
+* Support for RethinkDB is completely gone.
+
+## [2.0 Alpha 6] - 2018-05-17
+
+Tag name: v2.0.0a6
+
+### Changed
+
+Upgraded PyMongo to version 3.6 (which is compatible with MongoDB 3.6, 3.4 [and more](https://docs.mongodb.com/ecosystem/drivers/driver-compatibility-reference/#python-driver-compatibility)). [Pull request #2298](https://github.com/bigchaindb/bigchaindb/pull/2298)
+
+### Fixed
+
+When deploying a node using our Docker Compose file, it didn't expose port 46656, which is used by Tendermint for inter-node communications, so the node couldn't communicate with other nodes. We fixed that in [pull request #2299](https://github.com/bigchaindb/bigchaindb/pull/2299)
+
+### Notes
+
+We ran all our tests using MongoDB 3.6 and they all passed, so it seems safe to use BigchainDB with MongoDB 3.6 from now on.
+
+## [2.0 Alpha 5] - 2018-05-11
+
+Tag name: v2.0.0a5
+
+### Changed
+
+To resolve [issue #2279](https://github.com/bigchaindb/bigchaindb/issues/2279), we made some changes to the `bigchaindb-abci` package (which is our fork of `py-abci`) and told BigchainDB to use the new version (`bigchaindb-abci==0.4.5`). [Pull request #2281](https://github.com/bigchaindb/bigchaindb/pull/2281).
+
+## [2.0 Alpha 4] - 2018-05-09
+
+Tag name: v2.0.0a4
+
+### Changed
+
+The Kubernetes liveness probe for the BigchainDB StatefulSet was improved to check the Tendermint /status endpoint in addition to the Tendermint /abci_info endpoint. [Pull request #2275](https://github.com/bigchaindb/bigchaindb/pull/2275)
+
+### Fixed
+
+[Pull request #2270](https://github.com/bigchaindb/bigchaindb/pull/2270) resolved [issue #2269](https://github.com/bigchaindb/bigchaindb/issues/2269).
+
+### Notes
+
+There's a new [page in the docs about storing files in BigchainDB](https://docs.bigchaindb.com/en/latest/store-files.html). [Pull request #2259](https://github.com/bigchaindb/bigchaindb/pull/2259)
+
+## [2.0 Alpha 3] - 2018-05-03
+
+Tag name: v2.0.0a3
+
+### Changed
+
+* Upgraded BigchainDB Server code to use the latest version of Tendermint: version 0.19.2. Pull requests [#2249](https://github.com/bigchaindb/bigchaindb/pull/2249), [#2252](https://github.com/bigchaindb/bigchaindb/pull/2252) and [#2253](https://github.com/bigchaindb/bigchaindb/pull/2253)
+* Made some fixes to `py-abci` (an external Python package) and used our fixed version with BigchainDB. Those fixes resolved several known issues, including [issue #2182](https://github.com/bigchaindb/bigchaindb/issues/2182) and issues with large transactions in general. Note: At the time of writing, our fixes to `py-abci` hadn't been merged into the main `py-abci` repository or its latest release on PyPI; we were using our own special `bigchaindb-abci` package (which included our fixes). Pull requests [#2250](https://github.com/bigchaindb/bigchaindb/pull/2250) and [#2261](https://github.com/bigchaindb/bigchaindb/pull/2261)
+* If BigchainDB Server crashes and then comes back, Tendermint Core doesn't try to reconnect to it. That's just how Tendermint Core works. We revised our Kubernetes-based production deployment template to resolve that issue: BigchainDB Server and Tendermint Core are now in the same Kubernetes StatefulSet; if the connection between them ever goes down, then Kubernetes restarts the whole StatefulSet. [Pull request #2242](https://github.com/bigchaindb/bigchaindb/pull/2242)
+
+### Fixed
+
+Re-enabled multi-threading. [Pull request #2258](https://github.com/bigchaindb/bigchaindb/pull/2258)
+
+### Known Issues
+
+Tendermint changed how it responds to a request to store data (via the [Tendermint Broadcast API](https://tendermint.com/docs/tendermint-core/using-tendermint.html#broadcast-api)) between version 0.12 and 0.19.2. We started modifying the code of BigchainDB Server to account for those changes in responses (in [pull request #2239](https://github.com/bigchaindb/bigchaindb/pull/2239)), but we found that there's a difference between what the Tendermint documentation _says_ about those responses and how Tendermint actually responds. We need to determine Tendermint's intent before we can finalize that pull request.
+
+### Notes
+
+We were focused on getting the public BigchainDB Testnet stable during the development of BigchainDB 2.0 Alpha 3, and we think we largely succeeded. Because of that focus, we delayed the deployment of an internal test network until later. It would have had the same instabilities as the public BigchainDB Testnet anyway. In the future, we'll always test a new version of BigchainDB on our internal test network before deploying it on the public BigchainDB Testnet. (That wasn't possible this time around, because there was no old/stable version of BigchainDB 2.n to run on the public BigchainDB Testnet while we tested BigchainDB 2.[n+1] internally.)
 
 ## [2.0 Alpha 2] - 2018-04-18
 

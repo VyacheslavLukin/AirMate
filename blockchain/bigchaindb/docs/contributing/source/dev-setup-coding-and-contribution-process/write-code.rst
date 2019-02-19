@@ -1,3 +1,8 @@
+
+.. Copyright BigchainDB GmbH and BigchainDB contributors
+   SPDX-License-Identifier: (Apache-2.0 AND CC-BY-4.0)
+   Code is Apache-2.0 and docs are CC-BY-4.0
+
 Write Code
 ==========
 
@@ -97,13 +102,15 @@ framework to write Python tests. Read all about it.
 Most tests are in the ``tests/`` folder. Take a look around.
 
 
-Running a Local Node for Dev and Test
--------------------------------------
+Running a Local Node/Network for Dev and Test
+---------------------------------------------
 
 This is tricky and personal. Different people do it different ways. We documented some of those on separate pages:
 
-- `Dev node setup and running all tests with Docker Compose <setup-dev-environment.html>`_
+- `Dev node setup and running all tests with Docker Compose <run-node-with-docker-compose.html>`_
 - `Dev node setup and running all tests as processes <run-node-as-processes.html>`_
+- `Dev network setup with stack.sh <run-dev-network-stack.html>`_
+- `Dev network setup with Ansible <run-dev-network-ansible.html>`_
 - More to come?
 
 

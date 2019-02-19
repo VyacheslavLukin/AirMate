@@ -1,3 +1,9 @@
+<!---
+Copyright BigchainDB GmbH and BigchainDB contributors
+SPDX-License-Identifier: (Apache-2.0 AND CC-BY-4.0)
+Code is Apache-2.0 and docs are CC-BY-4.0
+--->
+
 # Python Style Guide
 
 This guide starts out with our general Python coding style guidelines and ends with a section on how we write & run (Python) tests.
@@ -85,6 +91,6 @@ flake8 --max-line-length 119 bigchaindb/
 
 ## Writing and Running (Python) Tests
 
-The content of this section was moved to [`bigchaindb/tests/README.md`](./tests/README.md).
+The content of this section was moved to [`bigchaindb/tests/README.md`](https://github.com/bigchaindb/bigchaindb/blob/master/tests/README.md).
 
 Note: We automatically run all tests on all pull requests (using Travis CI), so you should definitely run all tests locally before you submit a pull request. See the above-linked README file for instructions.

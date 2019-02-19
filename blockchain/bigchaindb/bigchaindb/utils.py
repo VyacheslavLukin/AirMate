@@ -1,9 +1,18 @@
+# Copyright BigchainDB GmbH and BigchainDB contributors
+# SPDX-License-Identifier: (Apache-2.0 AND CC-BY-4.0)
+# Code is Apache-2.0 and docs are CC-BY-4.0
+
 import contextlib
 import threading
 import queue
 import multiprocessing as mp
+import json
 
 import setproctitle
+from packaging import version
+from bigchaindb.version import __tm_supported_versions__
+from bigchaindb.tendermint_utils import key_from_base64
+from bigchaindb.common.crypto import key_pair_from_ed25519_key
 
 
 class ProcessGroup(object):
@@ -31,7 +40,8 @@ class ProcessGroup(object):
 class Process(mp.Process):
     """Wrapper around multiprocessing.Process that uses
     setproctitle to set the name of the process when running
-    the target task."""
+    the target task.
+    """
 
     def run(self):
         setproctitle.setproctitle(self.name)
@@ -167,3 +177,32 @@ class Lazy:
 
         self.stack = []
         return last
+
+
+# Load Tendermint's public and private key from the file path
+def load_node_key(path):
+    with open(path) as json_data:
+        priv_validator = json.load(json_data)
+        priv_key = priv_validator['priv_key']['value']
+        hex_private_key = key_from_base64(priv_key)
+        return key_pair_from_ed25519_key(hex_private_key)
+
+
+def tendermint_version_is_compatible(running_tm_ver):
+    """
+    Check Tendermint compatability with BigchainDB server
+
+    :param running_tm_ver: Version number of the connected Tendermint instance
+    :type running_tm_ver: str
+    :return: True/False depending on the compatability with BigchainDB server
+    :rtype: bool
+    """
+
+    # Splitting because version can look like this e.g. 0.22.8-40d6dc2e
+    tm_ver = running_tm_ver.split('-')
+    if not tm_ver:
+        return False
+    for ver in __tm_supported_versions__:
+        if version.parse(ver) == version.parse(tm_ver[0]):
+            return True
+    return False

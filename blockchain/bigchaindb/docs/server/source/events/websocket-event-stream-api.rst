@@ -1,3 +1,8 @@
+
+.. Copyright BigchainDB GmbH and BigchainDB contributors
+   SPDX-License-Identifier: (Apache-2.0 AND CC-BY-4.0)
+   Code is Apache-2.0 and docs are CC-BY-4.0
+
 .. _the-websocket-event-stream-api:
 
 The WebSocket Event Stream API
@@ -85,7 +90,7 @@ Valid Transactions
 
 Streams an event for any newly valid transactions committed to a block. Message
 bodies contain the transaction's ID, associated asset ID, and containing
-block's ID.
+block's height.
 
 Example message:
 
@@ -94,7 +99,7 @@ Example message:
     {
         "transaction_id": "<sha3-256 hash>",
         "asset_id": "<sha3-256 hash>",
-        "block_id": "<int>"
+        "height": <int>
     }
 
 

@@ -1,21 +1,20 @@
+
+.. Copyright BigchainDB GmbH and BigchainDB contributors
+   SPDX-License-Identifier: (Apache-2.0 AND CC-BY-4.0)
+   Code is Apache-2.0 and docs are CC-BY-4.0
+
 Appendices
 ==========
 
 .. toctree::
    :maxdepth: 1
 
-   install-os-level-deps
-   run-with-docker
    json-serialization
    cryptography
-   the-Bigchain-class
-   backend
-   commands
-   tendermint-integration
    aws-setup
    generate-key-pair-for-ssh
    firewall-notes
    ntp-notes
    licenses
-   run-with-vagrant
-   run-with-ansible
+   all-in-one-bigchaindb
+   log-rotation

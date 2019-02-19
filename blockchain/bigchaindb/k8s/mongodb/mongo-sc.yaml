@@ -1,3 +1,7 @@
+# Copyright BigchainDB GmbH and BigchainDB contributors
+# SPDX-License-Identifier: (Apache-2.0 AND CC-BY-4.0)
+# Code is Apache-2.0 and docs are CC-BY-4.0
+
 ####################################################################
 # This YAML section desribes a StorageClass for the mongodb dbPath #
 ####################################################################
@@ -8,7 +12,7 @@ metadata:
 provisioner: kubernetes.io/azure-disk
 parameters:
   skuName: Premium_LRS #[Premium_LRS, Standard_LRS]
-  location: westeurope
+  location: <Storage account location>
   # If you have created a different storage account e.g. for Premium Storage
   storageAccount: <Storage account name>
   # Use Managed Disk(s) with VMs using Managed Disks(Only used for Tectonic deployment)
@@ -24,7 +28,7 @@ metadata:
 provisioner: kubernetes.io/azure-disk
 parameters:
   skuName: Premium_LRS #[Premium_LRS, Standard_LRS]
-  location: westeurope
+  location: <Storage account location>
   # If you have created a different storage account e.g. for Premium Storage
   storageAccount: <Storage account name>
   # Use Managed Disk(s) with VMs using Managed Disks(Only used for Tectonic deployment)

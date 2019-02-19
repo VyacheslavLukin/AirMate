@@ -1,3 +1,7 @@
+# Copyright BigchainDB GmbH and BigchainDB contributors
+# SPDX-License-Identifier: (Apache-2.0 AND CC-BY-4.0)
+# Code is Apache-2.0 and docs are CC-BY-4.0
+
 from argparse import Namespace
 
 import pytest
@@ -23,8 +27,8 @@ def mock_db_init_with_existing_db(monkeypatch):
 
 @pytest.fixture
 def mock_processes_start(monkeypatch):
-    from bigchaindb import processes
-    monkeypatch.setattr(processes, 'start', lambda *args: None)
+    from bigchaindb import start
+    monkeypatch.setattr(start, 'start', lambda *args: None)
 
 
 @pytest.fixture
@@ -35,9 +39,7 @@ def mock_generate_key_pair(monkeypatch):
 @pytest.fixture
 def mock_bigchaindb_backup_config(monkeypatch):
     config = {
-        'keypair': {},
         'database': {'host': 'host', 'port': 12345, 'name': 'adbname'},
-        'backlog_reassign_delay': 5
     }
     monkeypatch.setattr('bigchaindb._config', config)
 
@@ -54,7 +56,7 @@ def run_start_args(request):
 @pytest.fixture
 def mocked_setup_logging(mocker):
     return mocker.patch(
-        'bigchaindb.commands.utils.setup_logging',
+        'bigchaindb.log.setup_logging',
         autospec=True,
         spec_set=True,
     )
