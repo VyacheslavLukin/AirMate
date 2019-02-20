@@ -145,21 +145,26 @@ export default class IndexPage extends React.Component {
     makeApiGet(
       `${process.env.API_URL}/get_station_data/${currentItem.id}`,
     ).then(data => {
-      let measuresString = "";
-      const measurements = data.measurements;
-      measurements.forEach(measurement => {
-        measuresString += `${measurement.parameter}: ${measurement.value} ${measurement.unit}<br>`;
-      });
+      let popupContent = `ID: ${currentItem.id}<br>`;
+      popupContent += `Transaction hash: ${currentItem.last_txid}<br>`;
+      popupContent += `Latitude: ${currentItem.latitude}<br>`;
+      popupContent += `Longitude: ${currentItem.longitude}<br>`;
 
+      let measuresString = '';
+
+      if (data.measurements) {
+        const measurements = data.measurements;
+        measurements.forEach(measurement => {
+          measuresString += `${measurement.parameter}: ${measurement.value} ${measurement.unit}<br>`;
+        });
+      } else {
+        measuresString = JSON.stringify(data);
+      }
+
+      popupContent += measuresString;
       this.popup
         .setLatLng(e.target._latlng)
-        .setContent(
-          `ID: ${currentItem.id}<br>
-Transaction hash: ${currentItem.last_txid}<br>
-Latitude: ${currentItem.latitude}<br>
-Longitude: ${currentItem.longitude}<br>
-${measuresString}`,
-        )
+        .setContent(popupContent)
         .openOn(this.map);
     });
   }
