@@ -1,17 +1,30 @@
 from flask import Flask
-from flask_sqlalchemy import SQLAlchemy
+from flask_migrate import Migrate
 
-POSTGRES = {
-    'user': 'airmate',
-    'pw': 'airpass',
-    'db': 'airmate',
-    'host': 'postgres',
-    'port': '5432',
-}
+from .db import db
+from .views import api
 
-api = Flask(__name__)
-api.config["SQLALCHEMY_DATABASE_URI"] = 'postgresql://%(user)s:\
-%(pw)s@%(host)s:%(port)s/%(db)s' % POSTGRES
-db = SQLAlchemy(api)
 
-from data_layer.api import views
+def create_app(config=None):
+    app = Flask(__name__)
+    if config is not None:
+        app.config.from_pyfile(config)
+
+    register_extensions(app)
+    register_blueprints(app)
+
+    return app
+
+
+def register_extensions(app):
+    db.init_app(app)
+    Migrate().init_app(app, db)
+    pass
+
+
+def register_blueprints(app):
+    app.register_blueprint(api)
+    pass
+
+
+app = create_app('config.py')

@@ -1,3 +1,7 @@
+# Copyright BigchainDB GmbH and BigchainDB contributors
+# SPDX-License-Identifier: (Apache-2.0 AND CC-BY-4.0)
+# Code is Apache-2.0 and docs are CC-BY-4.0
+
 """Schema validation related functions and data"""
 import os.path
 import logging
@@ -5,7 +9,6 @@ import logging
 import jsonschema
 import yaml
 import rapidjson
-import rapidjson_schema
 
 from bigchaindb.common.exceptions import SchemaValidationError
 
@@ -13,12 +16,12 @@ from bigchaindb.common.exceptions import SchemaValidationError
 logger = logging.getLogger(__name__)
 
 
-def _load_schema(name):
+def _load_schema(name, path=__file__):
     """Load a schema from disk"""
-    path = os.path.join(os.path.dirname(__file__), name + '.yaml')
+    path = os.path.join(os.path.dirname(path), name + '.yaml')
     with open(path) as handle:
         schema = yaml.safe_load(handle)
-    fast_schema = rapidjson_schema.loads(rapidjson.dumps(schema))
+    fast_schema = rapidjson.Validator(rapidjson.dumps(schema))
     return path, (schema, fast_schema)
 
 
@@ -30,7 +33,14 @@ _, TX_SCHEMA_CREATE = _load_schema('transaction_create_' +
                                    TX_SCHEMA_VERSION)
 _, TX_SCHEMA_TRANSFER = _load_schema('transaction_transfer_' +
                                      TX_SCHEMA_VERSION)
-VOTE_SCHEMA_PATH, VOTE_SCHEMA = _load_schema('vote')
+
+_, TX_SCHEMA_VALIDATOR_ELECTION = _load_schema('transaction_validator_election_' +
+                                               TX_SCHEMA_VERSION)
+
+_, TX_SCHEMA_CHAIN_MIGRATION_ELECTION = _load_schema('transaction_chain_migration_election_' +
+                                                     TX_SCHEMA_VERSION)
+
+_, TX_SCHEMA_VOTE = _load_schema('transaction_vote_' + TX_SCHEMA_VERSION)
 
 
 def _validate_schema(schema, body):
@@ -48,7 +58,7 @@ def _validate_schema(schema, body):
     # a helpful error message.
 
     try:
-        schema[1].validate(rapidjson.dumps(body))
+        schema[1](rapidjson.dumps(body))
     except ValueError as exc:
         try:
             jsonschema.validate(body, schema[0])
@@ -69,8 +79,3 @@ def validate_transaction_schema(tx):
         _validate_schema(TX_SCHEMA_TRANSFER, tx)
     else:
         _validate_schema(TX_SCHEMA_CREATE, tx)
-
-
-def validate_vote_schema(vote):
-    """Validate a vote dict"""
-    _validate_schema(VOTE_SCHEMA, vote)

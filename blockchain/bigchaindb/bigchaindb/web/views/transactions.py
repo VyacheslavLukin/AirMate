@@ -1,3 +1,7 @@
+# Copyright BigchainDB GmbH and BigchainDB contributors
+# SPDX-License-Identifier: (Apache-2.0 AND CC-BY-4.0)
+# Code is Apache-2.0 and docs are CC-BY-4.0
+
 """This module provides the blueprint for some basic API endpoints.
 
 For more information please refer to the documentation: http://bigchaindb.com/http-api
@@ -8,9 +12,10 @@ from flask import current_app, request, jsonify
 from flask_restful import Resource, reqparse
 
 from bigchaindb.common.exceptions import SchemaValidationError, ValidationError
-from bigchaindb.models import Transaction
 from bigchaindb.web.views.base import make_error
 from bigchaindb.web.views import parameters
+from bigchaindb.models import Transaction
+
 
 logger = logging.getLogger(__name__)
 
@@ -28,9 +33,9 @@ class TransactionApi(Resource):
         pool = current_app.config['bigchain_pool']
 
         with pool() as bigchain:
-            tx, status = bigchain.get_transaction(tx_id, include_status=True)
+            tx = bigchain.get_transaction(tx_id)
 
-        if not tx or status is not bigchain.TX_VALID:
+        if not tx:
             return make_error(404)
 
         return tx.to_dict()

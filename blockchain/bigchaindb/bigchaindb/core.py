@@ -1,679 +1,278 @@
-import random
-from time import time
+# Copyright BigchainDB GmbH and BigchainDB contributors
+# SPDX-License-Identifier: (Apache-2.0 AND CC-BY-4.0)
+# Code is Apache-2.0 and docs are CC-BY-4.0
 
-from bigchaindb import exceptions as core_exceptions
-from bigchaindb.common import crypto, exceptions
-from bigchaindb.common.utils import gen_timestamp, serialize
+"""This module contains all the goodness to integrate BigchainDB
+with Tendermint.
+"""
+import logging
+import sys
 
-import bigchaindb
+from abci.application import BaseApplication
+from abci.types_pb2 import (
+    ResponseInitChain,
+    ResponseInfo,
+    ResponseCheckTx,
+    ResponseBeginBlock,
+    ResponseDeliverTx,
+    ResponseEndBlock,
+    ResponseCommit,
+)
 
-from bigchaindb import backend, config_utils, fastquery
-from bigchaindb.consensus import BaseConsensusRules
-from bigchaindb.models import Block, Transaction
+from bigchaindb import BigchainDB
+from bigchaindb.elections.election import Election
+from bigchaindb.version import __tm_supported_versions__
+from bigchaindb.utils import tendermint_version_is_compatible
+from bigchaindb.tendermint_utils import (decode_transaction,
+                                         calculate_hash)
+from bigchaindb.lib import Block
+import bigchaindb.upsert_validator.validator_utils as vutils
+from bigchaindb.events import EventTypes, Event
 
 
-class Bigchain(object):
-    """Bigchain API
+CodeTypeOk = 0
+CodeTypeError = 1
+logger = logging.getLogger(__name__)
 
-    Create, read, sign, write transactions to the database
+
+class App(BaseApplication):
+    """Bridge between BigchainDB and Tendermint.
+
+    The role of this class is to expose the BigchainDB
+    transaction logic to Tendermint Core.
     """
 
-    BLOCK_INVALID = 'invalid'
-    """return if a block has been voted invalid"""
+    def __init__(self, bigchaindb=None, events_queue=None):
+        self.events_queue = events_queue
+        self.bigchaindb = bigchaindb or BigchainDB()
+        self.block_txn_ids = []
+        self.block_txn_hash = ''
+        self.block_transactions = []
+        self.validators = None
+        self.new_height = None
+        self.chain = self.bigchaindb.get_latest_abci_chain()
 
-    BLOCK_VALID = TX_VALID = 'valid'
-    """return if a block is valid, or tx is in valid block"""
+    def log_abci_migration_error(self, chain_id, validators):
+        logger.error(f'An ABCI chain migration is in process. ' +
+                     'Download the new ABCI client and configure it with ' +
+                     'chain_id={chain_id} and validators={validators}.')
 
-    BLOCK_UNDECIDED = TX_UNDECIDED = 'undecided'
-    """return if block is undecided, or tx is in undecided block"""
+    def abort_if_abci_chain_is_not_synced(self):
+        if self.chain is None or self.chain['is_synced']:
+            return
 
-    TX_IN_BACKLOG = 'backlog'
-    """return if transaction is in backlog"""
+        validators = self.bigchaindb.get_validators()
+        self.log_abci_migration_error(self.chain['chain_id'], validators)
+        sys.exit(1)
 
-    def __init__(self, public_key=None, private_key=None, keyring=[], connection=None, backlog_reassign_delay=None):
-        """Initialize the Bigchain instance
+    def init_chain(self, genesis):
+        """Initialize chain upon genesis or a migration"""
 
-        A Bigchain instance has several configuration parameters (e.g. host).
-        If a parameter value is passed as an argument to the Bigchain
-        __init__ method, then that is the value it will have.
-        Otherwise, the parameter value will come from an environment variable.
-        If that environment variable isn't set, then the value
-        will come from the local configuration file. And if that variable
-        isn't in the local configuration file, then the parameter will have
-        its default value (defined in bigchaindb.__init__).
+        app_hash = ''
+        height = 0
 
-        Args:
-            public_key (str): the base58 encoded public key for the ED25519 curve.
-            private_key (str): the base58 encoded private key for the ED25519 curve.
-            keyring (list[str]): list of base58 encoded public keys of the federation nodes.
-            connection (:class:`~bigchaindb.backend.connection.Connection`):
-                A connection to the database.
-        """
+        known_chain = self.bigchaindb.get_latest_abci_chain()
+        if known_chain is not None:
+            chain_id = known_chain['chain_id']
 
-        config_utils.autoconfigure()
+            if known_chain['is_synced']:
+                msg = f'Got invalid InitChain ABCI request ({genesis}) - ' + \
+                      'the chain {chain_id} is already synced.'
+                logger.error(msg)
+                sys.exit(1)
 
-        self.me = public_key or bigchaindb.config['keypair']['public']
-        self.me_private = private_key or bigchaindb.config['keypair']['private']
-        self.nodes_except_me = keyring or bigchaindb.config['keyring']
+            if chain_id != genesis.chain_id:
+                validators = self.bigchaindb.get_validators()
+                self.log_abci_migration_error(chain_id, validators)
+                sys.exit(1)
 
-        if backlog_reassign_delay is None:
-            backlog_reassign_delay = bigchaindb.config['backlog_reassign_delay']
-        self.backlog_reassign_delay = backlog_reassign_delay
+            # set migration values for app hash and height
+            block = self.bigchaindb.get_latest_block()
+            app_hash = '' if block is None else block['app_hash']
+            height = 0 if block is None else block['height'] + 1
 
-        consensusPlugin = bigchaindb.config.get('consensus_plugin')
+        known_validators = self.bigchaindb.get_validators()
+        validator_set = [vutils.decode_validator(v)
+                         for v in genesis.validators]
 
-        if consensusPlugin:
-            self.consensus = config_utils.load_consensus_plugin(consensusPlugin)
+        if known_validators and known_validators != validator_set:
+            self.log_abci_migration_error(known_chain['chain_id'],
+                                          known_validators)
+            sys.exit(1)
+
+        block = Block(app_hash=app_hash, height=height, transactions=[])
+        self.bigchaindb.store_block(block._asdict())
+        self.bigchaindb.store_validator_set(height + 1, validator_set)
+        abci_chain_height = 0 if known_chain is None else known_chain['height']
+        self.bigchaindb.store_abci_chain(abci_chain_height,
+                                         genesis.chain_id, True)
+        self.chain = {'height': abci_chain_height, 'is_synced': True,
+                      'chain_id': genesis.chain_id}
+        return ResponseInitChain()
+
+    def info(self, request):
+        """Return height of the latest committed block."""
+
+        self.abort_if_abci_chain_is_not_synced()
+
+        # Check if BigchainDB supports the Tendermint version
+        if not (hasattr(request, 'version') and tendermint_version_is_compatible(request.version)):
+            logger.error(f'Unsupported Tendermint version: {getattr(request, "version", "no version")}.'
+                         f' Currently, BigchainDB only supports {__tm_supported_versions__}. Exiting!')
+            sys.exit(1)
+
+        logger.info(f"Tendermint version: {request.version}")
+
+        r = ResponseInfo()
+        block = self.bigchaindb.get_latest_block()
+        if block:
+            chain_shift = 0 if self.chain is None else self.chain['height']
+            r.last_block_height = block['height'] - chain_shift
+            r.last_block_app_hash = block['app_hash'].encode('utf-8')
         else:
-            self.consensus = BaseConsensusRules
+            r.last_block_height = 0
+            r.last_block_app_hash = b''
+        return r
 
-        self.connection = connection if connection else backend.connect(**bigchaindb.config['database'])
-        # if not self.me:
-        #    raise exceptions.KeypairNotFoundException()
-
-    federation = property(lambda self: set(self.nodes_except_me + [self.me]))
-    """ Set of federation member public keys """
-
-    def write_transaction(self, signed_transaction):
-        """Write the transaction to bigchain.
-
-        When first writing a transaction to the bigchain the transaction will be kept in a backlog until
-        it has been validated by the nodes of the federation.
+    def check_tx(self, raw_transaction):
+        """Validate the transaction before entry into
+        the mempool.
 
         Args:
-            signed_transaction (Transaction): transaction with the `signature` included.
-
-        Returns:
-            dict: database response
+            raw_tx: a raw string (in bytes) transaction.
         """
-        signed_transaction = signed_transaction.to_dict()
 
-        # we will assign this transaction to `one` node. This way we make sure that there are no duplicate
-        # transactions on the bigchain
-        if self.nodes_except_me:
-            assignee = random.choice(self.nodes_except_me)
+        self.abort_if_abci_chain_is_not_synced()
+
+        logger.debug('check_tx: %s', raw_transaction)
+        transaction = decode_transaction(raw_transaction)
+        if self.bigchaindb.is_valid_transaction(transaction):
+            logger.debug('check_tx: VALID')
+            return ResponseCheckTx(code=CodeTypeOk)
         else:
-            # I am the only node
-            assignee = self.me
+            logger.debug('check_tx: INVALID')
+            return ResponseCheckTx(code=CodeTypeError)
 
-        signed_transaction.update({'assignee': assignee})
-        signed_transaction.update({'assignment_timestamp': time()})
+    def begin_block(self, req_begin_block):
+        """Initialize list of transaction.
+        Args:
+            req_begin_block: block object which contains block header
+            and block hash.
+        """
+        self.abort_if_abci_chain_is_not_synced()
 
-        # write to the backlog
-        return backend.query.write_transaction(self.connection, signed_transaction)
+        chain_shift = 0 if self.chain is None else self.chain['height']
+        logger.debug('BEGIN BLOCK, height:%s, num_txs:%s',
+                     req_begin_block.header.height + chain_shift,
+                     req_begin_block.header.num_txs)
 
-    def reassign_transaction(self, transaction):
-        """Assign a transaction to a new node
+        self.block_txn_ids = []
+        self.block_transactions = []
+        return ResponseBeginBlock()
+
+    def deliver_tx(self, raw_transaction):
+        """Validate the transaction before mutating the state.
 
         Args:
-            transaction (dict): assigned transaction
-
-        Returns:
-            dict: database response or None if no reassignment is possible
+            raw_tx: a raw string (in bytes) transaction.
         """
 
-        other_nodes = tuple(
-            self.federation.difference([transaction['assignee']])
-        )
-        new_assignee = random.choice(other_nodes) if other_nodes else self.me
+        self.abort_if_abci_chain_is_not_synced()
 
-        return backend.query.update_transaction(
-                self.connection, transaction['id'],
-                {'assignee': new_assignee, 'assignment_timestamp': time()})
+        logger.debug('deliver_tx: %s', raw_transaction)
+        transaction = self.bigchaindb.is_valid_transaction(
+            decode_transaction(raw_transaction), self.block_transactions)
 
-    def delete_transaction(self, *transaction_id):
-        """Delete a transaction from the backlog.
-
-        Args:
-            *transaction_id (str): the transaction(s) to delete
-
-        Returns:
-            The database response.
-        """
-
-        return backend.query.delete_transaction(self.connection, *transaction_id)
-
-    def get_stale_transactions(self):
-        """Get a cursor of stale transactions.
-
-        Transactions are considered stale if they have been assigned a node, but are still in the
-        backlog after some amount of time specified in the configuration
-        """
-
-        return backend.query.get_stale_transactions(self.connection, self.backlog_reassign_delay)
-
-    def validate_transaction(self, transaction):
-        """Validate a transaction.
-
-        Args:
-            transaction (Transaction): transaction to validate.
-
-        Returns:
-            The transaction if the transaction is valid else it raises an
-            exception describing the reason why the transaction is invalid.
-        """
-
-        return self.consensus.validate_transaction(self, transaction)
-
-    def is_new_transaction(self, txid, exclude_block_id=None):
-        """Return True if the transaction does not exist in any
-        VALID or UNDECIDED block. Return False otherwise.
-
-        Args:
-            txid (str): Transaction ID
-            exclude_block_id (str): Exclude block from search
-        """
-        block_statuses = self.get_blocks_status_containing_tx(txid)
-        block_statuses.pop(exclude_block_id, None)
-        for status in block_statuses.values():
-            if status != self.BLOCK_INVALID:
-                return False
-        return True
-
-    def get_block(self, block_id, include_status=False):
-        """Get the block with the specified `block_id` (and optionally its status)
-
-        Returns the block corresponding to `block_id` or None if no match is
-        found.
-
-        Args:
-            block_id (str): transaction id of the transaction to get
-            include_status (bool): also return the status of the block
-                       the return value is then a tuple: (block, status)
-        """
-        # get block from database
-        block_dict = backend.query.get_block(self.connection, block_id)
-        # get the asset ids from the block
-        if block_dict:
-            asset_ids = Block.get_asset_ids(block_dict)
-            txn_ids = Block.get_txn_ids(block_dict)
-            # get the assets from the database
-            assets = self.get_assets(asset_ids)
-            # get the metadata from the database
-            metadata = self.get_metadata(txn_ids)
-            # add the assets to the block transactions
-            block_dict = Block.couple_assets(block_dict, assets)
-            # add the metadata to the block transactions
-            block_dict = Block.couple_metadata(block_dict, metadata)
-
-        status = None
-        if include_status:
-            if block_dict:
-                status = self.block_election_status(block_dict)
-            return block_dict, status
+        if not transaction:
+            logger.debug('deliver_tx: INVALID')
+            return ResponseDeliverTx(code=CodeTypeError)
         else:
-            return block_dict
+            logger.debug('storing tx')
+            self.block_txn_ids.append(transaction.id)
+            self.block_transactions.append(transaction)
+            return ResponseDeliverTx(code=CodeTypeOk)
 
-    def get_transaction(self, txid, include_status=False):
-        """Get the transaction with the specified `txid` (and optionally its status)
-
-        This query begins by looking in the bigchain table for all blocks containing
-        a transaction with the specified `txid`. If one of those blocks is valid, it
-        returns the matching transaction from that block. Else if some of those
-        blocks are undecided, it returns a matching transaction from one of them. If
-        the transaction was found in invalid blocks only, or in no blocks, then this
-        query looks for a matching transaction in the backlog table, and if it finds
-        one there, it returns that.
+    def end_block(self, request_end_block):
+        """Calculate block hash using transaction ids and previous block
+        hash to be stored in the next block.
 
         Args:
-            txid (str): transaction id of the transaction to get
-            include_status (bool): also return the status of the transaction
-                                   the return value is then a tuple: (tx, status)
-
-        Returns:
-            A :class:`~.models.Transaction` instance if the transaction
-            was found in a valid block, an undecided block, or the backlog table,
-            otherwise ``None``.
-            If :attr:`include_status` is ``True``, also returns the
-            transaction's status if the transaction was found.
+            height (int): new height of the chain.
         """
 
-        response, tx_status = None, None
+        self.abort_if_abci_chain_is_not_synced()
 
-        blocks_validity_status = self.get_blocks_status_containing_tx(txid)
-        check_backlog = True
+        chain_shift = 0 if self.chain is None else self.chain['height']
 
-        if blocks_validity_status:
-            # Disregard invalid blocks, and return if there are no valid or undecided blocks
-            blocks_validity_status = {
-                _id: status for _id, status in blocks_validity_status.items()
-                if status != Bigchain.BLOCK_INVALID
-            }
-            if blocks_validity_status:
+        height = request_end_block.height + chain_shift
+        self.new_height = height
 
-                # The transaction _was_ found in an undecided or valid block,
-                # so there's no need to look in the backlog table
-                check_backlog = False
+        # store pre-commit state to recover in case there is a crash during
+        # `end_block` or `commit`
+        logger.debug(f'Updating pre-commit state: {self.new_height}')
+        pre_commit_state = dict(height=self.new_height,
+                                transactions=self.block_txn_ids)
+        self.bigchaindb.store_pre_commit_state(pre_commit_state)
 
-                tx_status = self.TX_UNDECIDED
-                # If the transaction is in a valid or any undecided block, return it. Does not check
-                # if transactions in undecided blocks are consistent, but selects the valid block
-                # before undecided ones
-                for target_block_id in blocks_validity_status:
-                    if blocks_validity_status[target_block_id] == Bigchain.BLOCK_VALID:
-                        tx_status = self.TX_VALID
-                        break
+        block_txn_hash = calculate_hash(self.block_txn_ids)
+        block = self.bigchaindb.get_latest_block()
 
-                # Query the transaction in the target block and return
-                response = backend.query.get_transaction_from_block(self.connection, txid, target_block_id)
-
-        if check_backlog:
-            response = backend.query.get_transaction_from_backlog(self.connection, txid)
-
-            if response:
-                tx_status = self.TX_IN_BACKLOG
-
-        if response:
-            if tx_status == self.TX_IN_BACKLOG:
-                response = Transaction.from_dict(response)
-            else:
-                # If we are reading from the bigchain collection the asset is
-                # not in the transaction so we need to fetch the asset and
-                # reconstruct the transaction.
-                response = Transaction.from_db(self, response)
-
-        if include_status:
-            return response, tx_status
+        if self.block_txn_ids:
+            self.block_txn_hash = calculate_hash([block['app_hash'], block_txn_hash])
         else:
-            return response
+            self.block_txn_hash = block['app_hash']
 
-    def get_status(self, txid):
-        """Retrieve the status of a transaction with `txid` from bigchain.
+        validator_update = Election.process_block(self.bigchaindb,
+                                                  self.new_height,
+                                                  self.block_transactions)
 
-        Args:
-            txid (str): transaction id of the transaction to query
+        return ResponseEndBlock(validator_updates=validator_update)
 
-        Returns:
-            (string): transaction status ('valid', 'undecided',
-            or 'backlog'). If no transaction with that `txid` was found it
-            returns `None`
-        """
-        _, status = self.get_transaction(txid, include_status=True)
-        return status
+    def commit(self):
+        """Store the new height and along with block hash."""
 
-    def get_blocks_status_containing_tx(self, txid):
-        """Retrieve block ids and statuses related to a transaction
+        self.abort_if_abci_chain_is_not_synced()
 
-        Transactions may occur in multiple blocks, but no more than one valid block.
+        data = self.block_txn_hash.encode('utf-8')
 
-        Args:
-            txid (str): transaction id of the transaction to query
+        # register a new block only when new transactions are received
+        if self.block_txn_ids:
+            self.bigchaindb.store_bulk_transactions(self.block_transactions)
 
-        Returns:
-            A dict of blocks containing the transaction,
-            e.g. {block_id_1: 'valid', block_id_2: 'invalid' ...}, or None
-        """
+        block = Block(app_hash=self.block_txn_hash,
+                      height=self.new_height,
+                      transactions=self.block_txn_ids)
+        # NOTE: storing the block should be the last operation during commit
+        # this effects crash recovery. Refer BEP#8 for details
+        self.bigchaindb.store_block(block._asdict())
 
-        # First, get information on all blocks which contain this transaction
-        blocks = backend.query.get_blocks_status_from_transaction(self.connection, txid)
-        if blocks:
-            # Determine the election status of each block
-            blocks_validity_status = {
-                block['id']: self.block_election_status(block)
-                for block in blocks
-            }
+        logger.debug('Commit-ing new block with hash: apphash=%s ,'
+                     'height=%s, txn ids=%s', data, self.new_height,
+                     self.block_txn_ids)
 
-            # NOTE: If there are multiple valid blocks with this transaction,
-            # something has gone wrong
-            if list(blocks_validity_status.values()).count(Bigchain.BLOCK_VALID) > 1:
-                block_ids = str([
-                    block for block in blocks_validity_status
-                    if blocks_validity_status[block] == Bigchain.BLOCK_VALID
-                ])
-                raise core_exceptions.CriticalDoubleInclusion(
-                    'Transaction {tx} is present in '
-                    'multiple valid blocks: {block_ids}'
-                    .format(tx=txid, block_ids=block_ids))
+        if self.events_queue:
+            event = Event(EventTypes.BLOCK_VALID, {
+                'height': self.new_height,
+                'transactions': self.block_transactions
+            })
+            self.events_queue.put(event)
 
-            return blocks_validity_status
+        return ResponseCommit(data=data)
 
-        else:
-            return None
 
-    def get_asset_by_id(self, asset_id):
-        """Returns the asset associated with an asset_id.
+def rollback(b):
+    pre_commit = b.get_pre_commit_state()
 
-            Args:
-                asset_id (str): The asset id.
+    if pre_commit is None:
+        # the pre_commit record is first stored in the first `end_block`
+        return
 
-            Returns:
-                dict if the asset exists else None.
-        """
-        cursor = backend.query.get_asset_by_id(self.connection, asset_id)
-        cursor = list(cursor)
-        if cursor:
-            return cursor[0]['asset']
+    latest_block = b.get_latest_block()
+    if latest_block is None:
+        logger.error('Found precommit state but no blocks!')
+        sys.exit(1)
 
-    def get_spent(self, txid, output):
-        """Check if a `txid` was already used as an input.
-
-        A transaction can be used as an input for another transaction. Bigchain
-        needs to make sure that a given `(txid, output)` is only used once.
-
-        This method will check if the `(txid, output)` has already been
-        spent in a transaction that is in either the `VALID`, `UNDECIDED` or
-        `BACKLOG` state.
-
-        Args:
-            txid (str): The id of the transaction
-            output (num): the index of the output in the respective transaction
-
-        Returns:
-            The transaction (Transaction) that used the `(txid, output)` as an
-            input else `None`
-
-        Raises:
-            CriticalDoubleSpend: If the given `(txid, output)` was spent in
-            more than one valid transaction.
-        """
-        # checks if an input was already spent
-        # checks if the bigchain has any transaction with input {'txid': ...,
-        # 'output': ...}
-        transactions = list(backend.query.get_spent(self.connection, txid,
-                                                    output))
-
-        # a transaction_id should have been spent at most one time
-        # determine if these valid transactions appear in more than one valid
-        # block
-        num_valid_transactions = 0
-        non_invalid_transactions = []
-        for transaction in transactions:
-            # ignore transactions in invalid blocks
-            # FIXME: Isn't there a faster solution than doing I/O again?
-            txn, status = self.get_transaction(transaction['id'],
-                                               include_status=True)
-            if status == self.TX_VALID:
-                num_valid_transactions += 1
-            # `txid` can only have been spent in at most on valid block.
-            if num_valid_transactions > 1:
-                raise core_exceptions.CriticalDoubleSpend(
-                    '`{}` was spent more than once. There is a problem'
-                    ' with the chain'.format(txid))
-            # if its not and invalid transaction
-            if status is not None:
-                transaction.update({'metadata': txn.metadata})
-                non_invalid_transactions.append(transaction)
-
-        if non_invalid_transactions:
-            return Transaction.from_dict(non_invalid_transactions[0])
-
-        # Either no transaction was returned spending the `(txid, output)` as
-        # input or the returned transactions are not valid.
-
-    def get_owned_ids(self, owner):
-        """Retrieve a list of ``txid`` s that can be used as inputs.
-
-        Args:
-            owner (str): base58 encoded public key.
-
-        Returns:
-            :obj:`list` of TransactionLink: list of ``txid`` s and ``output`` s
-            pointing to another transaction's condition
-        """
-        return self.get_outputs_filtered(owner, spent=False)
-
-    @property
-    def fastquery(self):
-        return fastquery.FastQuery(self.connection, self.me)
-
-    def get_outputs_filtered(self, owner, spent=None):
-        """Get a list of output links filtered on some criteria
-
-        Args:
-            owner (str): base58 encoded public_key.
-            spent (bool): If ``True`` return only the spent outputs. If
-                          ``False`` return only unspent outputs. If spent is
-                          not specified (``None``) return all outputs.
-
-        Returns:
-            :obj:`list` of TransactionLink: list of ``txid`` s and ``output`` s
-            pointing to another transaction's condition
-        """
-        outputs = self.fastquery.get_outputs_by_public_key(owner)
-        if spent is None:
-            return outputs
-        elif spent is True:
-            return self.fastquery.filter_unspent_outputs(outputs)
-        elif spent is False:
-            return self.fastquery.filter_spent_outputs(outputs)
-
-    def get_transactions_filtered(self, asset_id, operation=None):
-        """Get a list of transactions filtered on some criteria
-        """
-        txids = backend.query.get_txids_filtered(self.connection, asset_id,
-                                                 operation)
-        for txid in txids:
-            tx, status = self.get_transaction(txid, True)
-            if status == self.TX_VALID:
-                yield tx
-
-    def create_block(self, validated_transactions):
-        """Creates a block given a list of `validated_transactions`.
-
-        Note that this method does not validate the transactions. Transactions
-        should be validated before calling create_block.
-
-        Args:
-            validated_transactions (list(Transaction)): list of validated
-                                                        transactions.
-
-        Returns:
-            Block: created block.
-        """
-        # Prevent the creation of empty blocks
-        if not validated_transactions:
-            raise exceptions.OperationError('Empty block creation is not '
-                                            'allowed')
-
-        voters = list(self.federation)
-        block = Block(validated_transactions, self.me, gen_timestamp(), voters)
-        block = block.sign(self.me_private)
-
-        return block
-
-    # TODO: check that the votings structure is correctly constructed
-    def validate_block(self, block):
-        """Validate a block.
-
-        Args:
-            block (Block): block to validate.
-
-        Returns:
-            The block if the block is valid else it raises and exception
-            describing the reason why the block is invalid.
-        """
-        return self.consensus.validate_block(self, block)
-
-    def has_previous_vote(self, block_id):
-        """Check for previous votes from this node
-
-        Args:
-            block_id (str): the id of the block to check
-
-        Returns:
-            bool: :const:`True` if this block already has a
-            valid vote from this node, :const:`False` otherwise.
-
-        """
-        votes = list(backend.query.get_votes_by_block_id_and_voter(self.connection, block_id, self.me))
-        el, _ = self.consensus.voting.partition_eligible_votes(votes, [self.me])
-        return bool(el)
-
-    def write_block(self, block):
-        """Write a block to bigchain.
-
-        Args:
-            block (Block): block to write to bigchain.
-        """
-
-        # Decouple assets from block
-        assets, block_dict = block.decouple_assets()
-        metadatas, block_dict = block.decouple_metadata(block_dict)
-
-        # write the assets
-        if assets:
-            self.write_assets(assets)
-
-        if metadatas:
-            self.write_metadata(metadatas)
-
-        # write the block
-        return backend.query.write_block(self.connection, block_dict)
-
-    def prepare_genesis_block(self):
-        """Prepare a genesis block."""
-
-        metadata = {'message': 'Hello World from the BigchainDB'}
-        transaction = Transaction.create([self.me], [([self.me], 1)],
-                                         metadata=metadata)
-
-        # NOTE: The transaction model doesn't expose an API to generate a
-        #       GENESIS transaction, as this is literally the only usage.
-        transaction.operation = 'GENESIS'
-        transaction = transaction.sign([self.me_private])
-
-        # create the block
-        return self.create_block([transaction])
-
-    def create_genesis_block(self):
-        """Create the genesis block
-
-        Block created when bigchain is first initialized. This method is not atomic, there might be concurrency
-        problems if multiple instances try to write the genesis block when the BigchainDB Federation is started,
-        but it's a highly unlikely scenario.
-        """
-
-        # 1. create one transaction
-        # 2. create the block with one transaction
-        # 3. write the block to the bigchain
-
-        blocks_count = backend.query.count_blocks(self.connection)
-
-        if blocks_count:
-            raise exceptions.GenesisBlockAlreadyExistsError('Cannot create the Genesis block')
-
-        block = self.prepare_genesis_block()
-        self.write_block(block)
-
-        return block
-
-    def vote(self, block_id, previous_block_id, decision, invalid_reason=None):
-        """Create a signed vote for a block given the
-        :attr:`previous_block_id` and the :attr:`decision` (valid/invalid).
-
-        Args:
-            block_id (str): The id of the block to vote on.
-            previous_block_id (str): The id of the previous block.
-            decision (bool): Whether the block is valid or invalid.
-            invalid_reason (Optional[str]): Reason the block is invalid
-        """
-
-        if block_id == previous_block_id:
-            raise exceptions.CyclicBlockchainError()
-
-        vote = {
-            'voting_for_block': block_id,
-            'previous_block': previous_block_id,
-            'is_block_valid': decision,
-            'invalid_reason': invalid_reason,
-            'timestamp': gen_timestamp()
-        }
-
-        vote_data = serialize(vote)
-        signature = crypto.PrivateKey(self.me_private).sign(vote_data.encode())
-
-        vote_signed = {
-            'node_pubkey': self.me,
-            'signature': signature.decode(),
-            'vote': vote
-        }
-
-        return vote_signed
-
-    def write_vote(self, vote):
-        """Write the vote to the database."""
-        return backend.query.write_vote(self.connection, vote)
-
-    def get_last_voted_block(self):
-        """Returns the last block that this node voted on."""
-
-        last_block_id = backend.query.get_last_voted_block_id(self.connection,
-                                                              self.me)
-        return Block.from_dict(self.get_block(last_block_id))
-
-    def block_election(self, block):
-        if type(block) != dict:
-            block = block.to_dict()
-        votes = list(backend.query.get_votes_by_block_id(self.connection,
-                                                         block['id']))
-        return self.consensus.voting.block_election(block, votes,
-                                                    self.federation)
-
-    def block_election_status(self, block):
-        """Tally the votes on a block, and return the status:
-           valid, invalid, or undecided.
-        """
-        return self.block_election(block)['status']
-
-    def get_assets(self, asset_ids):
-        """Return a list of assets that match the asset_ids
-
-        Args:
-            asset_ids (:obj:`list` of :obj:`str`): A list of asset_ids to
-                retrieve from the database.
-
-        Returns:
-            list: The list of assets returned from the database.
-        """
-        return backend.query.get_assets(self.connection, asset_ids)
-
-    def get_metadata(self, txn_ids):
-        """Return a list of metadata that match the transaction ids (txn_ids)
-
-        Args:
-            txn_ids (:obj:`list` of :obj:`str`): A list of txn_ids to
-                retrieve from the database.
-
-        Returns:
-            list: The list of metadata returned from the database.
-        """
-        return backend.query.get_metadata(self.connection, txn_ids)
-
-    def write_assets(self, assets):
-        """Writes a list of assets into the database.
-
-        Args:
-            assets (:obj:`list` of :obj:`dict`): A list of assets to write to
-                the database.
-        """
-        return backend.query.write_assets(self.connection, assets)
-
-    def write_metadata(self, metadata):
-        """Writes a list of metadata into the database.
-
-        Args:
-            metadata (:obj:`list` of :obj:`dict`): A list of metadata to write to
-                the database.
-        """
-        return backend.query.write_metadata(self.connection, metadata)
-
-    def text_search(self, search, *, limit=0, table='assets'):
-        """Return an iterator of assets that match the text search
-
-        Args:
-            search (str): Text search string to query the text index
-            limit (int, optional): Limit the number of returned documents.
-
-        Returns:
-            iter: An iterator of assets that match the text search.
-        """
-        objects = backend.query.text_search(self.connection, search, limit=limit,
-                                            table=table)
-
-        # TODO: This is not efficient. There may be a more efficient way to
-        #       query by storing block ids with the assets and using fastquery.
-        #       See https://github.com/bigchaindb/bigchaindb/issues/1496
-        for obj in objects:
-            tx, status = self.get_transaction(obj['id'], True)
-            if status == self.TX_VALID:
-                yield obj
+    # NOTE: the pre-commit state is always at most 1 block ahead of the commited state
+    if latest_block['height'] < pre_commit['height']:
+        Election.rollback(b, pre_commit['height'], pre_commit['transactions'])
+        b.delete_transactions(pre_commit['transactions'])

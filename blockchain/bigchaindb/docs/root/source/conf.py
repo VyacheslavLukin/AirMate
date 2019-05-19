@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-#
+# Copyright BigchainDB GmbH and BigchainDB contributors
+# SPDX-License-Identifier: (Apache-2.0 AND CC-BY-4.0)
+# Code is Apache-2.0 and docs are CC-BY-4.0
+
 # BigchainDB documentation build configuration file, created by
 # sphinx-quickstart on Thu Sep 29 11:13:27 2016.
 #
@@ -12,6 +14,8 @@
 #
 # All configuration values have a default; values that are commented out
 # serve to show the default.
+
+import datetime
 
 from recommonmark.parser import CommonMarkParser
 
@@ -60,7 +64,8 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'BigchainDB'
-copyright = '2017, BigchainDB Contributors'
+now = datetime.datetime.now()
+copyright = str(now.year) + ', BigchainDB Contributors'
 author = 'BigchainDB Contributors'
 
 # The version info for the project you're documenting, acts as replacement for

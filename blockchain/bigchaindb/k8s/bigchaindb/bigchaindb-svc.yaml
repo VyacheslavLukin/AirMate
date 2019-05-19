@@ -1,3 +1,7 @@
+# Copyright BigchainDB GmbH and BigchainDB contributors
+# SPDX-License-Identifier: (Apache-2.0 AND CC-BY-4.0)
+# Code is Apache-2.0 and docs are CC-BY-4.0
+
 apiVersion: v1
 kind: Service
 metadata:
@@ -7,7 +11,7 @@ metadata:
     name: bdb-instance-0
 spec:
   selector:
-    app: bdb-instance-0-dep
+    app: bdb-instance-0-ss
   ports:
   - port: 9984
     targetPort: 9984
@@ -17,9 +21,21 @@ spec:
     targetPort: 9985
     name: bdb-ws-port
     protocol: TCP
-  - port: 46658
-    targetPort: 46658
+  - port: 26658
+    targetPort: 26658
     name: tm-abci-port
+    protocol: TCP
+  - port: 26656
+    targetPort: 26656
+    name: tm-p2p-port
+    protocol: TCP
+  - port: 26657
+    targetPort: 26657
+    name: tm-rpc-port
+    protocol: TCP
+  - port: 9986
+    targetPort: 9986
+    name: pub-key-access
     protocol: TCP
   type: ClusterIP
   clusterIP: None

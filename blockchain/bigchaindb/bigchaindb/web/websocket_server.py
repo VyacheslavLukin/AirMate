@@ -1,3 +1,7 @@
+# Copyright BigchainDB GmbH and BigchainDB contributors
+# SPDX-License-Identifier: (Apache-2.0 AND CC-BY-4.0)
+# Code is Apache-2.0 and docs are CC-BY-4.0
+
 """WebSocket server for the BigchainDB Event Stream API."""
 
 # NOTE
@@ -16,6 +20,7 @@ import asyncio
 import logging
 import threading
 from uuid import uuid4
+from concurrent.futures import CancelledError
 
 import aiohttp
 from aiohttp import web
@@ -41,6 +46,17 @@ def _multiprocessing_to_asyncio(in_queue, out_queue, loop):
     while True:
         value = in_queue.get()
         loop.call_soon_threadsafe(out_queue.put_nowait, value)
+
+
+def eventify_block(block):
+    for tx in block['transactions']:
+        if tx.asset:
+            asset_id = tx.asset.get('id', tx.id)
+        else:
+            asset_id = tx.id
+        yield {'height': block['height'],
+               'asset_id': asset_id,
+               'transaction_id': tx.id}
 
 
 class Dispatcher:
@@ -94,18 +110,11 @@ class Dispatcher:
                 str_buffer.append(event)
 
             elif event.type == EventTypes.BLOCK_VALID:
-                block = event.data
+                str_buffer = map(json.dumps, eventify_block(event.data))
 
-                for tx in block['transactions']:
-                    asset_id = tx['id'] if tx['operation'] == 'CREATE' else tx['asset']['id']
-                    data = {'height': block['height'],
-                            'asset_id': asset_id,
-                            'transaction_id': tx['id']}
-                    str_buffer.append(json.dumps(data))
-
-            for _, websocket in self.subscribers.items():
-                for str_item in str_buffer:
-                    websocket.send_str(str_item)
+            for str_item in str_buffer:
+                for _, websocket in self.subscribers.items():
+                    yield from websocket.send_str(str_item)
 
 
 @asyncio.coroutine
@@ -124,6 +133,9 @@ def websocket_handler(request):
             msg = yield from websocket.receive()
         except RuntimeError as e:
             logger.debug('Websocket exception: %s', str(e))
+            break
+        except CancelledError:
+            logger.debug('Websocket closed')
             break
         if msg.type == aiohttp.WSMsgType.CLOSED:
             logger.debug('Websocket closed')

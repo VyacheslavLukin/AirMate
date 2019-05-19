@@ -1,3 +1,7 @@
+# Copyright BigchainDB GmbH and BigchainDB contributors
+# SPDX-License-Identifier: (Apache-2.0 AND CC-BY-4.0)
+# Code is Apache-2.0 and docs are CC-BY-4.0
+
 sudo: required
 
 dist: trusty
@@ -30,10 +34,6 @@ matrix:
   - python: 3.5
     env: TOXENV=docsserver
   include:
-  - python: 3.5
-    env:
-    - BIGCHAINDB_DATABASE_BACKEND=localmongodb
-    - BIGCHAINDB_DATABASE_SSL=
   - python: 3.6
     env:
     - BIGCHAINDB_DATABASE_BACKEND=localmongodb
@@ -43,6 +43,9 @@ matrix:
     - BIGCHAINDB_DATABASE_BACKEND=localmongodb
     - BIGCHAINDB_DATABASE_SSL=
     - BIGCHAINDB_CI_ABCI=enable
+  - python: 3.6
+    env:
+    - BIGCHAINDB_ACCEPTANCE_TEST=enable
 
 before_install: sudo .ci/travis-before-install.sh
 

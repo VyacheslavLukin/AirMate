@@ -1,3 +1,7 @@
+# Copyright BigchainDB GmbH and BigchainDB contributors
+# SPDX-License-Identifier: (Apache-2.0 AND CC-BY-4.0)
+# Code is Apache-2.0 and docs are CC-BY-4.0
+
 """Utils for reading and setting configuration settings.
 
 The value of each BigchainDB Server configuration setting is
@@ -24,7 +28,7 @@ from bigchaindb.common import exceptions
 
 import bigchaindb
 
-from bigchaindb.consensus import BaseConsensusRules
+from bigchaindb.validation import BaseValidationRules
 
 # TODO: move this to a proper configuration file for logging
 logging.getLogger('requests').setLevel(logging.WARNING)
@@ -108,7 +112,7 @@ def file_config(filename=None):
                 'Failed to parse the JSON configuration from `{}`, {}'.format(filename, err)
             )
 
-    logger.info('Configuration loaded from `{}`'.format(filename))
+        logger.info('Configuration loaded from `{}`'.format(filename))
 
     return config
 
@@ -128,6 +132,7 @@ def env_config(config):
 
     def load_from_env(value, path):
         var_name = CONFIG_SEP.join([CONFIG_PREFIX] + list(map(lambda s: s.upper(), path)))
+
         return os.environ.get(var_name, value)
 
     return map_leafs(load_from_env, config)
@@ -247,46 +252,44 @@ def autoconfigure(filename=None, config=None, force=False):
 
     # override configuration with env variables
     newconfig = env_config(newconfig)
-
     if config:
         newconfig = update(newconfig, config)
-
     set_config(newconfig)  # sets bigchaindb.config
 
 
 @lru_cache()
-def load_consensus_plugin(name=None):
-    """Find and load the chosen consensus plugin.
+def load_validation_plugin(name=None):
+    """Find and load the chosen validation plugin.
 
     Args:
         name (string): the name of the entry_point, as advertised in the
             setup.py of the providing package.
 
     Returns:
-        an uninstantiated subclass of ``bigchaindb.consensus.AbstractConsensusRules``
+        an uninstantiated subclass of ``bigchaindb.validation.AbstractValidationRules``
     """
     if not name:
-        return BaseConsensusRules
+        return BaseValidationRules
 
-    # TODO: This will return the first plugin with group `bigchaindb.consensus`
+    # TODO: This will return the first plugin with group `bigchaindb.validation`
     #       and name `name` in the active WorkingSet.
     #       We should probably support Requirements specs in the config, e.g.
-    #       consensus_plugin: 'my-plugin-package==0.0.1;default'
+    #       validation_plugin: 'my-plugin-package==0.0.1;default'
     plugin = None
-    for entry_point in iter_entry_points('bigchaindb.consensus', name):
+    for entry_point in iter_entry_points('bigchaindb.validation', name):
         plugin = entry_point.load()
 
     # No matching entry_point found
     if not plugin:
         raise ResolutionError(
-            'No plugin found in group `bigchaindb.consensus` with name `{}`'.
+            'No plugin found in group `bigchaindb.validation` with name `{}`'.
             format(name))
 
     # Is this strictness desireable?
     # It will probably reduce developer headaches in the wild.
-    if not issubclass(plugin, (BaseConsensusRules,)):
+    if not issubclass(plugin, (BaseValidationRules,)):
         raise TypeError('object of type "{}" does not implement `bigchaindb.'
-                        'consensus.BaseConsensusRules`'.format(type(plugin)))
+                        'validation.BaseValidationRules`'.format(type(plugin)))
 
     return plugin
 

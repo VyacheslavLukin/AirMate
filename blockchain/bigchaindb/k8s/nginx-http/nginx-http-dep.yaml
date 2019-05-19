@@ -1,3 +1,7 @@
+# Copyright BigchainDB GmbH and BigchainDB contributors
+# SPDX-License-Identifier: (Apache-2.0 AND CC-BY-4.0)
+# Code is Apache-2.0 and docs are CC-BY-4.0
+
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
@@ -12,7 +16,7 @@ spec:
       terminationGracePeriodSeconds: 10
       containers:
       - name: nginx
-        image: bigchaindb/nginx_http:2.0.0-alpha
+        image: bigchaindb/nginx_http:2.0.0-alpha5
         imagePullPolicy: Always
         env:
         - name: NODE_FRONTEND_PORT
@@ -30,6 +34,11 @@ spec:
             configMapKeyRef:
               name: vars
               key: node-dns-server-ip
+        - name: MONGODB_FRONTEND_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: vars
+              key: mongodb-backend-port
         - name: MONGODB_BACKEND_HOST
           valueFrom:
             configMapKeyRef:
@@ -59,29 +68,24 @@ spec:
           valueFrom:
             configMapKeyRef:
               name: tendermint-config
-              key: tm-pub-key-access
-        - name: TM_BACKEND_HOST
-          valueFrom:
-            configMapKeyRef:
-              name: tendermint-config
-              key: ngx-tm-instance-name
+              key: bdb-pub-key-access
         - name: TM_P2P_PORT
           valueFrom:
             configMapKeyRef:
               name: tendermint-config
-              key: tm-p2p-port
+              key: bdb-p2p-port
         ports:
-        - containerPort: "<node-health-check-port from ConfigMap>"
+        - containerPort: 8888
           protocol: TCP
           name: ngx-health
-        - containerPort: "<node-frontend-port from ConfigMap>"
+        - containerPort: 80
           protocol: TCP
-        - containerPort: "<tm-pub-key-access from ConfigMap>"
+        - containerPort: 9986
           protocol: TCP
-          name: tm-pub-key
-        - containerPort: "<tm-p2p-port from ConfigMap>"
+          name: bdb-pub-key
+        - containerPort: 26656
           protocol: TCP
-          name: tm-p2p-port
+          name: bdb-p2p-port
         livenessProbe:
           httpGet:
             path: /health

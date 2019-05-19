@@ -1,11 +1,15 @@
 # AirMate
 #### Green Sensing: Smart Sensing: Global Distributed GHG and Local Pollutant Sensing Networks for Climate Accountability
-You need nodejs and docker installed on your machine in order to be able to work with a project
+You need docker and docker-compose installed on your machine in order to be able to work with the project
 
-1. ```npm i```
-2. ```webpack --config webpack.config.vendor.js```
-3. ```npm start```
-4. ```PROFIT!!!```
+1. ```Edit .env and set login with password. They are used inside minimax_watchdog.py.```
+2. ```Edit web/.env and set API_URL. It's used by a client side of the web application.```
+3. ```Run bigchaindb:```
+   * ```docker-compose -f blockchain/bigchaindb/docker-compose.yml up -d bigchaindb```
+4. ```Edit data_layer/.env and provide valid BIGCHAIN_URL.```
+5. ```docker-compose up -d```
+6. ```Attach bigchaindb container to airmate_dev network:```
+   * ```docker network connect airmate_dev <bigchaindb_container>```
 
 ## API description
 

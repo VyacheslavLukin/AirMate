@@ -1,13 +1,18 @@
+# Copyright BigchainDB GmbH and BigchainDB contributors
+# SPDX-License-Identifier: (Apache-2.0 AND CC-BY-4.0)
+# Code is Apache-2.0 and docs are CC-BY-4.0
+
 """Fixtures and setup / teardown functions
 
 Tasks:
 1. setup test database before starting the tests
 2. delete test database after running the tests
 """
-
+import json
 import os
 import copy
 import random
+import tempfile
 from collections import namedtuple
 from logging import getLogger
 from logging.config import dictConfig
@@ -15,7 +20,15 @@ from logging.config import dictConfig
 import pytest
 from pymongo import MongoClient
 
+from bigchaindb import ValidatorElection
 from bigchaindb.common import crypto
+from bigchaindb.tendermint_utils import key_from_base64
+from bigchaindb.backend import schema, query
+from bigchaindb.common.crypto import (key_pair_from_ed25519_key,
+                                      public_key_from_ed25519_key)
+from bigchaindb.common.exceptions import DatabaseDoesNotExist
+from bigchaindb.lib import Block
+from tests.utils import gen_vote
 
 TEST_DB_NAME = 'bigchain_test'
 
@@ -26,57 +39,34 @@ USER_PRIVATE_KEY = '8eJ8q9ZQpReWyQT5aFCiwtZ5wDZC4eDnCen88p3tQ6ie'
 USER_PUBLIC_KEY = 'JEAkEJqLbbgDRAtMm8YAjGp759Aq2qTn9eaEHUj2XePE'
 
 
-def pytest_runtest_setup(item):
-    if isinstance(item, item.Function):
-        backend = item.session.config.getoption('--database-backend')
-        if (item.get_marker('localmongodb') and backend != 'localmongodb'):
-            pytest.skip('Skip tendermint specific tests if not using localmongodb')
-
-
 def pytest_addoption(parser):
     from bigchaindb.backend.connection import BACKENDS
 
-    BACKENDS['mongodb-ssl'] = 'bigchaindb.backend.mongodb.connection.MongoDBConnection'
     backends = ', '.join(BACKENDS.keys())
     parser.addoption(
         '--database-backend',
         action='store',
-        default=os.environ.get('BIGCHAINDB_DATABASE_BACKEND', 'rethinkdb'),
+        default=os.environ.get('BIGCHAINDB_DATABASE_BACKEND', 'localmongodb'),
         help='Defines the backend to use (available: {})'.format(backends),
     )
-
-
-def pytest_ignore_collect(path, config):
-    from bigchaindb.backend.connection import BACKENDS
-    path = str(path)
-
-    BACKENDS['mongodb-ssl'] = 'bigchaindb.backend.mongodb.connection.MongoDBConnection'
-    supported_backends = BACKENDS.keys()
-
-    if os.path.isdir(path):
-        dirname = os.path.split(path)[1]
-        if dirname in supported_backends and dirname != config.getoption('--database-backend'):
-            print('Ignoring unrequested backend test dir: ', path)
-            return True
 
 
 def pytest_configure(config):
     config.addinivalue_line(
         'markers',
-        'bdb(): Mark the test as needing BigchainDB, i.e. a database with '
-        'the three tables: "backlog", "bigchain", "votes". BigchainDB will '
-        'be configured such that the database and tables are available for an '
-        'entire test session. For distributed tests, the database name will '
-        'be suffixed with the process identifier, e.g.: "bigchain_test_gw0", '
-        'to ensure that each process session has its own separate database.'
+        'bdb(): Mark the test as needing BigchainDB.'
+        'BigchainDB will be configured such that the database and tables are available for an '
+        'entire test session.'
+        'You need to run a backend (e.g. MongoDB) '
+        'prior to running tests with this marker. You should not need to restart the backend '
+        'in between tests runs since the test infrastructure flushes the backend upon session end.'
     )
     config.addinivalue_line(
         'markers',
-        'genesis(): Mark the test as needing a genesis block in place. The '
-        'prerequisite steps of configuration and database setup are taken '
-        'care of at session scope (if needed), prior to creating the genesis '
-        'block. The genesis block has function scope: it is destroyed after '
-        'each test function/method.'
+        'abci(): Mark the test as needing a running ABCI server in place. Use this marker'
+        'for tests that require a running Tendermint instance. Note that the test infrastructure'
+        'has no way to reset Tendermint data upon session end - you need to do it manually.'
+        'Setup performed by this marker includes the steps performed by the bdb marker.'
     )
 
 
@@ -87,12 +77,6 @@ def _bdb_marker(request):
 
 
 @pytest.fixture(autouse=True)
-def _genesis_marker(request):
-    if request.keywords.get('genesis', None):
-        request.getfixturevalue('_genesis')
-
-
-@pytest.fixture(autouse=True)
 def _restore_config(_configure_bigchaindb):
     from bigchaindb import config, config_utils
     config_before_test = copy.deepcopy(config)
@@ -100,29 +84,8 @@ def _restore_config(_configure_bigchaindb):
     config_utils.set_config(config_before_test)
 
 
-@pytest.fixture
-def _restore_dbs(request):
-    from bigchaindb.backend import connect, schema
-    from bigchaindb.common.exceptions import DatabaseDoesNotExist
-    from .utils import list_dbs
-    conn = connect()
-    dbs_before_test = list_dbs(conn)
-    yield
-    dbs_after_test = list_dbs(conn)
-    dbs_to_delete = (
-        db for db in set(dbs_after_test) - set(dbs_before_test)
-        if TEST_DB_NAME not in db
-    )
-    print(dbs_to_delete)
-    for db in dbs_to_delete:
-        try:
-            schema.drop_database(conn, db)
-        except DatabaseDoesNotExist:
-            pass
-
-
 @pytest.fixture(scope='session')
-def _configure_bigchaindb(request, ssl_context):
+def _configure_bigchaindb(request):
     import bigchaindb
     from bigchaindb import config_utils
     test_db_name = TEST_DB_NAME
@@ -133,26 +96,11 @@ def _configure_bigchaindb(request, ssl_context):
 
     backend = request.config.getoption('--database-backend')
 
-    if backend == 'mongodb-ssl':
-        bigchaindb._database_map[backend] = {
-            # we use mongodb as the backend for mongodb-ssl
-            'backend': 'mongodb',
-            'connection_timeout': 5000,
-            'max_tries': 3,
-            'ssl': True,
-            'ca_cert': ssl_context.ca,
-            'crlfile': ssl_context.crl,
-            'certfile': ssl_context.cert,
-            'keyfile': ssl_context.key,
-            'keyfile_passphrase': os.environ.get('BIGCHAINDB_DATABASE_KEYFILE_PASSPHRASE', None)
-        }
-        bigchaindb._database_map[backend].update(bigchaindb._base_database_mongodb)
-
     config = {
         'database': bigchaindb._database_map[backend],
-        'keypair': {
-            'private': '31Lb1ZGKTyHnmVK3LUMrAUrPNfd4sE2YyBt3UA4A25aA',
-            'public': '4XYfCbabAWVUCbjTmRTFEu2sc3dFEdkse4r6X498B1s8',
+        'tendermint': {
+            'host': 'localhost',
+            'port': 26657,
         }
     }
     config['database']['name'] = test_db_name
@@ -163,17 +111,12 @@ def _configure_bigchaindb(request, ssl_context):
 @pytest.fixture(scope='session')
 def _setup_database(_configure_bigchaindb):
     from bigchaindb import config
-    from bigchaindb.backend import connect, schema
-    from bigchaindb.common.exceptions import DatabaseDoesNotExist
+    from bigchaindb.backend import connect
     print('Initializing test db')
     dbname = config['database']['name']
     conn = connect()
 
-    try:
-        schema.drop_database(conn, dbname)
-    except DatabaseDoesNotExist:
-        pass
-
+    _drop_db(conn, dbname)
     schema.init_database(conn)
     print('Finishing init database')
 
@@ -181,10 +124,7 @@ def _setup_database(_configure_bigchaindb):
 
     print('Deleting `{}` database'.format(dbname))
     conn = connect()
-    try:
-        schema.drop_database(conn, dbname)
-    except DatabaseDoesNotExist:
-        pass
+    _drop_db(conn, dbname)
 
     print('Finished deleting `{}`'.format(dbname))
 
@@ -193,32 +133,17 @@ def _setup_database(_configure_bigchaindb):
 def _bdb(_setup_database, _configure_bigchaindb):
     from bigchaindb import config
     from bigchaindb.backend import connect
-    from bigchaindb.backend.admin import get_config
-    from bigchaindb.backend.schema import TABLES
-    from .utils import flush_db, update_table_config
+    from .utils import flush_db
+    from bigchaindb.common.memoize import to_dict, from_dict
+    from bigchaindb.models import Transaction
     conn = connect()
-    # TODO remove condition once the mongodb implementation is done
-    if config['database']['backend'] == 'rethinkdb':
-        table_configs_before = {
-            t: get_config(conn, table=t) for t in TABLES
-        }
     yield
     dbname = config['database']['name']
     flush_db(conn, dbname)
-    # TODO remove condition once the mongodb implementation is done
-    if config['database']['backend'] == 'rethinkdb':
-        for t, c in table_configs_before.items():
-            update_table_config(conn, t, **c)
 
-
-@pytest.fixture
-def _genesis(_bdb, genesis_block):
-    # TODO for precision's sake, delete the block once the test is done. The
-    # deletion is done indirectly via the teardown code of _bdb but explicit
-    # deletion of the block would make things clearer. E.g.:
-    # yield
-    # tests.utils.delete_genesis_block(conn, dbname)
-    pass
+    to_dict.cache_clear()
+    from_dict.cache_clear()
+    Transaction._input_valid.cache_clear()
 
 
 # We need this function to avoid loading an existing
@@ -270,16 +195,6 @@ def alice():
 
 
 @pytest.fixture
-def alice_privkey(alice):
-    return alice.private_key
-
-
-@pytest.fixture
-def alice_pubkey(alice):
-    return alice.public_key
-
-
-@pytest.fixture
 def bob():
     from bigchaindb.common.crypto import generate_key_pair
     return generate_key_pair()
@@ -318,36 +233,48 @@ def merlin():
 
 
 @pytest.fixture
-def merlin_privkey(merlin):
-    return merlin.private_key
-
-
-@pytest.fixture
-def merlin_pubkey(merlin):
-    return merlin.public_key
-
-
-@pytest.fixture
 def b():
-    from bigchaindb.tendermint import BigchainDB
+    from bigchaindb import BigchainDB
     return BigchainDB()
 
 
 @pytest.fixture
-def tb():
-    from bigchaindb.tendermint import BigchainDB
-    return BigchainDB()
+def b_mock(b, network_validators):
+    b.get_validators = mock_get_validators(network_validators)
+
+    return b
+
+
+def mock_get_validators(network_validators):
+    def validator_set(height):
+        validators = []
+        for public_key, power in network_validators.items():
+            validators.append({
+                'public_key': {'type': 'ed25519-base64', 'value': public_key},
+                'voting_power': power
+            })
+        return validators
+
+    return validator_set
 
 
 @pytest.fixture
-def create_tx(b, user_pk):
+def create_tx(alice, user_pk):
     from bigchaindb.models import Transaction
-    return Transaction.create([b.me], [([user_pk], 1)], asset={'name': 'xyz'})
+    name = f'I am created by the create_tx fixture. My random identifier is {random.random()}.'
+    return Transaction.create([alice.public_key], [([user_pk], 1)], asset={'name': name})
 
 
 @pytest.fixture
-def signed_create_tx(b, create_tx):
-    return create_tx.sign([b.me_private])
+def signed_create_tx(alice, create_tx):
+    return create_tx.sign([alice.private_key])
+
+
+@pytest.fixture
+def posted_create_tx(b, signed_create_tx):
+    res = b.post_transaction(signed_create_tx, 'broadcast_tx_commit')
+    assert res.status_code == 200
+    return signed_create_tx
 
 
 @pytest.fixture
@@ -367,110 +294,48 @@ def double_spend_tx(signed_create_tx, carol_pubkey, user_sk):
     return tx.sign([user_sk])
 
 
-@pytest.fixture
-def structurally_valid_vote():
-    return {
-        'node_pubkey': 'c' * 44,
-        'signature': 'd' * 86,
-        'vote': {
-            'voting_for_block': 'a' * 64,
-            'previous_block': 'b' * 64,
-            'is_block_valid': False,
-            'invalid_reason': None,
-            'timestamp': '1111111111'
-        }
-    }
+def _get_height(b):
+    maybe_block = b.get_latest_block()
+    return 0 if maybe_block is None else maybe_block['height']
 
 
 @pytest.fixture
-def genesis_block(b):
-    return b.create_genesis_block()
-
-
-@pytest.fixture
-def inputs(user_pk, b, genesis_block):
+def inputs(user_pk, b, alice):
     from bigchaindb.models import Transaction
-
     # create blocks with transactions for `USER` to spend
-    prev_block_id = genesis_block.id
-    for block in range(4):
+    for height in range(1, 4):
         transactions = [
             Transaction.create(
-                [b.me],
+                [alice.public_key],
                 [([user_pk], 1)],
                 metadata={'msg': random.random()},
-            ).sign([b.me_private])
+            ).sign([alice.private_key])
             for _ in range(10)
         ]
-        block = b.create_block(transactions)
-        b.write_block(block)
-
-        # vote the blocks valid, so that the inputs are valid
-        vote = b.vote(block.id, prev_block_id, True)
-        prev_block_id = block.id
-        b.write_vote(vote)
-
-
-@pytest.fixture
-def inputs_shared(user_pk, user2_pk, genesis_block):
-    from bigchaindb.models import Transaction
-
-    # create blocks with transactions for `USER` to spend
-    prev_block_id = genesis_block.id
-    for block in range(4):
-        transactions = [
-            Transaction.create(
-                [b.me],
-                [user_pk, user2_pk],
-                metadata={'msg': random.random()},
-            ).sign([b.me_private])
-            for _ in range(10)
-        ]
-        block = b.create_block(transactions)
-        b.write_block(block)
-
-        # vote the blocks valid, so that the inputs are valid
-        vote = b.vote(block.id, prev_block_id, True)
-        prev_block_id = block.id
-        b.write_vote(vote)
+        tx_ids = [tx.id for tx in transactions]
+        block = Block(app_hash='hash'+str(height), height=height, transactions=tx_ids)
+        b.store_block(block._asdict())
+        b.store_bulk_transactions(transactions)
 
 
 @pytest.fixture
 def dummy_db(request):
-    from bigchaindb.backend import connect, schema
-    from bigchaindb.common.exceptions import (DatabaseDoesNotExist,
-                                              DatabaseAlreadyExists)
+    from bigchaindb.backend import connect
+
     conn = connect()
     dbname = request.fixturename
     xdist_suffix = getattr(request.config, 'slaveinput', {}).get('slaveid')
     if xdist_suffix:
         dbname = '{}_{}'.format(dbname, xdist_suffix)
-    try:
-        schema.init_database(conn, dbname)
-    except DatabaseAlreadyExists:
-        schema.drop_database(conn, dbname)
-        schema.init_database(conn, dbname)
+
+    _drop_db(conn, dbname)  # make sure we start with a clean DB
+    schema.init_database(conn, dbname)
     yield dbname
-    try:
-        schema.drop_database(conn, dbname)
-    except DatabaseDoesNotExist:
-        pass
+
+    _drop_db(conn, dbname)
 
 
-@pytest.fixture
-def not_yet_created_db(request):
-    from bigchaindb.backend import connect, schema
-    from bigchaindb.common.exceptions import DatabaseDoesNotExist
-    conn = connect()
-    dbname = request.fixturename
-    xdist_suffix = getattr(request.config, 'slaveinput', {}).get('slaveid')
-    if xdist_suffix:
-        dbname = '{}_{}'.format(dbname, xdist_suffix)
-    try:
-        schema.drop_database(conn, dbname)
-    except DatabaseDoesNotExist:
-        pass
-    yield dbname
+def _drop_db(conn, dbname):
     try:
         schema.drop_database(conn, dbname)
     except DatabaseDoesNotExist:
@@ -524,35 +389,12 @@ def tendermint_host():
 
 @pytest.fixture
 def tendermint_port():
-    return int(os.getenv('BIGCHAINDB_TENDERMINT_PORT', 46657))
+    return int(os.getenv('BIGCHAINDB_TENDERMINT_PORT', 26657))
 
 
 @pytest.fixture
 def tendermint_ws_url(tendermint_host, tendermint_port):
     return 'ws://{}:{}/websocket'.format(tendermint_host, tendermint_port)
-
-
-@pytest.fixture
-def tendermint_context(tendermint_host, tendermint_port, tendermint_ws_url):
-    TendermintContext = namedtuple(
-        'TendermintContext', ('host', 'port', 'ws_url'))
-    return TendermintContext(
-        host=tendermint_host,
-        port=tendermint_port,
-        ws_url=tendermint_ws_url,
-    )
-
-
-@pytest.fixture
-def mocked_setup_pub_logger(mocker):
-    return mocker.patch(
-        'bigchaindb.log.setup.setup_pub_logger', autospec=True, spec_set=True)
-
-
-@pytest.fixture
-def mocked_setup_sub_logger(mocker):
-    return mocker.patch(
-        'bigchaindb.log.setup.setup_sub_logger', autospec=True, spec_set=True)
 
 
 @pytest.fixture(autouse=True)
@@ -567,13 +409,13 @@ def abci_http(_setup_database, _configure_bigchaindb, abci_server,
     import requests
     import time
 
-    for i in range(5):
+    for i in range(300):
         try:
             uri = 'http://{}:{}/abci_info'.format(tendermint_host, tendermint_port)
             requests.get(uri)
             return True
 
-        except requests.exceptions.RequestException as e:
+        except requests.exceptions.RequestException:
             pass
         time.sleep(1)
 
@@ -581,7 +423,7 @@ def abci_http(_setup_database, _configure_bigchaindb, abci_server,
 
 
 @pytest.yield_fixture(scope='session')
-def event_loop(request):
+def event_loop():
     import asyncio
 
     loop = asyncio.get_event_loop_policy().new_event_loop()
@@ -589,64 +431,16 @@ def event_loop(request):
     loop.close()
 
 
-@pytest.mark.bdb
 @pytest.fixture(scope='session')
 def abci_server():
     from abci import ABCIServer
-    from bigchaindb.tendermint.core import App
+    from bigchaindb.core import App
     from bigchaindb.utils import Process
 
     app = ABCIServer(app=App())
     abci_proxy = Process(name='ABCI', target=app.run)
     yield abci_proxy.start()
     abci_proxy.terminate()
-
-
-@pytest.fixture(scope='session')
-def certs_dir():
-    return os.path.abspath('tests/backend/mongodb-ssl/certs')
-
-
-@pytest.fixture(scope='session')
-def ca_chain_cert(certs_dir):
-    return os.environ.get(
-        'BIGCHAINDB_DATABASE_CA_CERT',
-        os.path.join(certs_dir, 'ca-chain.cert.pem'))
-
-
-@pytest.fixture(scope='session')
-def ssl_crl(certs_dir):
-    return os.environ.get(
-        'BIGCHAINDB_DATABASE_CRLFILE',
-        os.path.join(certs_dir, 'crl.pem'))
-
-
-@pytest.fixture(scope='session')
-def ssl_cert(certs_dir):
-    return os.environ.get(
-        'BIGCHAINDB_DATABASE_CERTFILE',
-        os.path.join(certs_dir, 'bigchaindb.cert.pem'))
-
-
-@pytest.fixture(scope='session')
-def ssl_key(certs_dir):
-    return os.environ.get(
-        'BIGCHAINDB_DATABASE_KEYFILE',
-        os.path.join(certs_dir, 'bigchaindb.key.pem'))
-
-
-@pytest.fixture
-def mdb_ssl_pem_key(certs_dir):
-    return os.environ.get(
-        'BIGCHAINDB_MDB_PEM_KEY_TEST',
-        os.path.join(certs_dir, 'local-mongo.pem'))
-
-
-@pytest.fixture(scope='session')
-def ssl_context(ca_chain_cert, ssl_crl, ssl_cert, ssl_key):
-    SSLContext = namedtuple('SSLContext', ('ca', 'crl', 'cert', 'key'))
-    return SSLContext(
-        ca=ca_chain_cert, crl=ssl_crl, cert=ssl_cert, key=ssl_key)
 
 
 @pytest.fixture
@@ -673,15 +467,6 @@ def wsserver_port(wsserver_config):
 @pytest.fixture
 def wsserver_base_url(wsserver_scheme, wsserver_host, wsserver_port):
     return '{}://{}:{}'.format(wsserver_scheme, wsserver_host, wsserver_port)
-
-
-@pytest.fixture
-def genesis_tx(b, user_pk):
-    from bigchaindb.models import Transaction
-    tx = Transaction.create([b.me], [([user_pk], 1)])
-    tx.operation = Transaction.GENESIS
-    genesis_tx = tx.sign([b.me_private])
-    return genesis_tx
 
 
 @pytest.fixture
@@ -750,3 +535,225 @@ def utxoset(dummy_unspent_outputs, utxo_collection):
     assert res.acknowledged
     assert len(res.inserted_ids) == 3
     return dummy_unspent_outputs, utxo_collection
+
+
+@pytest.fixture
+def network_validators(node_keys):
+    validator_pub_power = {}
+    voting_power = [8, 10, 7, 9]
+    for pub, priv in node_keys.items():
+        validator_pub_power[pub] = voting_power.pop()
+
+    return validator_pub_power
+
+
+@pytest.fixture
+def network_validators58(network_validators):
+    network_validators_base58 = {}
+    for p, v in network_validators.items():
+        p = public_key_from_ed25519_key(key_from_base64(p))
+        network_validators_base58[p] = v
+
+    return network_validators_base58
+
+
+@pytest.fixture
+def node_key(node_keys):
+    (pub, priv) = list(node_keys.items())[0]
+    return key_pair_from_ed25519_key(key_from_base64(priv))
+
+
+@pytest.fixture
+def ed25519_node_keys(node_keys):
+    (pub, priv) = list(node_keys.items())[0]
+    node_keys_dict = {}
+    for pub, priv in node_keys.items():
+        key = key_pair_from_ed25519_key(key_from_base64(priv))
+        node_keys_dict[key.public_key] = key
+
+    return node_keys_dict
+
+
+@pytest.fixture
+def node_keys():
+    return {'zL/DasvKulXZzhSNFwx4cLRXKkSM9GPK7Y0nZ4FEylM=':
+            'cM5oW4J0zmUSZ/+QRoRlincvgCwR0pEjFoY//ZnnjD3Mv8Nqy8q6VdnOFI0XDHhwtFcqRIz0Y8rtjSdngUTKUw==',
+            'GIijU7GBcVyiVUcB0GwWZbxCxdk2xV6pxdvL24s/AqM=':
+            'mdz7IjP6mGXs6+ebgGJkn7kTXByUeeGhV+9aVthLuEAYiKNTsYFxXKJVRwHQbBZlvELF2TbFXqnF28vbiz8Cow==',
+            'JbfwrLvCVIwOPm8tj8936ki7IYbmGHjPiKb6nAZegRA=':
+            '83VINXdj2ynOHuhvSZz5tGuOE5oYzIi0mEximkX1KYMlt/Csu8JUjA4+by2Pz3fqSLshhuYYeM+IpvqcBl6BEA==',
+            'PecJ58SaNRsWJZodDmqjpCWqG6btdwXFHLyE40RYlYM=':
+            'uz8bYgoL4rHErWT1gjjrnA+W7bgD/uDQWSRKDmC8otc95wnnxJo1GxYlmh0OaqOkJaobpu13BcUcvITjRFiVgw=='}
+
+
+@pytest.fixture
+def priv_validator_path(node_keys):
+    (public_key, private_key) = list(node_keys.items())[0]
+    priv_validator = {
+        'address': '84F787D95E196DC5DE5F972666CFECCA36801426',
+        'pub_key': {
+            'type': 'AC26791624DE60',
+            'value': public_key
+        },
+        'last_height': 0,
+        'last_round': 0,
+        'last_step': 0,
+        'priv_key': {
+            'type': '954568A3288910',
+            'value': private_key
+        }
+    }
+    fd, path = tempfile.mkstemp()
+    socket = os.fdopen(fd, 'w')
+    json.dump(priv_validator, socket)
+    socket.close()
+    return path
+
+
+@pytest.fixture
+def bad_validator_path(node_keys):
+    (public_key, private_key) = list(node_keys.items())[1]
+    priv_validator = {
+        'address': '84F787D95E196DC5DE5F972666CFECCA36801426',
+        'pub_key': {
+            'type': 'AC26791624DE60',
+            'value': public_key
+        },
+        'last_height': 0,
+        'last_round': 0,
+        'last_step': 0,
+        'priv_key': {
+            'type': '954568A3288910',
+            'value': private_key
+        }
+    }
+    fd, path = tempfile.mkstemp()
+    socket = os.fdopen(fd, 'w')
+    json.dump(priv_validator, socket)
+    socket.close()
+    return path
+
+
+@pytest.fixture
+def validators(b, node_keys):
+    from bigchaindb.backend import query
+    import time
+
+    def timestamp():  # we need this to force unique election_ids for setup and teardown of fixtures
+        return str(time.time())
+
+    height = get_block_height(b)
+
+    original_validators = b.get_validators()
+
+    (public_key, private_key) = list(node_keys.items())[0]
+
+    validator_set = [{'address': 'F5426F0980E36E03044F74DD414248D29ABCBDB2',
+                      'public_key': {'value': public_key,
+                                     'type': 'ed25519-base64'},
+                      'voting_power': 10}]
+
+    validator_update = {'validators': validator_set,
+                        'height': height + 1,
+                        'election_id': f'setup_at_{timestamp()}'}
+
+    query.store_validator_set(b.connection, validator_update)
+
+    yield
+
+    height = get_block_height(b)
+
+    validator_update = {'validators': original_validators,
+                        'height': height,
+                        'election_id': f'teardown_at_{timestamp()}'}
+
+    query.store_validator_set(b.connection, validator_update)
+
+
+def get_block_height(b):
+
+    if b.get_latest_block():
+        height = b.get_latest_block()['height']
+    else:
+        height = 0
+
+    return height
+
+
+@pytest.fixture
+def new_validator():
+    public_key = '1718D2DBFF00158A0852A17A01C78F4DCF3BA8E4FB7B8586807FAC182A535034'
+    power = 1
+    node_id = 'fake_node_id'
+
+    return {'public_key': {'value': public_key,
+                           'type': 'ed25519-base16'},
+            'power': power,
+            'node_id': node_id}
+
+
+@pytest.fixture
+def valid_upsert_validator_election(b_mock, node_key, new_validator):
+    voters = ValidatorElection.recipients(b_mock)
+    return ValidatorElection.generate([node_key.public_key],
+                                      voters,
+                                      new_validator, None).sign([node_key.private_key])
+
+
+@pytest.fixture
+def valid_upsert_validator_election_2(b_mock, node_key, new_validator):
+    voters = ValidatorElection.recipients(b_mock)
+    return ValidatorElection.generate([node_key.public_key],
+                                      voters,
+                                      new_validator, None).sign([node_key.private_key])
+
+
+@pytest.fixture
+def ongoing_validator_election(b, valid_upsert_validator_election, ed25519_node_keys):
+    validators = b.get_validators(height=1)
+    genesis_validators = {'validators': validators,
+                          'height': 0}
+    query.store_validator_set(b.connection, genesis_validators)
+    b.store_bulk_transactions([valid_upsert_validator_election])
+    query.store_election(b.connection, valid_upsert_validator_election.id, 1,
+                         is_concluded=False)
+    block_1 = Block(app_hash='hash_1', height=1,
+                    transactions=[valid_upsert_validator_election.id])
+    b.store_block(block_1._asdict())
+    return valid_upsert_validator_election
+
+
+@pytest.fixture
+def ongoing_validator_election_2(b, valid_upsert_validator_election_2, ed25519_node_keys):
+    validators = b.get_validators(height=1)
+    genesis_validators = {'validators': validators,
+                          'height': 0,
+                          'election_id': None}
+    query.store_validator_set(b.connection, genesis_validators)
+
+    b.store_bulk_transactions([valid_upsert_validator_election_2])
+    block_1 = Block(app_hash='hash_2', height=1, transactions=[valid_upsert_validator_election_2.id])
+    b.store_block(block_1._asdict())
+    return valid_upsert_validator_election_2
+
+
+@pytest.fixture
+def validator_election_votes(b_mock, ongoing_validator_election, ed25519_node_keys):
+    voters = ValidatorElection.recipients(b_mock)
+    votes = generate_votes(ongoing_validator_election, voters, ed25519_node_keys)
+    return votes
+
+
+@pytest.fixture
+def validator_election_votes_2(b_mock, ongoing_validator_election_2, ed25519_node_keys):
+    voters = ValidatorElection.recipients(b_mock)
+    votes = generate_votes(ongoing_validator_election_2, voters, ed25519_node_keys)
+    return votes
+
+
+def generate_votes(election, voters, keys):
+    votes = []
+    for voter, _ in enumerate(voters):
+        v = gen_vote(election, voter, keys)
+        votes.append(v)
+    return votes

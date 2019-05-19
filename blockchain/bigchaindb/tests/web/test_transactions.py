@@ -1,5 +1,9 @@
+# Copyright BigchainDB GmbH and BigchainDB contributors
+# SPDX-License-Identifier: (Apache-2.0 AND CC-BY-4.0)
+# Code is Apache-2.0 and docs are CC-BY-4.0
+
 import json
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 import base58
 import pytest
@@ -12,18 +16,13 @@ from bigchaindb.common import crypto
 TX_ENDPOINT = '/api/v1/transactions/'
 
 
-@pytest.mark.bdb
-@pytest.mark.usefixtures('inputs')
-def test_get_transaction_endpoint(b, client, user_pk):
-    input_tx = b.get_owned_ids(user_pk).pop()
-    tx = b.get_transaction(input_tx.txid)
-    res = client.get(TX_ENDPOINT + tx.id)
-    assert tx.to_dict() == res.json
+@pytest.mark.abci
+def test_get_transaction_endpoint(client, posted_create_tx):
+    res = client.get(TX_ENDPOINT + posted_create_tx.id)
+    assert posted_create_tx.to_dict() == res.json
     assert res.status_code == 200
 
 
-@pytest.mark.bdb
-@pytest.mark.usefixtures('inputs')
 def test_get_transaction_returns_404_if_not_found(client):
     res = client.get(TX_ENDPOINT + '123')
     assert res.status_code == 404
@@ -32,7 +31,7 @@ def test_get_transaction_returns_404_if_not_found(client):
     assert res.status_code == 404
 
 
-@pytest.mark.bdb
+@pytest.mark.abci
 def test_post_create_transaction_endpoint(b, client):
     from bigchaindb.models import Transaction
     user_priv, user_pub = crypto.generate_key_pair()
@@ -48,6 +47,7 @@ def test_post_create_transaction_endpoint(b, client):
     assert res.json['outputs'][0]['public_keys'][0] == user_pub
 
 
+@pytest.mark.abci
 @pytest.mark.parametrize('nested', [False, True])
 @pytest.mark.parametrize('language,expected_status_code', [
     ('danish', 202), ('dutch', 202), ('english', 202), ('finnish', 202),
@@ -60,13 +60,12 @@ def test_post_create_transaction_endpoint(b, client):
     ('any', 400)
 ])
 @pytest.mark.language
-@pytest.mark.bdb
 def test_post_create_transaction_with_language(b, client, nested, language,
                                                expected_status_code):
     from bigchaindb.models import Transaction
-    from bigchaindb.backend.mongodb.connection import MongoDBConnection
+    from bigchaindb.backend.localmongodb.connection import LocalMongoDBConnection
 
-    if isinstance(b.connection, MongoDBConnection):
+    if isinstance(b.connection, LocalMongoDBConnection):
         user_priv, user_pub = crypto.generate_key_pair()
         lang_obj = {'language': language}
 
@@ -89,6 +88,7 @@ def test_post_create_transaction_with_language(b, client, nested, language,
             assert res.json['message'] == expected_error_message
 
 
+@pytest.mark.abci
 @pytest.mark.parametrize('field', ['asset', 'metadata'])
 @pytest.mark.parametrize('value,err_key,expected_status_code', [
     ({'bad.key': 'v'}, 'bad.key', 400),
@@ -98,14 +98,13 @@ def test_post_create_transaction_with_language(b, client, nested, language,
     ({'good_key': {'bad.key': 'v'}}, 'bad.key', 400),
     ({'good_key': 'v'}, 'good_key', 202)
 ])
-@pytest.mark.bdb
 def test_post_create_transaction_with_invalid_key(b, client, field, value,
                                                   err_key, expected_status_code):
     from bigchaindb.models import Transaction
-    from bigchaindb.backend.mongodb.connection import MongoDBConnection
+    from bigchaindb.backend.localmongodb.connection import LocalMongoDBConnection
     user_priv, user_pub = crypto.generate_key_pair()
 
-    if isinstance(b.connection, MongoDBConnection):
+    if isinstance(b.connection, LocalMongoDBConnection):
         if field == 'asset':
             tx = Transaction.create([user_pub], [([user_pub], 1)],
                                     asset=value)
@@ -116,6 +115,7 @@ def test_post_create_transaction_with_invalid_key(b, client, field, value,
         res = client.post(TX_ENDPOINT, data=json.dumps(tx.to_dict()))
 
         assert res.status_code == expected_status_code
+
         if res.status_code == 400:
             expected_error_message = (
                 'Invalid transaction (ValidationError): Invalid key name "{}" '
@@ -124,6 +124,7 @@ def test_post_create_transaction_with_invalid_key(b, client, field, value,
             assert res.json['message'] == expected_error_message
 
 
+@pytest.mark.abci
 @patch('bigchaindb.web.views.base.logger')
 def test_post_create_transaction_with_invalid_id(mock_logger, b, client):
     from bigchaindb.common.exceptions import InvalidHash
@@ -158,6 +159,7 @@ def test_post_create_transaction_with_invalid_id(mock_logger, b, client):
     # assert caplog.records[0].args['message'] == expected_error_message
 
 
+@pytest.mark.abci
 @patch('bigchaindb.web.views.base.logger')
 def test_post_create_transaction_with_invalid_signature(mock_logger,
                                                         b,
@@ -201,11 +203,13 @@ def test_post_create_transaction_with_invalid_signature(mock_logger,
     # assert caplog.records[0].args['message'] == expected_error_message
 
 
+@pytest.mark.abci
 def test_post_create_transaction_with_invalid_structure(client):
     res = client.post(TX_ENDPOINT, data='{}')
     assert res.status_code == 400
 
 
+@pytest.mark.abci
 @patch('bigchaindb.web.views.base.logger')
 def test_post_create_transaction_with_invalid_schema(mock_logger, client):
     from bigchaindb.models import Transaction
@@ -251,6 +255,7 @@ def test_post_create_transaction_with_invalid_schema(mock_logger, client):
     # assert caplog.records[0].args['message'] == expected_error_message
 
 
+@pytest.mark.abci
 @pytest.mark.parametrize('exc,msg', (
     ('AmountError', 'Do the math again!'),
     ('DoubleSpend', 'Nope! It is gone now!'),
@@ -259,7 +264,6 @@ def test_post_create_transaction_with_invalid_schema(mock_logger, client):
     ('ValidationError', 'Create and transfer!'),
     ('InputDoesNotExist', 'Hallucinations?'),
     ('TransactionOwnerError', 'Not yours!'),
-    ('TransactionNotInValidBlock', 'Wait, maybe?'),
     ('ValidationError', '?'),
 ))
 @patch('bigchaindb.web.views.base.logger')
@@ -270,10 +274,10 @@ def test_post_invalid_transaction(mock_logger, client, exc, msg, monkeypatch,):
     def mock_validation(self_, tx):
         raise exc_cls(msg)
 
+    TransactionMock = Mock(validate=mock_validation)
+
     monkeypatch.setattr(
-        'bigchaindb.Bigchain.validate_transaction', mock_validation)
-    monkeypatch.setattr(
-        'bigchaindb.models.Transaction.from_dict', lambda tx: None)
+        'bigchaindb.models.Transaction.from_dict', lambda tx: TransactionMock)
     res = client.post(TX_ENDPOINT, data=json.dumps({}))
     expected_status_code = 400
     expected_error_message = 'Invalid transaction ({}): {}'.format(exc, msg)
@@ -296,19 +300,13 @@ def test_post_invalid_transaction(mock_logger, client, exc, msg, monkeypatch,):
     # assert caplog.records[2].args['message'] == expected_error_message
 
 
-@pytest.mark.bdb
-@pytest.mark.usefixtures('inputs')
-def test_post_transfer_transaction_endpoint(b, client, user_pk, user_sk):
-    sk, pk = crypto.generate_key_pair()
+@pytest.mark.abci
+def test_post_transfer_transaction_endpoint(client, user_pk, user_sk, posted_create_tx):
     from bigchaindb.models import Transaction
 
-    user_priv, user_pub = crypto.generate_key_pair()
-
-    input_valid = b.get_owned_ids(user_pk).pop()
-    create_tx = b.get_transaction(input_valid.txid)
-    transfer_tx = Transaction.transfer(create_tx.to_inputs(),
-                                       [([user_pub], 1)],
-                                       asset_id=create_tx.id)
+    transfer_tx = Transaction.transfer(posted_create_tx.to_inputs(),
+                                       [([user_pk], 1)],
+                                       asset_id=posted_create_tx.id)
     transfer_tx = transfer_tx.sign([user_sk])
 
     res = client.post(TX_ENDPOINT, data=json.dumps(transfer_tx.to_dict()))
@@ -316,22 +314,17 @@ def test_post_transfer_transaction_endpoint(b, client, user_pk, user_sk):
     assert res.status_code == 202
 
     assert res.json['inputs'][0]['owners_before'][0] == user_pk
-    assert res.json['outputs'][0]['public_keys'][0] == user_pub
+    assert res.json['outputs'][0]['public_keys'][0] == user_pk
 
 
-@pytest.mark.bdb
-@pytest.mark.usefixtures('inputs')
-def test_post_invalid_transfer_transaction_returns_400(b, client, user_pk):
+@pytest.mark.abci
+def test_post_invalid_transfer_transaction_returns_400(client, user_pk, posted_create_tx):
     from bigchaindb.models import Transaction
     from bigchaindb.common.exceptions import InvalidSignature
 
-    user_pub = crypto.generate_key_pair()[1]
-
-    input_valid = b.get_owned_ids(user_pk).pop()
-    create_tx = b.get_transaction(input_valid.txid)
-    transfer_tx = Transaction.transfer(create_tx.to_inputs(),
-                                       [([user_pub], 1)],
-                                       asset_id=create_tx.id)
+    transfer_tx = Transaction.transfer(posted_create_tx.to_inputs(),
+                                       [([user_pk], 1)],
+                                       asset_id=posted_create_tx.id)
     transfer_tx._hash()
 
     res = client.post(TX_ENDPOINT, data=json.dumps(transfer_tx.to_dict()))
@@ -342,7 +335,31 @@ def test_post_invalid_transfer_transaction_returns_400(b, client, user_pk):
     assert res.json['message'] == expected_error_message
 
 
-@pytest.mark.tendermint
+@pytest.mark.abci
+def test_post_wrong_asset_division_transfer_returns_400(b, client, user_pk):
+    from bigchaindb.models import Transaction
+    from bigchaindb.common.exceptions import AmountError
+
+    priv_key, pub_key = crypto.generate_key_pair()
+
+    create_tx = Transaction.create([pub_key],
+                                   [([pub_key], 10)],
+                                   asset={'test': 'asset'}).sign([priv_key])
+    res = client.post(TX_ENDPOINT + '?mode=commit', data=json.dumps(create_tx.to_dict()))
+    assert res.status_code == 202
+
+    transfer_tx = Transaction.transfer(create_tx.to_inputs(),
+                                       [([pub_key], 20)],  # 20 > 10
+                                       asset_id=create_tx.id).sign([priv_key])
+    res = client.post(TX_ENDPOINT + '?mode=commit', data=json.dumps(transfer_tx.to_dict()))
+    expected_error_message = \
+        f'Invalid transaction ({AmountError.__name__}): ' + \
+        'The amount used in the inputs `10` needs to be same as the amount used in the outputs `20`'
+
+    assert res.status_code == 400
+    assert res.json['message'] == expected_error_message
+
+
 def test_transactions_get_list_good(client):
     from functools import partial
 
@@ -356,7 +373,7 @@ def test_transactions_get_list_good(client):
 
     asset_id = '1' * 64
 
-    with patch('bigchaindb.core.Bigchain.get_transactions_filtered', get_txs_patched):
+    with patch('bigchaindb.BigchainDB.get_transactions_filtered', get_txs_patched):
         url = TX_ENDPOINT + '?asset_id=' + asset_id
         assert client.get(url).json == [
             ['asset_id', asset_id],
@@ -369,11 +386,10 @@ def test_transactions_get_list_good(client):
         ]
 
 
-@pytest.mark.tendermint
 def test_transactions_get_list_bad(client):
     def should_not_be_called():
         assert False
-    with patch('bigchaindb.core.Bigchain.get_transactions_filtered',
+    with patch('bigchaindb.BigchainDB.get_transactions_filtered',
                lambda *_, **__: should_not_be_called()):
         # Test asset id validated
         url = TX_ENDPOINT + '?asset_id=' + '1' * 63
@@ -386,30 +402,6 @@ def test_transactions_get_list_bad(client):
         assert client.get(url).status_code == 400
 
 
-def test_return_only_valid_transaction(client):
-    from bigchaindb import Bigchain
-
-    def get_transaction_patched(status):
-        def inner(self, tx_id, include_status):
-            return {}, status
-        return inner
-
-    # NOTE: `get_transaction` only returns a transaction if it's included in an
-    #       UNDECIDED or VALID block, as well as transactions from the backlog.
-    #       As the endpoint uses `get_transaction`, we don't have to test
-    #       against invalid transactions here.
-    with patch('bigchaindb.core.Bigchain.get_transaction',
-               get_transaction_patched(Bigchain.TX_UNDECIDED)):
-        url = '{}{}'.format(TX_ENDPOINT, '123')
-        assert client.get(url).status_code == 404
-
-    with patch('bigchaindb.core.Bigchain.get_transaction',
-               get_transaction_patched(Bigchain.TX_IN_BACKLOG)):
-        url = '{}{}'.format(TX_ENDPOINT, '123')
-        assert client.get(url).status_code == 404
-
-
-@pytest.mark.tendermint
 @patch('requests.post')
 @pytest.mark.parametrize('mode', [
     ('', 'broadcast_tx_async'),
@@ -420,6 +412,12 @@ def test_return_only_valid_transaction(client):
 def test_post_transaction_valid_modes(mock_post, client, mode):
     from bigchaindb.models import Transaction
     from bigchaindb.common.crypto import generate_key_pair
+
+    def _mock_post(*args, **kwargs):
+        return Mock(json=Mock(return_value={'result': {'code': 0}}))
+
+    mock_post.side_effect = _mock_post
+
     alice = generate_key_pair()
     tx = Transaction.create([alice.public_key],
                             [([alice.public_key], 1)],
@@ -431,7 +429,7 @@ def test_post_transaction_valid_modes(mock_post, client, mode):
     assert mode[1] == kwargs['json']['method']
 
 
-@pytest.mark.tendermint
+@pytest.mark.abci
 def test_post_transaction_invalid_mode(client):
     from bigchaindb.models import Transaction
     from bigchaindb.common.crypto import generate_key_pair

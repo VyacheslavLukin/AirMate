@@ -1,3 +1,7 @@
+# Copyright BigchainDB GmbH and BigchainDB contributors
+# SPDX-License-Identifier: (Apache-2.0 AND CC-BY-4.0)
+# Code is Apache-2.0 and docs are CC-BY-4.0
+
 """Utility functions and basic common arguments
 for ``argparse.ArgumentParser``.
 """
@@ -10,7 +14,6 @@ import sys
 
 import bigchaindb
 import bigchaindb.config_utils
-from bigchaindb.log.setup import setup_logging
 from bigchaindb.version import __version__
 
 
@@ -45,32 +48,6 @@ def configure_bigchaindb(command):
         command(args)
 
     return configure
-
-
-def start_logging_process(command):
-    """Decorator to start the logging subscriber process.
-
-    Args:
-        command: The command to decorate.
-
-    Returns:
-        The command wrapper function.
-
-    .. important::
-
-        Configuration, if needed, should be applied before invoking this
-        decorator, as starting the subscriber process for logging will
-        configure the root logger for the child process based on the
-        state of :obj:`bigchaindb.config` at the moment this decorator
-        is invoked.
-
-    """
-    @functools.wraps(command)
-    def start_logging(args):
-        from bigchaindb import config
-        setup_logging(user_log_config=config.get('log'))
-        command(args)
-    return start_logging
 
 
 def _convert(value, default=None, convert=None):
@@ -170,7 +147,7 @@ base_parser.add_argument('-c', '--config',
 # the environment variables provided to configure the logger.
 base_parser.add_argument('-l', '--log-level',
                          type=str.upper,  # convert to uppercase for comparison to choices
-                         choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'],
+                         choices=['DEBUG', 'BENCHMARK', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'],
                          help='Log level')
 
 base_parser.add_argument('-y', '--yes', '--yes-please',

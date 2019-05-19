@@ -1,3 +1,9 @@
+<!---
+Copyright BigchainDB GmbH and BigchainDB contributors
+SPDX-License-Identifier: (Apache-2.0 AND CC-BY-4.0)
+Code is Apache-2.0 and docs are CC-BY-4.0
+--->
+
 # Notes on NTP Daemon Setup
 
 There are several NTP daemons available, including:
@@ -13,7 +19,7 @@ We suggest you run your NTP daemon in a mode which will tell your OS kernel to h
 
 Use the default mode with `ntpd` and `chronyd`. For another NTP daemon, consult its documentation.
 
-It's tricky to make an NTP daemon setup secure. Always install the latest version and read the documentation about how to configure and run it securely. See the [notes on firewall setup](firewall-notes.html).
+It's tricky to make an NTP daemon setup secure. Always install the latest version and read the documentation about how to configure and run it securely. See the [notes on firewall setup](firewall-notes).
 
 
 ## Amazon Linux Instances

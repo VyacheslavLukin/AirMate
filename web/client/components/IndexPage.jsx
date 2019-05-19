@@ -99,7 +99,7 @@ export default class IndexPage extends React.Component {
   }
 
   componentDidMount() {
-    makeApiGet("http://87.117.178.114:5000/get_sensors_list").then(data => {
+    makeApiGet(`${process.env.API_URL}/get_stations_list`).then(data => {
       this.map = new L.Map("map", {
         zoomControl: false,
         center: new L.LatLng(data[0].latitude, data[0].longitude),
@@ -142,35 +142,29 @@ export default class IndexPage extends React.Component {
 
   onMapClick(e) {
     const currentItem = this.state.data[e.target._icon.id];
-    // console.log(currentItem);
-    // console.log(e);
-
     makeApiGet(
-      `http://87.117.178.114:5000/get_sensor_data/${currentItem.id}`,
+      `${process.env.API_URL}/get_station_data/${currentItem.id}`,
     ).then(data => {
-      console.log(data);
+      let popupContent = `ID: ${currentItem.id}<br>`;
+      popupContent += `Transaction hash: ${currentItem.last_txid}<br>`;
+      popupContent += `Latitude: ${currentItem.latitude}<br>`;
+      popupContent += `Longitude: ${currentItem.longitude}<br>`;
 
-      let measures = JSON.parse(data.measures.data.location);
-      measures = measures.measures;
-      console.log(measures);
+      let measuresString = '';
 
-      let measuresString = "";
-
-      for (let i = 0; i < measures.length; i++) {
-        measuresString += `${measures[i].parameter}: ${measures[i].value} ${
-          measures[i].unit
-        }<br>`;
+      if (data.measurements) {
+        const measurements = data.measurements;
+        measurements.forEach(measurement => {
+          measuresString += `${measurement.parameter}: ${measurement.value} ${measurement.unit}<br>`;
+        });
+      } else {
+        measuresString = JSON.stringify(data);
       }
 
+      popupContent += measuresString;
       this.popup
         .setLatLng(e.target._latlng)
-        .setContent(
-          `ID: ${currentItem.id}<br>
-Transaction hash: ${data.transaction}<br>
-Latitude: ${currentItem.latitude}<br>
-Longitude: ${currentItem.longitude}<br>
-${measuresString}`,
-        )
+        .setContent(popupContent)
         .openOn(this.map);
     });
   }

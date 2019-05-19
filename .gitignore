@@ -3,3 +3,4 @@ web/node_modules/
 npm-debug.log
 web/public/dist/*
 **.pyc
+venv

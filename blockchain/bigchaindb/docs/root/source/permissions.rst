@@ -1,3 +1,10 @@
+
+.. Copyright BigchainDB GmbH and BigchainDB contributors
+   SPDX-License-Identifier: (Apache-2.0 AND CC-BY-4.0)
+   Code is Apache-2.0 and docs are CC-BY-4.0
+
+.. _permissions-in-bigchaindb:
+
 Permissions in BigchainDB
 -------------------------
 
@@ -15,8 +22,9 @@ To spend/transfer an unspent output, a user (or group of users) must fulfill the
 - "…three of these four people must sign."
 - "…either Bob must sign, or both Tom and Sylvia must sign."
 
-For details, see the section about conditions
-in the `IPDB Transaction Spec <https://github.com/ipdb/ipdb-tx-spec>`_.
+For details, see the section titled **Transaction Components: Conditions**
+in the relevant
+`BigchainDB Transactions Spec <https://github.com/bigchaindb/BEPs/tree/master/tx-specs/>`_.
 
 Once an output has been spent, it can't be spent again: *nobody* has permission to do that. That is, BigchainDB doesn't permit anyone to "double spend" an output.
 
@@ -52,20 +60,7 @@ You could do more elaborate things too. As one example, each time someone writes
 Read Permissions
 ================
 
-All the data stored in a BigchainDB network can be read by anyone with access to that network. One *can* store encrypted data, but if the decryption key ever leaks out, then the encrypted data can be read, decrypted, and leak out too. (Deleting the encrypted data is :doc:`not an option <immutable>`.)
-
-The permission to read some specific information (e.g. a music file) can be thought of as an *asset*. (In many countries, that permission or "right" is a kind of intellectual property.)
-BigchainDB can be used to register that asset and transfer it from owner to owner.
-Today, BigchainDB does not have a way to restrict read access of data stored in a BigchainDB network, but many third-party services do offer that (e.g. Google Docs, Dropbox). 
-In principle, a third party service could ask a BigchainDB network to determine if a particular user has permission to read some particular data. Indeed they could use BigchainDB to keep track of *all* the rights a user has for some data (not just the right to read it).
-That third party could also use BigchainDB to store audit logs, i.e. records of every read, write or other operation on stored data.
-
-BigchainDB can be used in other ways to help parties exchange private data:
-
-- It can be used to publicly disclose the *availability* of some private data (stored elsewhere). For example, there might be a description of the data and a price.
-- It can be used to record the TLS handshakes which two parties sent to each other to establish an encrypted and authenticated TLS connection, which they could use to exchange private data with each other. (The stored handshake information wouldn't be enough, by itself, to decrypt the data.) It would be a "proof of TLS handshake."
-- See the BigchainDB `Privacy Protocols repository <https://github.com/bigchaindb/privacy-protocols>`_ for more techniques.
-
+See the page titled, :doc:`BigchainDB, Privacy and Private Data <private-data>`.
 
 Role-Based Access Control (RBAC)
 ================================

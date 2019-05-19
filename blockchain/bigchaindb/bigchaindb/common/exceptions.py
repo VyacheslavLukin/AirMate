@@ -1,3 +1,7 @@
+# Copyright BigchainDB GmbH and BigchainDB contributors
+# SPDX-License-Identifier: (Apache-2.0 AND CC-BY-4.0)
+# Code is Apache-2.0 and docs are CC-BY-4.0
+
 """Custom exceptions used in the `bigchaindb` package.
 """
 from bigchaindb.exceptions import BigchainDBError
@@ -5,10 +9,6 @@ from bigchaindb.exceptions import BigchainDBError
 
 class ConfigurationError(BigchainDBError):
     """Raised when there is a problem with server configuration"""
-
-
-class DatabaseAlreadyExists(BigchainDBError):
-    """Raised when trying to create the database but the db is already there"""
 
 
 class DatabaseDoesNotExist(BigchainDBError):
@@ -21,10 +21,6 @@ class StartupError(BigchainDBError):
 
 class CyclicBlockchainError(BigchainDBError):
     """Raised when there is a cycle in the blockchain"""
-
-
-class KeypairNotFoundException(BigchainDBError):
-    """Raised if operation cannot proceed because the keypair was not given"""
 
 
 class KeypairMismatchException(BigchainDBError):
@@ -70,20 +66,6 @@ class InvalidSignature(ValidationError):
     """
 
 
-class ImproperVoteError(ValidationError):
-    """Raised if a vote is not constructed correctly, or signed incorrectly"""
-
-
-class MultipleVotesError(ValidationError):
-    """Raised if a voter has voted more than once"""
-
-
-class TransactionNotInValidBlock(ValidationError):
-    """Raised when a transfer transaction is attempting to fulfill the
-    outputs of a transaction that is in an invalid or undecided block
-    """
-
-
 class AssetIdMismatch(ValidationError):
     """Raised when multiple transaction inputs related to different assets"""
 
@@ -100,10 +82,6 @@ class TransactionOwnerError(ValidationError):
     """Raised if a user tries to transfer a transaction they don't own"""
 
 
-class SybilError(ValidationError):
-    """If a block or vote comes from an unidentifiable node"""
-
-
 class DuplicateTransaction(ValidationError):
     """Raised if a duplicated transaction is found"""
 
@@ -112,9 +90,25 @@ class ThresholdTooDeep(ValidationError):
     """Raised if threshold condition is too deep"""
 
 
-class GenesisBlockAlreadyExistsError(ValidationError):
-    """Raised when trying to create the already existing genesis block"""
-
-
 class MultipleValidatorOperationError(ValidationError):
     """Raised when a validator update pending but new request is submited"""
+
+
+class MultipleInputsError(ValidationError):
+    """Raised if there were multiple inputs when only one was expected"""
+
+
+class InvalidProposer(ValidationError):
+    """Raised if the public key is not a part of the validator set"""
+
+
+class UnequalValidatorSet(ValidationError):
+    """Raised if the validator sets differ"""
+
+
+class InvalidPowerChange(ValidationError):
+    """Raised if proposed power change in validator set is >=1/3 total power"""
+
+
+class InvalidPublicKey(ValidationError):
+    """Raised if public key doesn't match the encoding type"""

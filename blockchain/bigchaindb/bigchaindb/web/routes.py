@@ -1,3 +1,7 @@
+# Copyright BigchainDB GmbH and BigchainDB contributors
+# SPDX-License-Identifier: (Apache-2.0 AND CC-BY-4.0)
+# Code is Apache-2.0 and docs are CC-BY-4.0
+
 """API routes definition"""
 from flask_restful import Api
 from bigchaindb.web.views import (
@@ -7,7 +11,6 @@ from bigchaindb.web.views import (
     info,
     transactions as tx,
     outputs,
-    votes,
     validators,
 )
 
@@ -29,12 +32,11 @@ ROUTES_API_V1 = [
     r('/', info.ApiV1Index),
     r('assets/', assets.AssetListApi),
     r('metadata/', metadata.MetadataApi),
-    r('blocks/<string:block_id>', blocks.BlockApi),
+    r('blocks/<int:block_id>', blocks.BlockApi),
     r('blocks/', blocks.BlockListApi),
     r('transactions/<string:tx_id>', tx.TransactionApi),
     r('transactions', tx.TransactionListApi),
     r('outputs/', outputs.OutputListApi),
-    r('votes/', votes.VotesApi),
     r('validators/', validators.ValidatorsApi),
 ]
 
