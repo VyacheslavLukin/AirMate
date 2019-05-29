@@ -30,6 +30,9 @@ class BigchainHelper:
     def retrieve(self, transaction_id):
         return self.bdb.transactions.retrieve(transaction_id)
 
+    def search(self, string):
+        return self.bdb.bdb.assets.get(search=string)
+
 
 bdb = BigchainDB(BIGCHAIN_URL,
                  headers={'app_id': 'openaq_id', 'app_key': 'openaq_key'})
