@@ -49,9 +49,23 @@ def get_station_history(station_id):
     return resp
 
 
+@api.route('/get_nearest_station_data/<latitude>/<longitude>')
+def get_nearest_station_data(latitude, longitude):
+    station = get_nearest_station(latitude, longitude)
+    if station is None:
+        abort(404)
+
+    transaction = bdb_helper.retrieve(station.last_txid)
+    resp = Response(transaction['asset']['data']['station_data'], status=200, mimetype='application/json')
+    resp.headers['Access-Control-Allow-Origin'] = '*'
+    resp.headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS, PUT, PATCH, DELETE'
+    resp.headers['Access-Control-Allow-Headers'] = 'X-Requested-With,content-type'
+    resp.headers['Access-Control-Allow-Credentials'] = True
+    return resp
+
+
 @api.route('/get_data_by_date/<date>')
 def get_data_by_date(date):
-
     # date example: 2019-05-22T10:00:00.000Z
     row_data = bdb_helper.search(string=date)
     data = [asset['data']['station_data'] for asset in row_data]
@@ -63,6 +77,7 @@ def get_data_by_date(date):
     resp.headers['Access-Control-Allow-Credentials'] = True
     return resp
 
+
 @api.route('/get_stations_list')
 def get_stations_list():
     stations = get_list_of_available_stations()
@@ -72,7 +87,6 @@ def get_stations_list():
     resp.headers['Access-Control-Allow-Headers'] = 'X-Requested-With,content-type'
     resp.headers['Access-Control-Allow-Credentials'] = True
     return resp
-
 
 
 def get_list_of_available_stations():
@@ -86,3 +100,21 @@ def get_list_of_available_stations():
         }
         for station in stations
     ]
+
+
+def get_nearest_station(latitude, longitude):
+    station1 = Station.query.filter(Station.latitude > latitude).order_by(Station.latitude.asc()).first()
+    station2 = Station.query.filter(Station.latitude <= latitude).order_by(Station.latitude.desc()).first()
+    station3 = Station.query.filter(Station.longitude > longitude).order_by(Station.longitude.asc()).first()
+    station4 = Station.query.filter(Station.longitude <= longitude).order_by(Station.longitude.desc()).first()
+
+    candidates = [station1, station2, station3, station4]
+    closest_station = station1
+    distance = -1
+
+    for candidate in candidates:
+        temp_distance = pow(candidate.latitude - latitude, 2) + pow(candidate.longitude - longitude, 2)
+        if (distance < 0) or (distance > temp_distance):
+            closest_station = candidate
+
+    return closest_station
