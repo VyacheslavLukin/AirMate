@@ -30,16 +30,20 @@ def get_station_history(station_id):
     if station is None:
         abort(404)
 
-    # get the transaction mentioned in postgres
-    transaction = bdb_helper.retrieve(station.last_txid)
-
-    # retrieve the location information
-    location = transaction['asset']['data']['station_data']['location']
+    # create search string
+    search_string = str(station.latitude)+' '+str(station.longitude)
 
     # get all instances related to this location
-    history = bdb_helper.search(string=location)
+    history = bdb_helper.search(string=search_string)
 
-    data = [asset['data']['station_data'] for asset in history]
+    # get correct transactions (they will be the first ones)
+    data = []
+    for record in history:
+        if(abs(record['data']['station_data']['coordinates']['latitude'] - station.latitude) < 0.000001) and\
+                (abs(record['data']['station_data']['coordinates']['longitude'] - station.longitude) < 0.000001):
+            data.append(record['data']['station_data'])
+        else:
+            break
 
     resp = Response(json.dumps(data), status=200, mimetype='application/json')
     resp.headers['Access-Control-Allow-Origin'] = '*'
@@ -103,15 +107,20 @@ def get_list_of_available_stations():
 
 
 def get_nearest_station(latitude, longitude):
+
+    # stations close by latitude
     station1 = Station.query.filter(Station.latitude > latitude).order_by(Station.latitude.asc()).first()
     station2 = Station.query.filter(Station.latitude <= latitude).order_by(Station.latitude.desc()).first()
+    # stations close by longitude
     station3 = Station.query.filter(Station.longitude > longitude).order_by(Station.longitude.asc()).first()
     station4 = Station.query.filter(Station.longitude <= longitude).order_by(Station.longitude.desc()).first()
 
     candidates = [station1, station2, station3, station4]
     closest_station = station1
+    # distance from target point to candidate station
     distance = -1
 
+    # define the closest candidate
     for candidate in candidates:
         temp_distance = pow(candidate.latitude - latitude, 2) + pow(candidate.longitude - longitude, 2)
         if (distance < 0) or (distance > temp_distance):
