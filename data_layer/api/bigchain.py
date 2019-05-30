@@ -31,7 +31,7 @@ class BigchainHelper:
         return self.bdb.transactions.retrieve(transaction_id)
 
     def search(self, string):
-        return self.bdb.bdb.assets.get(search=string)
+        return self.bdb.assets.get(search=string)
 
 
 bdb = BigchainDB(BIGCHAIN_URL,
