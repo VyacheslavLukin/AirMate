@@ -46,8 +46,6 @@ def get_station_history(station_id):
 
         if(abs(station_data['coordinates']['latitude'] - station.latitude) < 0.000001) and\
                 (abs(station_data['coordinates']['longitude'] - station.longitude) < 0.000001):
-        # if (abs(record['data']['station_data'][len(record['data']['station_data'])-1][0] - station.latitude) < 0.000001) and \
-        #         (abs(record['data']['station_data'][len(record['data']['station_data'])-1][1] - station.longitude) < 0.000001):
             data.append(record['data']['station_data'])
         else:
             break
