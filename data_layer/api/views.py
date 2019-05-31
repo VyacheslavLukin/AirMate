@@ -120,9 +120,10 @@ def get_nearest_station(latitude, longitude):
     # distance from target point to candidate station
     distance = -1
 
+
     # define the closest candidate
     for candidate in candidates:
-        temp_distance = pow(candidate.latitude - latitude, 2) + pow(candidate.longitude - longitude, 2)
+        temp_distance = pow(candidate.latitude - float(latitude), 2) + pow(candidate.longitude - float(longitude), 2)
         if (distance < 0) or (distance > temp_distance):
             closest_station = candidate
 

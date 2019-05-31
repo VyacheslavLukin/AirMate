@@ -40,15 +40,15 @@ services:
     networks:
     - dev
 
-  minimax_watchdog:
-    build: data_layer
-    env_file: .env
-    restart: always
-    command: bash -c "cd third_party && python minimax_watchdog.py"
-    depends_on:
-    - db
-    networks:
-    - dev
+  # minimax_watchdog:
+  #   build: data_layer
+  #   env_file: .env
+  #   restart: always
+  #   command: bash -c "cd third_party && python minimax_watchdog.py"
+  #   depends_on:
+  #   - db
+  #   networks:
+  #   - dev
 
 networks:
   dev:
