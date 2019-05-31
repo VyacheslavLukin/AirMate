@@ -5,6 +5,7 @@ from flask import Response, Blueprint, abort
 from .db import Station
 from .bigchain import bdb_helper
 
+
 api = Blueprint('api', __name__)
 
 
@@ -16,11 +17,12 @@ def get_station_data(station_id):
 
     transaction = bdb_helper.retrieve(station.last_txid)
     resp = Response(transaction['asset']['data']['station_data'], status=200, mimetype='application/json')
-    resp.headers['Access-Control-Allow-Origin'] = '*'
+    resp.headers['Access-Control-Allow-Origin' \
+                 ''] = '*'
     resp.headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS, PUT, PATCH, DELETE'
     resp.headers['Access-Control-Allow-Headers'] = 'X-Requested-With,content-type'
     resp.headers['Access-Control-Allow-Credentials'] = True
-    return resp
+    return res
 
 
 @api.route('/get_station_history/<station_id>')
@@ -39,8 +41,13 @@ def get_station_history(station_id):
     # get correct transactions (they will be the first ones)
     data = []
     for record in history:
-        if(abs(record['data']['station_data']['coordinates']['latitude'] - station.latitude) < 0.000001) and\
-                (abs(record['data']['station_data']['coordinates']['longitude'] - station.longitude) < 0.000001):
+
+        station_data = json.loads(record['data']['station_data'])
+
+        if(abs(station_data['coordinates']['latitude'] - station.latitude) < 0.000001) and\
+                (abs(station_data['coordinates']['longitude'] - station.longitude) < 0.000001):
+        # if (abs(record['data']['station_data'][len(record['data']['station_data'])-1][0] - station.latitude) < 0.000001) and \
+        #         (abs(record['data']['station_data'][len(record['data']['station_data'])-1][1] - station.longitude) < 0.000001):
             data.append(record['data']['station_data'])
         else:
             break
