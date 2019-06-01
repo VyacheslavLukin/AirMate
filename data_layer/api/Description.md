@@ -2,7 +2,7 @@
 
 ### Methods
 #### GET /get_station_data/<station_id> - get the latest data from this station
-#### GET /get_nearest_station_data/<latitude>/<longitude> - get the data from nearest station
+#### GET /get_nearest_station_data/`<latitude>`/`<longitude>` - get the data from nearest station
 
 ##### Reponse
 ```
