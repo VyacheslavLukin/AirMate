@@ -22,7 +22,7 @@ def get_station_data(station_id):
     resp.headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS, PUT, PATCH, DELETE'
     resp.headers['Access-Control-Allow-Headers'] = 'X-Requested-With,content-type'
     resp.headers['Access-Control-Allow-Credentials'] = True
-    return res
+    return resp
 
 
 @api.route('/get_station_history/<station_id>')

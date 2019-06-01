@@ -1,6 +1,0 @@
-extends:
-  - eslint-config-with-prettier
-env:
-    browser: true
-rules:
-    linebreak-style: [off, 'windows']
