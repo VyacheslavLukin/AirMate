@@ -5,6 +5,17 @@ import axios from 'axios'
 
 export default class App extends Component {
 
+  constructor(props){
+    super(props);
+
+    this._mapRef = React.createRef();
+
+    this.setStartingViewport = this.setStartingViewport.bind(this);
+    this.handleLocation = this.handleLocation.bind(this);
+
+    this.handleLocation();
+  }
+
   state = {
     viewport: { //initial point is hardcoded
       latitude: 52.54304, 
@@ -17,48 +28,57 @@ export default class App extends Component {
     stations: []
   }
   
-  setViewport(newViewport) {
-    this.setState({
-      viewport: newViewport
-    })
-  } 
+  _onViewportChange = viewport => this.setState({viewport});
 
-  setSelectedStation(newSelectedStation) {
-    console.log("newSelectedStation: ", newSelectedStation);
-    // console.log("this.state.stations (setSelectedStation):", this.state.stations);
+  setStations = stations => this.setState({stations});
+
+  setSelectedStation(selectedStation) {
+    console.log("selectedStation: ", selectedStation);
    
-    if (newSelectedStation == null) {
-      this.setState({
-        selectedStation: null
-      })
+    if (selectedStation == null) {
+      this.setState({selectedStation}); //null
     } else {
-      let id = newSelectedStation['id'];
-      console.log('newSlectedStation id', id);
+      let id = selectedStation['id'];
       this.getStationInfoById(id).then(result => {
-        console.log("result.data", result.data);
         const stationInfo = result.data;
-        stationInfo.id = newSelectedStation.id;
+        stationInfo.id = selectedStation.id;
         stationInfo.latitude = stationInfo.coordinates.latitude;
         stationInfo.longitude = stationInfo.coordinates.longitude;
         delete stationInfo['coordinates'];
-        console.log('stationInfo', stationInfo);
         this.setState({
           selectedStation: stationInfo
-        }, console.log('this.state.selectedStation', this.state.selectedStation));
+        });
     });
     }  
-  }
-
-  setStations(newStations) {
-    this.setState({
-      stations: newStations
-    })
-    // console.log("this.state.stations (setStations):", this.state.stations);
   }
 
 
   getStationsList() {
     return axios.get(`${process.env.REACT_APP_API_URL}/get_stations_list`)
+  }
+
+  handleLocation() {
+    // TODO: check what happens if one blocks location
+    // upd: firefox is ok
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(this.setStartingViewport);
+    } else {
+      // x.innerHTML = "Geolocation is not supported by this browser.";
+    }
+  }
+
+  setStartingViewport(position) {
+    console.log('requested position', position);
+    this.setState({
+      viewport: {
+        latitude: position.coords.latitude,
+        longitude: position.coords.longitude,
+        width: "100vw",
+        height: "100vh",
+        zoom: 10
+      }
+    }, console.log('viewport', this.state.viewport));
+    
   }
 
   componentDidMount() {
@@ -71,7 +91,7 @@ export default class App extends Component {
     //   }
     // };  
     // document.addEventListener("keydown", listener, false);
-
+    
     this.getStationsList().then(stations => {
       console.log("stations.data", stations.data)
       this.setStations(stations.data)
@@ -122,19 +142,28 @@ export default class App extends Component {
     </div>
     return popupContent;
   }
+
+  _getMap = () => {
+    return this._mapRef.current ? this._mapRef.current.getMap() : null;
+  };  
   
+  // _onMapLoad = () => {
+  //   const map = this._getMap();
+  //   map.addSource(HEATMAP_SOURCE_ID, {type: 'geojson', data: response});
+  //   map.addLayer(this._mkHeatmapLayer('heatmap-layer', HEATMAP_SOURCE_ID));
+  // }
   
   
   render () {
+    
     return (
       <div>
         <ReactMapGL
           {...this.state.viewport}
           mapboxApiAccessToken={process.env.REACT_APP_MAPBOX_TOKEN}
           mapStyle="mapbox://styles/reshreshus/cjwamfl3205ry1cpptvzeyq1e"
-          onViewportChange={viewport => {
-            this.setViewport(viewport);
-          }}
+          onViewportChange={this._onViewportChange}
+          // onLoad={this._onMapLoad}
         >
           {this.state.stations.map(station => (
             <Marker
