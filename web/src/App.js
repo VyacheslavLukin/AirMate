@@ -1,7 +1,21 @@
 import React, {Component} from 'react';
-import ReactMapGL, {Marker, Popup} from 'react-map-gl';
+import ReactMapGL, {Marker, Popup, NavigationControl, FullscreenControl} from 'react-map-gl';
 import './App.css';
 import axios from 'axios';
+
+const fullscreenControlStyle = {
+  position: 'absolute',
+  top: 0,
+  left: 0,
+  padding: '10px'
+};
+
+const navStyle = {
+  position: 'absolute',
+  top: 36,
+  left: 0,
+  padding: '10px'
+};
 
 
 const HEATMAP_SOURCE_ID = 'o3';
@@ -270,7 +284,18 @@ export default class App extends Component {
           onViewportChange={this._onViewportChange}
           // onLoad={this._onMapLoad}
         >
-          <button onClick={this._onMapLoad}> test heatmap on o3 </button>
+          
+          <div className="fullscreen" style={fullscreenControlStyle}>
+          <FullscreenControl />
+          </div>
+          <div className="nav" style={navStyle}>
+            <NavigationControl />
+          </div>
+        <div>
+            <button style={{position: 'absolute', top: 10, left: 55, padding: '5px'}} onClick={this._onMapLoad}> test heatmap on o3 </button>
+        </div>
+
+
           {this.state.stations.map(station => (
               <Marker
                 key={station.id}
