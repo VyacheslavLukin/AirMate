@@ -97,6 +97,16 @@ def get_stations_list():
     resp.headers['Access-Control-Allow-Credentials'] = True
     return resp
 
+@api.route('/stations?parameter=<parameter>')
+def get_stations_data_by_parameter(parameter):
+    data = get_list_of_stations_with_data(parameter)
+    resp = Response(json.dumps(data), status=200, mimetype='application/json')
+    resp.headers['Access-Control-Allow-Origin'] = '*'
+    resp.headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS, PUT, PATCH, DELETE'
+    resp.headers['Access-Control-Allow-Headers'] = 'X-Requested-With,content-type'
+    resp.headers['Access-Control-Allow-Credentials'] = True
+    return resp
+
 
 def get_list_of_available_stations():
     stations = Station.query.all()
@@ -108,6 +118,21 @@ def get_list_of_available_stations():
             'last_txid': station.last_txid
         }
         for station in stations
+    ]
+
+def get_list_of_stations_with_data(parameter):
+    stations = Station.query.all()
+    return [
+        {
+            'id': station.id,
+            'latitude': station.latitude,
+            'longitude': station.longitude,
+            'last_txid': station.last_txid,
+             parameter: measurement['value']
+        }
+        for station in stations
+            for measurement in station.data['measurements']
+                if measurement['parameter'] == parameter
     ]
 
 
