@@ -97,7 +97,7 @@ def get_stations_list():
     resp.headers['Access-Control-Allow-Credentials'] = True
     return resp
 
-@api.route('/stations?parameter=<parameter>')
+@api.route('/stations/<parameter>')
 def get_stations_data_by_parameter(parameter):
     data = get_list_of_stations_with_data(parameter)
     resp = Response(json.dumps(data), status=200, mimetype='application/json')
@@ -131,7 +131,7 @@ def get_list_of_stations_with_data(parameter):
              parameter: measurement['value']
         }
         for station in stations
-            for measurement in station.data['measurements']
+            for measurement in json.loads(station.data)['measurements']
                 if measurement['parameter'] == parameter
     ]
 
