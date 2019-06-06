@@ -33,22 +33,34 @@ def get_station_history(station_id):
         abort(404)
 
     # create search string
-    search_string = str(station.latitude)+' '+str(station.longitude)
+    search_string = station_id
 
-    # get all instances related to this location
+    # get all instances related to this station
     history = bdb_helper.search(string=search_string)
+    data = [
+        record['data']['station_data']
+        for record in history
+            if json.loads(record['data']['station_data'])['location'] == station_id
+    ]
 
-    # get correct transactions (they will be the first ones)
-    data = []
-    for record in history:
 
-        station_data = json.loads(record['data']['station_data'])
 
-        if(abs(station_data['coordinates']['latitude'] - station.latitude) < 0.000001) and\
-                (abs(station_data['coordinates']['longitude'] - station.longitude) < 0.000001):
-            data.append(record['data']['station_data'])
-        else:
-            break
+    # search_string = str(station.latitude)+' '+str(station.longitude)
+    #
+    # # get all instances related to this location
+    # history = bdb_helper.search(string=search_string)
+    #
+    # # get correct transactions (they will be the first ones)
+    # data = []
+    # for record in history:
+    #
+    #     station_data = json.loads(record['data']['station_data'])
+    #
+    #     if(abs(station_data['coordinates']['latitude'] - station.latitude) < 0.000001) and\
+    #             (abs(station_data['coordinates']['longitude'] - station.longitude) < 0.000001):
+    #         data.append(record['data']['station_data'])
+    #     else:
+    #         break
 
     resp = Response(json.dumps(data), status=200, mimetype='application/json')
     resp.headers['Access-Control-Allow-Origin'] = '*'
@@ -57,6 +69,36 @@ def get_station_history(station_id):
     resp.headers['Access-Control-Allow-Credentials'] = True
     return resp
 
+@api.route('/get_station_history/<station_id>/<parameter>')
+def get_station_history_of_parameter(station_id, parameter):
+    # get station from postgres
+    station = Station.query.get(station_id)
+    if station is None:
+        abort(404)
+
+    # create search string
+    search_string = station_id
+
+    # get all instances related to this station
+    history = bdb_helper.search(string=search_string)
+    data = [
+        {
+            'value': measurement['value'],
+            'date': measurement['lastUpdated'],
+            'unit': measurement['unit'],
+            'sourceName': measurement['sourceName']
+        }
+        for record in history
+            for measurement in json.loads(record['data']['station_data'])['measurements']
+                if measurement['parameter'] == parameter and json.loads(record['data']['station_data'])['location'] == station_id
+    ]
+
+    resp = Response(json.dumps(data), status=200, mimetype='application/json')
+    resp.headers['Access-Control-Allow-Origin'] = '*'
+    resp.headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS, PUT, PATCH, DELETE'
+    resp.headers['Access-Control-Allow-Headers'] = 'X-Requested-With,content-type'
+    resp.headers['Access-Control-Allow-Credentials'] = True
+    return resp
 
 @api.route('/get_nearest_station_data/<latitude>/<longitude>')
 def get_nearest_station_data(latitude, longitude):
