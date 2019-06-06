@@ -1,9 +1,15 @@
 import axios from 'axios';
 
+const URL = process.env.REACT_APP_API_URL;
+
 export const getStationInfoById = (id) => {
-    return axios.get(`${process.env.REACT_APP_API_URL}/get_station_data/${id}`);
+    return axios.get(`${URL}/get_station_data/${id}`);
 }
 
 export const getStationsList = () => {
-    return axios.get(`${process.env.REACT_APP_API_URL}/get_stations_list`)
+    return axios.get(`${URL}/get_stations_list`);
+}
+
+export const getMeasurementsFromAllStations = (parameter) =>{
+    return axios.get(`${URL}/stations/${parameter}`);
 }

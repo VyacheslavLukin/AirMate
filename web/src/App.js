@@ -1,6 +1,6 @@
 import React, {Component} from 'react';
 import ReactMapGL, {Marker, Popup, NavigationControl, FullscreenControl} from 'react-map-gl';
-import {getStationInfoById, getStationsList} from './common/Api';
+import {getStationInfoById, getStationsList, getMeasurementsFromAllStations} from './common/Api';
 import {fullscreenControlStyle, navStyle, _mkHeatmapLayer} from './MapStyles';
 
 const HEATMAP_SOURCE_ID = 'o3';
@@ -130,53 +130,38 @@ export default class App extends Component {
   
   _onMapLoad = () => {
     const map = this._getMap();
-    let promises = []
-    let stations = this.state.stations;
-    for(let i = 0; i < stations.length; i++){
-      //TODO: this is just for experimenting
-      // in future, of course, a signle request will be used
-      let featurePromise = getStationInfoById(stations[i].id);
-      promises.push(featurePromise);
-    }
-
-    Promise.all(promises.map(p => p.catch(e => e))).then(
-      results => {
-        let features = []
-        for (let i = 0; i < results.length; i++){
-          if (results[i] && results[i].data && results[i].data.measurements){
-            console.log('results[i].data', results[i].data);
-            let measurements = results[i].data.measurements;
-            for (let j = 0; j < measurements.length; j++) {
-              if (measurements[j].parameter === "o3") {
-                let stationGeoFeature =  {
-                  "type": "Feature",
-                  "properties": {
-                    "paramater": measurements[j].value
-                  },
-                  "geometry": {
-                    "type": "Point",
-                    "coordinates": [
-                      stations[i].longitude,
-                      stations[i].latitude
-                      
-                    ]
-                  }
-                };
-                features.push(stationGeoFeature);
-              }
-            }
+    
+    // let stations = this.state.stations;
+    let features = []
+    getMeasurementsFromAllStations('o3').then(result => {
+      let stations = result.data;
+      stations.forEach(station => {
+        let stationGeoFeature =  {
+          "type": "Feature",
+          "properties": {
+            "paramater": station['o3']
+          },
+          "geometry": {
+            "type": "Point",
+            "coordinates": [
+              station.longitude,
+              station.latitude
+            ]
           }
-        }
-        console.log('features', features);
-        let data = {
-          "type": "FeatureCollection",
-          "features": features
-        }
+        };
+        features.push(stationGeoFeature);
+      });
 
-        console.log('data', data);
-        map.addSource(HEATMAP_SOURCE_ID, {type: 'geojson', data: data});
-        map.addLayer(_mkHeatmapLayer('heatmap-layer', HEATMAP_SOURCE_ID));
-      }); 
+      console.log('features', features);
+      let data = {
+        "type": "FeatureCollection",
+        "features": features
+      }
+
+      console.log('data', data);
+      map.addSource(HEATMAP_SOURCE_ID, {type: 'geojson', data: data});
+      map.addLayer(_mkHeatmapLayer('heatmap-layer', HEATMAP_SOURCE_ID));
+    });
   }
   
   render () { 
@@ -201,7 +186,7 @@ export default class App extends Component {
             <button style={{position: 'absolute', top: 10, left: 55, padding: '5px'}} onClick={this._onMapLoad}> test heatmap on o3 </button>
         </div>
 
-
+          
           {this.state.stations.map(station => (
               <Marker
                 key={station.id}
