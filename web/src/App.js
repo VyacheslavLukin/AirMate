@@ -1,22 +1,7 @@
 import React, {Component} from 'react';
 import ReactMapGL, {Marker, Popup, NavigationControl, FullscreenControl} from 'react-map-gl';
-import './App.css';
-import axios from 'axios';
-
-const fullscreenControlStyle = {
-  position: 'absolute',
-  top: 0,
-  left: 0,
-  padding: '10px'
-};
-
-const navStyle = {
-  position: 'absolute',
-  top: 36,
-  left: 0,
-  padding: '10px'
-};
-
+import {getStationInfoById, getStationsList} from './common/Api';
+import {fullscreenControlStyle, navStyle, _mkHeatmapLayer} from './MapStyles';
 
 const HEATMAP_SOURCE_ID = 'o3';
 
@@ -58,7 +43,7 @@ export default class App extends Component {
       this.setState({selectedStation}); //null
     } else {
       let id = selectedStation['id'];
-      this.getStationInfoById(id).then(result => {
+      getStationInfoById(id).then(result => {
         const stationInfo = result.data;
         stationInfo.id = selectedStation.id;
         stationInfo.latitude = stationInfo.coordinates.latitude;
@@ -71,19 +56,10 @@ export default class App extends Component {
     }  
   }
 
-
-  getStationsList() {
-    return axios.get(`${process.env.REACT_APP_API_URL}/get_stations_list`)
-  }
-
   handleLocation() {
-    // TODO: check what happens if one blocks location
-    // upd: firefox is ok
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(this.setStartingViewport);
-    } else {
-      // x.innerHTML = "Geolocation is not supported by this browser.";
-    }
+    } 
   }
 
   setStartingViewport(position) {
@@ -100,26 +76,13 @@ export default class App extends Component {
     
   }
 
-  componentDidMount() {
-    //Todo: close popup when escape is pressed. Not important
-    // and not complete. One has to remove the listener
-    // normally it is done in componentWillMount but it is deprecated..
-    // const listener = (e) => {
-    //   if (e.key === "Escape") {
-    //     this.setSelectedStation(null);
-    //   }
-    // };  
-    // document.addEventListener("keydown", listener, false);
-    
-    this.getStationsList().then(stations => {
+  componentDidMount() {  
+    getStationsList().then(stations => {
       console.log("stations.data", stations.data)
       this.setStations(stations.data)
     });
   }
 
-  getStationInfoById = (id) => {
-    return axios.get(`${process.env.REACT_APP_API_URL}/get_station_data/${id}`);
-  }
 
   getStationFromStateById = (id) => {
     console.log("this.state.stations (getStationFromStateById):", this.state.stations);
@@ -128,7 +91,7 @@ export default class App extends Component {
         return this.state.stations[i]
       }
     }
-    return null
+    return null;
   }
 
   getStationPopupText = (id) => {
@@ -166,14 +129,13 @@ export default class App extends Component {
   };  
   
   _onMapLoad = () => {
-    console.log('_onMapLoad');
     const map = this._getMap();
     let promises = []
     let stations = this.state.stations;
     for(let i = 0; i < stations.length; i++){
       //TODO: this is just for experimenting
       // in future, of course, a signle request will be used
-      let featurePromise = this.getStationInfoById(stations[i].id);
+      let featurePromise = getStationInfoById(stations[i].id);
       promises.push(featurePromise);
     }
 
@@ -213,65 +175,9 @@ export default class App extends Component {
 
         console.log('data', data);
         map.addSource(HEATMAP_SOURCE_ID, {type: 'geojson', data: data});
-        map.addLayer(this._mkHeatmapLayer('heatmap-layer', HEATMAP_SOURCE_ID));
+        map.addLayer(_mkHeatmapLayer('heatmap-layer', HEATMAP_SOURCE_ID));
       }); 
   }
-
-  // test mapbox heatmap on "o3"
-  _mkHeatmapLayer = (id, source) => {
-    // const MAX_ZOOM_LEVEL = 18;
-    return {
-      id,
-      type: 'heatmap',
-      source,
-      maxzoom: 15,
-      paint: {
-        // increase weight as diameter breast height increases
-        'heatmap-weight': {
-          property: 'paramater',
-          type: 'exponential',
-          stops: [
-            [1, 0],
-            [62, 1]
-          ]
-        },
-        // increase intensity as zoom level increases
-        'heatmap-intensity': {
-          stops: [
-            [11, 1],
-            [15, 3]
-          ]
-        },
-        // assign color values be applied to points depending on their density
-        'heatmap-color': [
-          'interpolate',
-          ['linear'],
-          ['heatmap-density'],
-          0, 'rgba(236,222,239,0)',
-          0.2, 'rgb(208,209,230)',
-          0.4, 'rgb(166,189,219)',
-          0.6, 'rgb(103,169,207)',
-          0.8, 'rgb(28,144,153)'
-        ],
-        // increase radius as zoom increases
-        'heatmap-radius': {
-          stops: [
-            [11, 15],
-            [15, 20]
-          ]
-        },
-        // decrease opacity to transition into the circle layer
-        'heatmap-opacity': {
-          default: 1,
-          stops: [
-            [14, 1],
-            [15, 0]
-          ]
-        },
-      }
-    };
-  }
-  
   
   render () { 
     return (
