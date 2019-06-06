@@ -170,7 +170,10 @@ def get_list_of_stations_with_data(parameter):
             'latitude': station.latitude,
             'longitude': station.longitude,
             'last_txid': station.last_txid,
-             parameter: measurement['value']
+             parameter: measurement['value'],
+            'date': measurement['lastUpdated'],
+            'unit': measurement['unit'],
+            'sourceName': measurement['sourceName']
         }
         for station in stations
             for measurement in json.loads(station.data)['measurements']
