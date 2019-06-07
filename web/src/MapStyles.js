@@ -40,12 +40,18 @@ export const _mkHeatmapLayer = (id, source) => {
         'interpolate',
         ['linear'],
         ['heatmap-density'],
-        0, 'rgba(236,222,239,0)',
-        0.2, 'rgb(208,209,230)',
-        0.4, 'rgb(166,189,219)',
-        0.6, 'rgb(103,169,207)',
-        0.8, 'rgb(28,144,153)'
-      ],
+        // 0, 'rgba(236,222,239,0)',
+        // 0.2, 'rgb(208,209,230)',
+        // 0.4, 'rgb(166,189,219)',
+        // 0.6, 'rgb(103,169,207)',
+        // 0.8, 'rgb(28,144,153)'
+        0, 'rgba(255,255,51,0)',
+        0.2, 'rgb(255,255,51)',
+        0.4, 'rgb(255,153,51)',
+        0.6, 'rgb(255,51,51)',
+        0.8, 'rgb(255,0,0)'
+      ]
+      ,
       // increase radius as zoom increases
       'heatmap-radius': {
         stops: [
