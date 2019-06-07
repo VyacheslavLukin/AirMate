@@ -3,7 +3,11 @@ import ReactMapGL, {Marker, Popup, NavigationControl, FullscreenControl} from 'r
 import {getStationInfoById, getStationsList, getMeasurementsFromAllStations} from './common/Api';
 import {fullscreenControlStyle, navStyle, _mkHeatmapLayer} from './MapStyles';
 
-const HEATMAP_SOURCE_ID = 'o3';
+// import SearchBar from './components/searchMaterialUI';
+import SearchBar from './components/SearchBar';
+
+import './App.css';
+const HEATMAP_SOURCE_ID = 'patameter_heatmap';
 
 export default class App extends Component {
 
@@ -15,7 +19,10 @@ export default class App extends Component {
     this.setStartingViewport = this.setStartingViewport.bind(this);
     this.handleLocation = this.handleLocation.bind(this);
 
-    this._onMapLoad = this._onMapLoad.bind(this);
+    // this._onMapLoad = this._onMapLoad.bind(this);
+    this.heatMapOnParamter = this.heatMapOnParamter.bind(this);
+
+    this.onCancelSearch = this.onCancelSearch.bind(this);
 
     this.handleLocation();
   }
@@ -29,7 +36,8 @@ export default class App extends Component {
       zoom: 10
     },
     selectedStation: null,
-    stations: []
+    stations: [],
+    heatmapIsOn: false
   }
   
   _onViewportChange = viewport => this.setState({viewport});
@@ -127,19 +135,31 @@ export default class App extends Component {
   _getMap = () => {
     return this._mapRef.current ? this._mapRef.current.getMap() : null;
   };  
+
+  onCancelSearch = () => {
+    if (this.state.heatmapIsOn) {
+      const map = this._getMap();
+      map.removeLayer('heatmap-layer');
+      map.removeSource(HEATMAP_SOURCE_ID);
+      this.setState({
+        heatmapIsOn: false
+      });
+    }
+  }
   
-  _onMapLoad = () => {
+  heatMapOnParamter = (parameter) => {
+    if (parameter === '') this.onCancelSearch();
     const map = this._getMap();
     
     // let stations = this.state.stations;
     let features = []
-    getMeasurementsFromAllStations('o3').then(result => {
+    getMeasurementsFromAllStations(parameter).then(result => {
       let stations = result.data;
       stations.forEach(station => {
         let stationGeoFeature =  {
           "type": "Feature",
           "properties": {
-            "paramater": station['o3']
+            "paramater": station[parameter]
           },
           "geometry": {
             "type": "Point",
@@ -159,8 +179,20 @@ export default class App extends Component {
       }
 
       console.log('data', data);
+      if (this.state.heatmapIsOn) {
+        
+        map.removeLayer('heatmap-layer');
+        map.removeSource(HEATMAP_SOURCE_ID);
+        
+        console.log('removed source');
+      } else {
+        this.setState({
+          heatmapIsOn: true
+        });
+        console.log('heatmapIsOn', this.state.heatmapIsOn);
+      }
       map.addSource(HEATMAP_SOURCE_ID, {type: 'geojson', data: data});
-      map.addLayer(_mkHeatmapLayer('heatmap-layer', HEATMAP_SOURCE_ID));
+        map.addLayer(_mkHeatmapLayer('heatmap-layer', HEATMAP_SOURCE_ID));
     });
   }
   
@@ -183,11 +215,12 @@ export default class App extends Component {
             <NavigationControl />
           </div>
         <div>
-            <button style={{position: 'absolute', top: 10, left: 55, padding: '5px'}} onClick={this._onMapLoad}> test heatmap on o3 </button>
+            {/* <button style={{position: 'absolute', top: 10, left: 55, padding: '5px'}} onClick={this._onMapLoad}> test heatmap on o3 </button> */}
         </div>
 
           
-          {this.state.stations.map(station => (
+          { !this.state.heatmapIsOn ?
+            this.state.stations.map(station => (
               <Marker
                 key={station.id}
                 latitude={station.latitude}
@@ -205,7 +238,7 @@ export default class App extends Component {
                   <img src="img/marker-icon.png" alt="marker icon" />
                 </button>
               </Marker>
-            ))}
+            )) : null}
   
           {this.state.selectedStation ? (
             
@@ -221,9 +254,14 @@ export default class App extends Component {
               </div>
             </Popup>
           ) : null}
+          <div className="search-parameters">
+            <SearchBar onRequestSearch={this.heatMapOnParamter} style={{marginLeft: 'auto'}} 
+            placeholder="Test heatmap on a paramter"
+            onCancelSearch={this.onCancelSearch}/>
+          </div>
+         
         </ReactMapGL>
       </div>
     ); 
   }
-  
 }
