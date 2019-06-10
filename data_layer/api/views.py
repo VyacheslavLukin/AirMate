@@ -142,6 +142,10 @@ def get_stations_list():
 @api.route('/stations/<parameter>')
 def get_stations_data_by_parameter(parameter):
     data = get_list_of_stations_with_data(parameter)
+    for i in range(len(data)):
+        if data[i]['unit'] == 'ppm':
+            data[i][parameter] = convert_ppm_to_ugm3(parameter, data[i][parameter])
+            data[i]['unit'] = '\\u00b5g/m\\u00b3'
     resp = Response(json.dumps(data), status=200, mimetype='application/json')
     resp.headers['Access-Control-Allow-Origin'] = '*'
     resp.headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS, PUT, PATCH, DELETE'
@@ -203,3 +207,27 @@ def get_nearest_station(latitude, longitude):
             closest_station = candidate
 
     return closest_station
+
+
+def convert_ppm_to_ugm3(parameter, ppm_value):
+
+    # The formula used : μg/m3 = ppm / (Vm/M) * 1000
+    # Where Vm is molar volume and M is molar mass
+
+    # define mm (molar mass)
+    if parameter == 'no2':
+        mm = 518.20206
+    elif parameter == 'o3':
+        mm = 47.99820
+    elif parameter == 'pm10':
+        mm = 1449.127490
+    elif parameter == 'pm25':
+        mm = 3622.818725
+    elif parameter == 'so2':
+        mm = 64.066
+    elif parameter == 'co':
+        mm = 58.9331950
+    else:
+        mm = 0.001
+
+    return ppm_value/(22.4/mm)*1000
