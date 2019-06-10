@@ -16,7 +16,7 @@ services:
     build: web
     restart: always
     ports:
-    - "80:3000"
+    - "80:8080"
     depends_on:
     - airmate_api
     networks:
