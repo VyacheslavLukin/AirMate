@@ -1,12 +1,17 @@
 import React, {Component} from 'react';
 import ReactMapGL, {Marker, Popup, NavigationControl, FullscreenControl} from 'react-map-gl';
 import {getStationInfoById, getStationsList, getMeasurementsFromAllStations} from './common/Api';
-import {fullscreenControlStyle, navStyle, _mkHeatmapLayer} from './MapStyles';
+import {fullscreenControlStyle, navStyle, heatmapLayer, cicrclesLayer} from './MapStyles';
+
+
+import MarkerIcon from './marker-icon.png';
 
 // import SearchBar from './components/searchMaterialUI';
 import SearchBar from './components/SearchBar';
 
-import './App.css';
+import style from './App.css';
+// require('style-loader!App.css');
+
 const HEATMAP_SOURCE_ID = 'patameter_heatmap';
 
 export default class App extends Component {
@@ -25,6 +30,8 @@ export default class App extends Component {
     this.onCancelSearch = this.onCancelSearch.bind(this);
 
     this.handleLocation();
+
+    console.log('mapbox token', process.env.REACT_APP_MAPBOX_TOKEN);
   }
 
   state = {
@@ -37,7 +44,8 @@ export default class App extends Component {
     },
     selectedStation: null,
     stations: [],
-    heatmapIsOn: false
+    overlayIsOn: false,
+    layerId: 'heatmap'
   }
   
   _onViewportChange = viewport => this.setState({viewport});
@@ -137,12 +145,12 @@ export default class App extends Component {
   };  
 
   onCancelSearch = () => {
-    if (this.state.heatmapIsOn) {
+    if (this.state.overlayIsOn) {
       const map = this._getMap();
       map.removeLayer('heatmap-layer');
       map.removeSource(HEATMAP_SOURCE_ID);
       this.setState({
-        heatmapIsOn: false
+        overlayIsOn: false
       });
     }
   }
@@ -179,20 +187,22 @@ export default class App extends Component {
       }
 
       console.log('data', data);
-      if (this.state.heatmapIsOn) {
+      if (this.state.overlayIsOn) {
         
         map.removeLayer('heatmap-layer');
+
         map.removeSource(HEATMAP_SOURCE_ID);
         
         console.log('removed source');
       } else {
         this.setState({
-          heatmapIsOn: true
+          overlayIsOn: true
         });
-        console.log('heatmapIsOn', this.state.heatmapIsOn);
+        console.log('overlayIsOn', this.state.overlayIsOn);
       }
       map.addSource(HEATMAP_SOURCE_ID, {type: 'geojson', data: data});
-        map.addLayer(_mkHeatmapLayer('heatmap-layer', HEATMAP_SOURCE_ID));
+      map.addLayer(heatmapLayer('heatmap-layer', HEATMAP_SOURCE_ID));
+      // map.addLayer(cicrclesLayer(this.state.layerId, HEATMAP_SOURCE_ID));
     });
   }
   
@@ -205,7 +215,6 @@ export default class App extends Component {
           mapboxApiAccessToken={process.env.REACT_APP_MAPBOX_TOKEN}
           mapStyle="mapbox://styles/reshreshus/cjwamfl3205ry1cpptvzeyq1e"
           onViewportChange={this._onViewportChange}
-          // onLoad={this._onMapLoad}
         >
           
           <div className="fullscreen" style={fullscreenControlStyle}>
@@ -219,7 +228,7 @@ export default class App extends Component {
         </div>
 
           
-          { !this.state.heatmapIsOn ?
+          { !this.state.overlayIsOn ?
             this.state.stations.map(station => (
               <Marker
                 key={station.id}
@@ -227,7 +236,7 @@ export default class App extends Component {
                 longitude={station.longitude}
               >
                 <button
-                  className="marker-btn"
+                  className={style["marker-btn"]}
                   onClick={e => {
                     e.preventDefault();
                     // set selected station or close it if clicked for the 2nd time
@@ -235,7 +244,7 @@ export default class App extends Component {
                       ? this.setSelectedStation(null) : this.setSelectedStation(station)
                   }}
                 >
-                  <img src="img/marker-icon.png" alt="marker icon" />
+                  <img src={MarkerIcon} alt="marker icon" />
                 </button>
               </Marker>
             )) : null}
@@ -254,7 +263,7 @@ export default class App extends Component {
               </div>
             </Popup>
           ) : null}
-          <div className="search-parameters">
+          <div className={style["search-parameters"]}>
             <SearchBar onRequestSearch={this.heatMapOnParamter} style={{marginLeft: 'auto'}} 
             placeholder="Test heatmap on a paramter"
             onCancelSearch={this.onCancelSearch}/>
