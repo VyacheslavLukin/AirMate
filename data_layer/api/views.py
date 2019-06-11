@@ -5,7 +5,6 @@ from flask import Response, Blueprint, abort
 from .db import Station
 from .bigchain import bdb_helper
 
-
 api = Blueprint('api', __name__)
 
 
@@ -40,10 +39,8 @@ def get_station_history(station_id):
     data = [
         record['data']['station_data']
         for record in history
-            if json.loads(record['data']['station_data'])['location'] == station_id
+        if json.loads(record['data']['station_data'])['location'] == station_id
     ]
-
-
 
     # search_string = str(station.latitude)+' '+str(station.longitude)
     #
@@ -69,6 +66,7 @@ def get_station_history(station_id):
     resp.headers['Access-Control-Allow-Credentials'] = True
     return resp
 
+
 @api.route('/get_station_history/<station_id>/<parameter>')
 def get_station_history_of_parameter(station_id, parameter):
     # get station from postgres
@@ -89,8 +87,9 @@ def get_station_history_of_parameter(station_id, parameter):
             'sourceName': measurement['sourceName']
         }
         for record in history
-            for measurement in json.loads(record['data']['station_data'])['measurements']
-                if measurement['parameter'] == parameter and json.loads(record['data']['station_data'])['location'] == station_id
+        for measurement in json.loads(record['data']['station_data'])['measurements']
+        if
+        measurement['parameter'] == parameter and json.loads(record['data']['station_data'])['location'] == station_id
     ]
 
     resp = Response(json.dumps(data), status=200, mimetype='application/json')
@@ -99,6 +98,7 @@ def get_station_history_of_parameter(station_id, parameter):
     resp.headers['Access-Control-Allow-Headers'] = 'X-Requested-With,content-type'
     resp.headers['Access-Control-Allow-Credentials'] = True
     return resp
+
 
 @api.route('/get_nearest_station_data/<latitude>/<longitude>')
 def get_nearest_station_data(latitude, longitude):
@@ -139,6 +139,7 @@ def get_stations_list():
     resp.headers['Access-Control-Allow-Credentials'] = True
     return resp
 
+
 @api.route('/stations/<parameter>')
 def get_stations_data_by_parameter(parameter):
     data = get_list_of_stations_with_data(parameter)
@@ -153,6 +154,15 @@ def get_stations_data_by_parameter(parameter):
     resp.headers['Access-Control-Allow-Credentials'] = True
     return resp
 
+@api.route('/get_parameters_list')
+def get_parameters_list():
+    parameters = get_list_of_parameters()
+    resp = Response(json.dumps(parameters), status=200, mimetype='application/json')
+    resp.headers['Access-Control-Allow-Origin'] = '*'
+    resp.headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS, PUT, PATCH, DELETE'
+    resp.headers['Access-Control-Allow-Headers'] = 'X-Requested-With,content-type'
+    resp.headers['Access-Control-Allow-Credentials'] = True
+    return resp
 
 def get_list_of_available_stations():
     stations = Station.query.all()
@@ -166,6 +176,7 @@ def get_list_of_available_stations():
         for station in stations
     ]
 
+
 def get_list_of_stations_with_data(parameter):
     stations = Station.query.all()
     return [
@@ -174,19 +185,18 @@ def get_list_of_stations_with_data(parameter):
             'latitude': station.latitude,
             'longitude': station.longitude,
             'last_txid': station.last_txid,
-             parameter: measurement['value'],
+            parameter: measurement['value'],
             'date': measurement['lastUpdated'],
             'unit': measurement['unit'],
             'sourceName': measurement['sourceName']
         }
         for station in stations
-            for measurement in json.loads(station.data)['measurements']
-                if measurement['parameter'] == parameter
+        for measurement in json.loads(station.data)['measurements']
+        if measurement['parameter'] == parameter
     ]
 
 
 def get_nearest_station(latitude, longitude):
-
     # stations close by latitude
     station1 = Station.query.filter(Station.latitude > latitude).order_by(Station.latitude.asc()).first()
     station2 = Station.query.filter(Station.latitude <= latitude).order_by(Station.latitude.desc()).first()
@@ -199,7 +209,6 @@ def get_nearest_station(latitude, longitude):
     # distance from target point to candidate station
     distance = -1
 
-
     # define the closest candidate
     for candidate in candidates:
         temp_distance = pow(candidate.latitude - float(latitude), 2) + pow(candidate.longitude - float(longitude), 2)
@@ -210,7 +219,6 @@ def get_nearest_station(latitude, longitude):
 
 
 def convert_ppm_to_ugm3(parameter, ppm_value):
-
     # The formula used : μg/m3 = ppm / (Vm/M) * 1000
     # Where Vm is molar volume and M is molar mass
 
@@ -230,4 +238,19 @@ def convert_ppm_to_ugm3(parameter, ppm_value):
     else:
         mm = 0.001
 
-    return ppm_value/(22.4/mm)*1000
+    return ppm_value / (22.4 / mm) * 1000
+
+
+def get_list_of_parameters():
+    stations = Station.query.all()
+    params = []
+    for station in stations:
+        for measurement in json.loads(station.data)['measurements']:
+            if not (measurement['parameter'] in params):
+                params.append(measurement['parameter'])
+    return [
+        {
+            'parameter': parameter
+        }
+        for parameter in params
+    ]
