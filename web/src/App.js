@@ -1,6 +1,6 @@
 import React, {Component} from 'react';
 import ReactMapGL, {Marker, Popup, NavigationControl, FullscreenControl} from 'react-map-gl';
-import {getStationInfoById, getStationsList} from './common/Api';
+import {getStationInfoById, getStationsList, getParametersList} from './common/Api';
 import {fullscreenControlStyle, navStyle, cicrclesLayer} from './MapStyles';
 
 import {heatmapOnParameter, removeHeatmap, HEATMAP_LAYER} from './layers/Heatmap';
@@ -8,6 +8,7 @@ import {heatmapOnParameter, removeHeatmap, HEATMAP_LAYER} from './layers/Heatmap
 import MarkerIcon from './marker-icon.png';
 
 import SearchBar from './components/SearchBar';
+import RadioButtons from './components/RadioButtons';
 
 import style from './App.css';
 
@@ -33,7 +34,8 @@ export default class App extends Component {
     },
     selectedStation: null,
     stations: [],
-    currentLayer: null
+    currentLayer: null,
+    parameters: null
   }
   
   _onViewportChange = viewport => this.setState({viewport});
@@ -78,9 +80,19 @@ export default class App extends Component {
   }
 
   componentDidMount() {  
-    getStationsList().then(stations => {
-      this.setStations(stations.data)
+    getStationsList().then(result => {
+      this.setStations(result.data)
     });
+
+    getParametersList().then(result => {
+      const parametersDict = result.data;
+      const parameters = [];
+      parametersDict.forEach(entry => {
+          parameters.push(entry.parameter);
+      });
+      parameters.push('-');
+      this.setState({ parameters });
+    })
   }
 
 
@@ -146,6 +158,16 @@ export default class App extends Component {
     removeHeatmap(map);
     heatmapOnParameter(parameter, map);
   }
+
+  changeParameter = (parameter) => {
+    if (parameter === '-'){
+      this.onCancelSearch();
+    } else {
+      this.toggleHeatmap(parameter);
+    }
+  }
+
+  
   
   render () { 
     return (
@@ -207,8 +229,15 @@ export default class App extends Component {
           ) : null}
           <div className={style["search-parameters"]}>
             <SearchBar onRequestSearch={this.toggleHeatmap} style={{marginLeft: 'auto'}} 
-            placeholder="Test heatmap on a paramter"
+            placeholder="Test heatmap on a parameter"
             onCancelSearch={this.onCancelSearch}/>
+            {this.state.parameters ? 
+            <div style={{backgroundColor:'white', marginTop: '1em'}}>
+              <RadioButtons parameters={this.state.parameters}
+              changeParameter={this.changeParameter}
+            /> 
+            </div>
+            : null}
           </div>
          
         </ReactMapGL>
