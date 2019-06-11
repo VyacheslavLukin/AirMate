@@ -1,37 +1,26 @@
 import React, {Component} from 'react';
 import ReactMapGL, {Marker, Popup, NavigationControl, FullscreenControl} from 'react-map-gl';
-import {getStationInfoById, getStationsList, getMeasurementsFromAllStations} from './common/Api';
-import {fullscreenControlStyle, navStyle, heatmapLayer, cicrclesLayer} from './MapStyles';
+import {getStationInfoById, getStationsList} from './common/Api';
+import {fullscreenControlStyle, navStyle, cicrclesLayer} from './MapStyles';
 
+import {heatmapOnParameter, removeHeatmap, HEATMAP_LAYER} from './layers/Heatmap';
 
 import MarkerIcon from './marker-icon.png';
 
-// import SearchBar from './components/searchMaterialUI';
 import SearchBar from './components/SearchBar';
 
 import style from './App.css';
-// require('style-loader!App.css');
-
-const HEATMAP_SOURCE_ID = 'patameter_heatmap';
 
 export default class App extends Component {
 
   constructor(props){
     super(props);
-
     this._mapRef = React.createRef();
-
     this.setStartingViewport = this.setStartingViewport.bind(this);
     this.handleLocation = this.handleLocation.bind(this);
-
-    // this._onMapLoad = this._onMapLoad.bind(this);
-    this.heatMapOnParamter = this.heatMapOnParamter.bind(this);
-
+    this.toggleHeatmap = this.toggleHeatmap.bind(this);
     this.onCancelSearch = this.onCancelSearch.bind(this);
-
     this.handleLocation();
-
-    console.log('mapbox token', process.env.REACT_APP_MAPBOX_TOKEN);
   }
 
   state = {
@@ -44,8 +33,7 @@ export default class App extends Component {
     },
     selectedStation: null,
     stations: [],
-    overlayIsOn: false,
-    layerId: 'heatmap'
+    currentLayer: null
   }
   
   _onViewportChange = viewport => this.setState({viewport});
@@ -53,8 +41,6 @@ export default class App extends Component {
   setStations = stations => this.setState({stations});
 
   setSelectedStation(selectedStation) {
-    console.log("selectedStation: ", selectedStation);
-   
     if (selectedStation == null) {
       this.setState({selectedStation}); //null
     } else {
@@ -79,7 +65,6 @@ export default class App extends Component {
   }
 
   setStartingViewport(position) {
-    console.log('requested position', position);
     this.setState({
       viewport: {
         latitude: position.coords.latitude,
@@ -88,20 +73,18 @@ export default class App extends Component {
         height: "100vh",
         zoom: 10
       }
-    }, console.log('viewport', this.state.viewport));
+    });
     
   }
 
   componentDidMount() {  
     getStationsList().then(stations => {
-      console.log("stations.data", stations.data)
       this.setStations(stations.data)
     });
   }
 
 
   getStationFromStateById = (id) => {
-    console.log("this.state.stations (getStationFromStateById):", this.state.stations);
     for (let i = 0; i < this.state.stations.length; i++){
       if (this.state.stations[i]['id'] === id) {
         return this.state.stations[i]
@@ -112,8 +95,6 @@ export default class App extends Component {
 
   getStationPopupText = (id) => {
     const currentItem = this.getStationFromStateById(id);
-
-    console.log("currentItem", currentItem);
     if (currentItem == null) {
       return "No info";
     }
@@ -125,10 +106,8 @@ export default class App extends Component {
       data.measurements.forEach(measurement => {
         measurements.push(<div key={measurement.parameter}> {measurement.parameter}: {measurement.value} {measurement.unit} </div>); 
       });
-    } else {
-      //TODO
-      // measuresString = JSON.stringify(data);
     }
+
      let popupContent = 
     <div key={currentItem.last_txid}>  
       ID: {currentItem.id} <br/>
@@ -144,66 +123,28 @@ export default class App extends Component {
     return this._mapRef.current ? this._mapRef.current.getMap() : null;
   };  
 
+  // supposed to be only for heatmap for now
   onCancelSearch = () => {
-    if (this.state.overlayIsOn) {
-      const map = this._getMap();
-      map.removeLayer('heatmap-layer');
-      map.removeSource(HEATMAP_SOURCE_ID);
+    if (this.state.currentLayer == HEATMAP_LAYER) {
+      removeHeatmap(this._getMap());
       this.setState({
-        overlayIsOn: false
+        currentLayer: null
       });
     }
   }
-  
-  heatMapOnParamter = (parameter) => {
-    if (parameter === '') this.onCancelSearch();
-    const map = this._getMap();
-    
-    // let stations = this.state.stations;
-    let features = []
-    getMeasurementsFromAllStations(parameter).then(result => {
-      let stations = result.data;
-      stations.forEach(station => {
-        let stationGeoFeature =  {
-          "type": "Feature",
-          "properties": {
-            "paramater": station[parameter]
-          },
-          "geometry": {
-            "type": "Point",
-            "coordinates": [
-              station.longitude,
-              station.latitude
-            ]
-          }
-        };
-        features.push(stationGeoFeature);
-      });
 
-      console.log('features', features);
-      let data = {
-        "type": "FeatureCollection",
-        "features": features
-      }
-
-      console.log('data', data);
-      if (this.state.overlayIsOn) {
-        
-        map.removeLayer('heatmap-layer');
-
-        map.removeSource(HEATMAP_SOURCE_ID);
-        
-        console.log('removed source');
-      } else {
-        this.setState({
-          overlayIsOn: true
-        });
-        console.log('overlayIsOn', this.state.overlayIsOn);
-      }
-      map.addSource(HEATMAP_SOURCE_ID, {type: 'geojson', data: data});
-      map.addLayer(heatmapLayer('heatmap-layer', HEATMAP_SOURCE_ID));
-      // map.addLayer(cicrclesLayer(this.state.layerId, HEATMAP_SOURCE_ID));
+  toggleHeatmap = parameter => {
+    if (parameter === '') {
+      this.onCancelSearch();
+      return;
+    }
+    this.setState({
+      currentLayer: HEATMAP_LAYER
     });
+
+    const map = this._getMap();
+    removeHeatmap(map);
+    heatmapOnParameter(parameter, map);
   }
   
   render () { 
@@ -227,8 +168,9 @@ export default class App extends Component {
             {/* <button style={{position: 'absolute', top: 10, left: 55, padding: '5px'}} onClick={this._onMapLoad}> test heatmap on o3 </button> */}
         </div>
 
-          
-          { !this.state.overlayIsOn ?
+          {  }
+          { (this.state.currentLayer == null) ?
+            (
             this.state.stations.map(station => (
               <Marker
                 key={station.id}
@@ -246,7 +188,7 @@ export default class App extends Component {
                 >
                   <img src={MarkerIcon} alt="marker icon" />
                 </button>
-              </Marker>
+              </Marker>)
             )) : null}
   
           {this.state.selectedStation ? (
@@ -264,7 +206,7 @@ export default class App extends Component {
             </Popup>
           ) : null}
           <div className={style["search-parameters"]}>
-            <SearchBar onRequestSearch={this.heatMapOnParamter} style={{marginLeft: 'auto'}} 
+            <SearchBar onRequestSearch={this.toggleHeatmap} style={{marginLeft: 'auto'}} 
             placeholder="Test heatmap on a paramter"
             onCancelSearch={this.onCancelSearch}/>
           </div>
