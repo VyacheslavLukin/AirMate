@@ -9,6 +9,7 @@ services:
   # Run: docker-compose run -d bdb
   mongodb:
     image: mongo:3.6
+    restart: always
     ports:
       - "27017:27017"
     command: mongod
@@ -19,6 +20,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile-dev
+    restart: always
     volumes:
       - ./bigchaindb:/usr/src/app/bigchaindb
       - ./tests:/usr/src/app/tests
@@ -49,6 +51,7 @@ services:
     command: '.ci/entrypoint.sh'
   tendermint:
     image: tendermint/tendermint:0.22.8
+    restart: always
     # volumes:
     #   - ./tmdata:/tendermint
     entrypoint: ''
