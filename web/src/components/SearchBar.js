@@ -10,7 +10,9 @@ import withStyles from '@material-ui/core/styles/withStyles'
 import classNames from 'classnames'
 
 // from https://github.com/TeamWertarbyte/material-ui-search-bar
-
+/* <SearchBar onRequestSearch={this.toggleHeatmap} style={{marginLeft: 'auto'}} 
+            placeholder="Test heatmap on a parameter"
+            onCancelSearch={this.onCancelSearch}/> */
 
 const styles = {
   root: {

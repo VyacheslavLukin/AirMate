@@ -6,7 +6,7 @@ import FormControl from '@material-ui/core/FormControl';
 import FormLabel from '@material-ui/core/FormLabel';
 
 export default function RadioButtons(props) {
-  const [value, setValue] = React.useState('female');
+  const [value, setValue] = React.useState('parameter');
 
   function handleChange(event) {
     setValue(event.target.value);
