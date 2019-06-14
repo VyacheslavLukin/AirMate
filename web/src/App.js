@@ -1,14 +1,17 @@
 import React, {Component} from 'react';
-import ReactMapGL, {Marker, Popup, NavigationControl, FullscreenControl} from 'react-map-gl';
+import ReactMapGL, {Marker, Popup, NavigationControl, FullscreenControl, FlyToInterpolator} from 'react-map-gl';
 import {getStationInfoById, getStationsList, getParametersList} from './common/Api';
 import {fullscreenControlStyle, navStyle, cicrclesLayer} from './MapStyles';
 
 import {heatmapOnParameter, removeHeatmap, HEATMAP_LAYER} from './layers/Heatmap';
+import {MARKERS_LAYER} from './layers/Markers';
+import {addCountiesLayer, _onHover, _getCursor} from './layers/Countries';
 
 import MarkerIcon from './marker-icon.png';
 
 import SearchBar from './components/SearchBar';
 import RadioButtons from './components/RadioButtons';
+import ControlPanel from './components/ControlPanel';
 
 import style from './App.css';
 
@@ -35,7 +38,9 @@ export default class App extends Component {
     selectedStation: null,
     stations: [],
     currentLayer: null,
-    parameters: null
+    parameters: null,
+    layers: ['heatmap', 'markers'],
+    currentParameter: null
   }
   
   _onViewportChange = viewport => this.setState({viewport});
@@ -93,6 +98,12 @@ export default class App extends Component {
       parameters.push('-');
       this.setState({ parameters });
     })
+
+    
+  }
+
+  _onMapLoad = () => {
+    addCountiesLayer(this._getMap());
   }
 
 
@@ -167,6 +178,34 @@ export default class App extends Component {
     }
   }
 
+  changeLayer = (layer) => {
+    if (layer === HEATMAP_LAYER) {
+      this.toggleHeatmap(this.state.currentParameter);
+    } else if (layer === MARKERS_LAYER) {
+      //TODO
+    }
+  }
+
+  onMarkerClick = (e, station) => {
+    e.preventDefault();
+    // set selected station or close it if clicked for the 2nd time
+    (this.state.selectedStation && station.id === this.state.selectedStation.id) 
+      ? this.setSelectedStation(null) : this.setSelectedStation(station)
+  } 
+
+  _onClick = event => {
+    if (this._getMap().getZoom() <= 5) {
+      console.log('event', event);
+      let [longitude, latitude] = event.lngLat;
+      this._onViewportChange({
+        longitude, 
+        latitude,
+        zoom: 6,
+        transitionInterpolator: new FlyToInterpolator(),
+        transitionDuration: 3000
+      });
+    }
+  }
   
   
   render () { 
@@ -178,6 +217,12 @@ export default class App extends Component {
           mapboxApiAccessToken={process.env.REACT_APP_MAPBOX_TOKEN}
           mapStyle="mapbox://styles/reshreshus/cjwamfl3205ry1cpptvzeyq1e"
           onViewportChange={this._onViewportChange}
+          onClick={this._onClick}
+          onLoad={this._onMapLoad}
+          onHover={_onHover(this._getMap)}
+          //TODO: https://uber.github.io/react-map-gl/#/Examples/custom-cursor
+          getCursor={this._getCursor}
+          interactiveLayerIds={['states-layer']}
         >
           
           <div className="fullscreen" style={fullscreenControlStyle}>
@@ -189,9 +234,7 @@ export default class App extends Component {
         <div>
             {/* <button style={{position: 'absolute', top: 10, left: 55, padding: '5px'}} onClick={this._onMapLoad}> test heatmap on o3 </button> */}
         </div>
-
-          {  }
-          { (this.state.currentLayer == null) ?
+          { (this.state.currentLayer == null && this._getMap() && this._getMap().getZoom() > 5) ?
             (
             this.state.stations.map(station => (
               <Marker
@@ -201,12 +244,7 @@ export default class App extends Component {
               >
                 <button
                   className={style["marker-btn"]}
-                  onClick={e => {
-                    e.preventDefault();
-                    // set selected station or close it if clicked for the 2nd time
-                    (this.state.selectedStation && station.id===this.state.selectedStation.id) 
-                      ? this.setSelectedStation(null) : this.setSelectedStation(station)
-                  }}
+                  onClick={(e) => this.onMarkerClick(e, station)}
                 >
                   <img src={MarkerIcon} alt="marker icon" />
                 </button>
@@ -227,18 +265,14 @@ export default class App extends Component {
               </div>
             </Popup>
           ) : null}
-          <div className={style["search-parameters"]}>
-            <SearchBar onRequestSearch={this.toggleHeatmap} style={{marginLeft: 'auto'}} 
-            placeholder="Test heatmap on a parameter"
-            onCancelSearch={this.onCancelSearch}/>
             {this.state.parameters ? 
-            <div style={{backgroundColor:'white', marginTop: '1em'}}>
-              <RadioButtons parameters={this.state.parameters}
+              <ControlPanel
+              parameters={this.state.parameters}
+              layers={this.state.layers}
+              changeLayer={this.changeLayer}
               changeParameter={this.changeParameter}
-            /> 
-            </div>
+              />
             : null}
-          </div>
          
         </ReactMapGL>
       </div>
