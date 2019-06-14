@@ -27,7 +27,7 @@ export default class ControlPanel extends PureComponent {
     return (
         <Container>
         <h3>Airmate</h3>
-        <p>Choose a parameter and layer</p>
+        <p>Choose a parameter and a layer</p>
         {/* <div className="source-link">
           <a
             href="https://github.com/VyacheslavLukin/AirMate"

@@ -9,8 +9,6 @@ import {addCountiesLayer, _onHover, _getCursor} from './layers/Countries';
 
 import MarkerIcon from './marker-icon.png';
 
-import SearchBar from './components/SearchBar';
-import RadioButtons from './components/RadioButtons';
 import ControlPanel from './components/ControlPanel';
 
 import style from './App.css';
@@ -182,7 +180,7 @@ export default class App extends Component {
     if (layer === HEATMAP_LAYER) {
       this.toggleHeatmap(this.state.currentParameter);
     } else if (layer === MARKERS_LAYER) {
-      //TODO
+
     }
   }
 
@@ -220,9 +218,8 @@ export default class App extends Component {
           onClick={this._onClick}
           onLoad={this._onMapLoad}
           onHover={_onHover(this._getMap)}
-          //TODO: https://uber.github.io/react-map-gl/#/Examples/custom-cursor
           getCursor={this._getCursor}
-          interactiveLayerIds={['states-layer']}
+          interactiveLayerIds={['countries-layer']}
         >
           
           <div className="fullscreen" style={fullscreenControlStyle}>
@@ -231,9 +228,6 @@ export default class App extends Component {
           <div className="nav" style={navStyle}>
             <NavigationControl />
           </div>
-        <div>
-            {/* <button style={{position: 'absolute', top: 10, left: 55, padding: '5px'}} onClick={this._onMapLoad}> test heatmap on o3 </button> */}
-        </div>
           { (this.state.currentLayer == null && this._getMap() && this._getMap().getZoom() > 5) ?
             (
             this.state.stations.map(station => (

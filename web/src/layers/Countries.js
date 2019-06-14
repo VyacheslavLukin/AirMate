@@ -2,16 +2,16 @@
 import {FlyToInterpolator} from 'react-map-gl';
 
 export const addCountiesLayer = (map) => {
-    map.addSource('states', {
+    map.addSource('countries', {
         'type': 'geojson',
         'data': 'https://d2ad6b4ur7yvpq.cloudfront.net/naturalearth-3.3.0/ne_50m_admin_0_countries.geojson'
     });
 
     // Add a layer showing the state polygons.
     map.addLayer({
-        'id': 'states-layer',
+        'id': 'countries-layer',
         'type': 'fill',
-        'source': 'states', 
+        'source': 'countries', 
         'maxzoom': 5,
         'paint': {
             'fill-color': 'rgba(200, 100, 240, 0.4)',
