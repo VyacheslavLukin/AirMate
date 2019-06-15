@@ -1,7 +1,6 @@
 import {getParameterGeojson} from '../common/Utils';
 import {getMeasurementsFromAllStations} from '../common/Api';
 
-// filters for classifying earthquakes into five categories based on magnitude
 const mag1 = ["<", ["get", "parameter"], 20];
 const mag2 = ["all", [">=", ["get", "parameter"], 20], ["<", ["get", "parameter"], 30]];
 const mag3 = ["all", [">=", ["get", "parameter"], 30], ["<", ["get", "parameter"], 40]];
@@ -9,8 +8,8 @@ const mag4 = ["all", [">=", ["get", "parameter"], 40], ["<", ["get", "parameter"
 const mag5 = [">=", ["get", "parameter"], 50];
  
 // colors to use for the categories
+// TODO: better to use different parameters for different colors (I guess)
 const colors = ['#fed976', '#feb24c', '#fd8d3c', '#fc4e2a', '#e31a1c'];
-// const colors = ['#FF0000', '#FF0000', '#FF0000', '#FF0000', '#FF0000'];
 
 export const CIRCLES_LAYER = 'circles';
 export const CLUSTERS_COUNT_LAYER = 'clusters-count';
@@ -18,8 +17,6 @@ export const PARAMETERS_LAYER = 'parameters';
 export const CLUSTERS_LAYER = 'clusters-layer';
 export const SOURCE = 'clusters-source';
 
-
-//TODO: make cluster cluster!
 export const addCirclesLayer = (parameter, map) => {
     getMeasurementsFromAllStations(parameter).then(result => {    
         let stations = result.data;
@@ -118,11 +115,6 @@ const clustersLayer = () => {
         source: SOURCE,
         filter: ["has", "point_count"],
         "paint": {
-                // Use step expressions (https://docs.mapbox.com/mapbox-gl-js/style-spec/#expressions-step)
-                // with three steps to implement three types of circles:
-                //   * Blue, 20px circles when point count is less than 100
-                //   * Yellow, 30px circles when point count is between 100 and 750
-                //   * Pink, 40px circles when point count is greater than or equal to 750
                 "circle-color": "#51bbd6",
                 // [
                 //     "step",
