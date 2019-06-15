@@ -4,7 +4,7 @@ import {getStationInfoById, getStationsList, getParametersList} from './common/A
 import {fullscreenControlStyle, navStyle} from './MapStyles';
 
 import {heatmapOnParameter, removeHeatmap, HEATMAP_LAYER} from './layers/Heatmap';
-import {addCirclesLayer, CIRCLES_LAYER, removeCircles, PARAMETERS_LAYER, CLUSTERS_LAYER} from './layers/Circles'
+import {addCirclesLayer, CIRCLES_LAYER, removeCircles, CLUSTERS_LAYER} from './layers/Circles'
 
 import {MARKERS_LAYER} from './layers/Markers';
 
@@ -103,24 +103,6 @@ export default class App extends Component {
       parameters.push('-');
       this.setState({ parameters });
     })
-  }
-
-  _onMapLoad = () => {
-    // addCirclesLayer(this.state.selectedParameter, this._getMap());
-    // addCountiesLayer(this._getMap());
-    // const map = this._getMap();
-    // map.on('mouseenter', CLUSTERS_LAYER, function () {
-    //   map.getCanvas().style.cursor = 'pointer';
-    //   });
-    // map.on('hover', PARAMETERS_LAYER, function () {
-    //   map.getCanvas().style.cursor = 'pointer';
-    //   });
-    // map.on('mouseenter', 'clusters', function () {
-    //   map.getCanvas().style.cursor = 'pointer';
-    // });
-    // map.on('mouseleave', 'clusters', function () {
-    //   map.getCanvas().style.cursor = '';
-    // });
   }
 
 
@@ -235,10 +217,8 @@ export default class App extends Component {
     const cluster = map.queryRenderedFeatures(point, { layers: [CLUSTERS_LAYER] })[0];
     
     if (cluster) {
-      console.log('cluster', cluster);
 
       const clusterId = cluster.properties.cluster_id;
-      console.log('clusterId', clusterId);
       let that = this
       map.getSource('clusters-source').getClusterExpansionZoom(clusterId, function (err, zoom) {
         if (err)
@@ -249,7 +229,6 @@ export default class App extends Component {
           zoom: zoom,
           duration: 1000
         });
-        console.log('zoom', zoom);
         // map.easeTo doesn't change viewport even if it zooms - strange. Perhaps, a bug
           setTimeout(function(){
             that._onViewportChange({
@@ -266,14 +245,12 @@ export default class App extends Component {
      
       
     } else {
-      const parametersLayer = map.queryRenderedFeatures(point, { layers: [PARAMETERS_LAYER] })[0];
-      if (parametersLayer) {
+      const cicrlesLayer = map.queryRenderedFeatures(point, { layers: [CIRCLES_LAYER] })[0];
+      if (cicrlesLayer) {
       
-        console.log('parametersLayer', parametersLayer);
-        // setTimeout(function(){
-          (this.state.selectedStation && (parametersLayer.properties.id === this.state.selectedStation.id))
-          ? this.setSelectedStation(null) : this.setSelectedStationById(parametersLayer.properties.id);
-        // }, 100);
+        console.log('cicrlesLayer', cicrlesLayer);
+        (this.state.selectedStation && (cicrlesLayer.properties.id === this.state.selectedStation.id))
+        ? this.setSelectedStation(null) : this.setSelectedStationById(cicrlesLayer.properties.id);
       }
     }
   }
@@ -293,9 +270,9 @@ export default class App extends Component {
           mapStyle="mapbox://styles/reshreshus/cjwamfl3205ry1cpptvzeyq1e"
           onViewportChange={this._onViewportChange}
           onClick={this._onClick}
-          onLoad={this._onMapLoad}
+          // onLoad={this._onMapLoad}
           getCursor={this._getCursor}
-          interactiveLayerIds={[PARAMETERS_LAYER, CLUSTERS_LAYER]}
+          interactiveLayerIds={[CIRCLES_LAYER, CLUSTERS_LAYER]}
         >
           
           <div className="fullscreen" style={fullscreenControlStyle}>
