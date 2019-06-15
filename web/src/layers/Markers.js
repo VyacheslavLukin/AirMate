@@ -1,1 +1,1 @@
-export const MARKERS_LAYER = 'markers_layer';
+export const MARKERS_LAYER = 'markers';

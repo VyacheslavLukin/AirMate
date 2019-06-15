@@ -1,11 +1,12 @@
 import React, {Component} from 'react';
 import ReactMapGL, {Marker, Popup, NavigationControl, FullscreenControl, FlyToInterpolator} from 'react-map-gl';
 import {getStationInfoById, getStationsList, getParametersList} from './common/Api';
-import {fullscreenControlStyle, navStyle, cicrclesLayer} from './MapStyles';
+import {fullscreenControlStyle, navStyle} from './MapStyles';
 
 import {heatmapOnParameter, removeHeatmap, HEATMAP_LAYER} from './layers/Heatmap';
+import {addCirclesLayer, CIRCLES_LAYER, removeCircles, PARAMETERS_LAYER, CLUSTERS_LAYER} from './layers/Circles'
+
 import {MARKERS_LAYER} from './layers/Markers';
-import {addCountiesLayer, _onHover, _getCursor} from './layers/Countries';
 
 import MarkerIcon from './marker-icon.png';
 
@@ -22,6 +23,7 @@ export default class App extends Component {
     this.handleLocation = this.handleLocation.bind(this);
     this.toggleHeatmap = this.toggleHeatmap.bind(this);
     this.onCancelSearch = this.onCancelSearch.bind(this);
+    this._onClick = this._onClick.bind(this);
     this.handleLocation();
   }
 
@@ -35,31 +37,36 @@ export default class App extends Component {
     },
     selectedStation: null,
     stations: [],
-    currentLayer: null,
+    selectedLayer: CIRCLES_LAYER,
     parameters: null,
-    layers: ['heatmap', 'markers'],
-    currentParameter: null
+    layers: [MARKERS_LAYER, HEATMAP_LAYER, CIRCLES_LAYER],
+    selectedParameter: null
   }
   
   _onViewportChange = viewport => this.setState({viewport});
 
   setStations = stations => this.setState({stations});
 
+  setSelectedStationById = id => {
+    getStationInfoById(id).then(result => {
+      const stationInfo = result.data;
+      stationInfo.id = id;
+      stationInfo.latitude = stationInfo.coordinates.latitude;
+      stationInfo.longitude = stationInfo.coordinates.longitude;
+      delete stationInfo['coordinates'];
+      this.setState({
+        selectedStation: stationInfo
+      });
+    });
+  }
+
   setSelectedStation(selectedStation) {
     if (selectedStation == null) {
       this.setState({selectedStation}); //null
     } else {
       let id = selectedStation['id'];
-      getStationInfoById(id).then(result => {
-        const stationInfo = result.data;
-        stationInfo.id = selectedStation.id;
-        stationInfo.latitude = stationInfo.coordinates.latitude;
-        stationInfo.longitude = stationInfo.coordinates.longitude;
-        delete stationInfo['coordinates'];
-        this.setState({
-          selectedStation: stationInfo
-        });
-    });
+      this.setSelectedStationById(id);
+
     }  
   }
 
@@ -96,12 +103,24 @@ export default class App extends Component {
       parameters.push('-');
       this.setState({ parameters });
     })
-
-    
   }
 
   _onMapLoad = () => {
-    addCountiesLayer(this._getMap());
+    // addCirclesLayer(this.state.selectedParameter, this._getMap());
+    // addCountiesLayer(this._getMap());
+    // const map = this._getMap();
+    // map.on('mouseenter', CLUSTERS_LAYER, function () {
+    //   map.getCanvas().style.cursor = 'pointer';
+    //   });
+    // map.on('hover', PARAMETERS_LAYER, function () {
+    //   map.getCanvas().style.cursor = 'pointer';
+    //   });
+    // map.on('mouseenter', 'clusters', function () {
+    //   map.getCanvas().style.cursor = 'pointer';
+    // });
+    // map.on('mouseleave', 'clusters', function () {
+    //   map.getCanvas().style.cursor = '';
+    // });
   }
 
 
@@ -146,10 +165,10 @@ export default class App extends Component {
 
   // supposed to be only for heatmap for now
   onCancelSearch = () => {
-    if (this.state.currentLayer == HEATMAP_LAYER) {
+    if (this.state.selectedLayer == HEATMAP_LAYER) {
       removeHeatmap(this._getMap());
       this.setState({
-        currentLayer: null
+        selectedLayer: null
       });
     }
   }
@@ -160,7 +179,7 @@ export default class App extends Component {
       return;
     }
     this.setState({
-      currentLayer: HEATMAP_LAYER
+      selectedLayer: HEATMAP_LAYER
     });
 
     const map = this._getMap();
@@ -169,18 +188,36 @@ export default class App extends Component {
   }
 
   changeParameter = (parameter) => {
-    if (parameter === '-'){
-      this.onCancelSearch();
-    } else {
-      this.toggleHeatmap(parameter);
+    //TODO: make switch case
+    if (this.state.selectedLayer === HEATMAP_LAYER){
+      if (parameter === '-'){
+        this.onCancelSearch();
+      } else {
+        this.toggleHeatmap(parameter);
+      }
+    } else if (this.state.selectedLayer === CIRCLES_LAYER) {
+      //TODO there are ways to do it more efficiently
+      removeCircles(this._getMap());
+      addCirclesLayer(parameter, this._getMap());
     }
+    this.setState({
+      selectedParameter: parameter
+    });
   }
 
   changeLayer = (layer) => {
+    if (this.state.selectedLayer == HEATMAP_LAYER){
+      removeHeatmap(this._getMap());
+    } else if (this.state.selectedLayer == CIRCLES_LAYER) {
+      removeCircles(this._getMap());
+    }
+    this.setState({
+      selectedLayer: layer
+    });
     if (layer === HEATMAP_LAYER) {
-      this.toggleHeatmap(this.state.currentParameter);
-    } else if (layer === MARKERS_LAYER) {
-
+      this.toggleHeatmap(this.state.selectedParameter);
+    } else if (layer === CIRCLES_LAYER) {
+      addCirclesLayer(this.state.selectedParameter, this._getMap());
     }
   }
 
@@ -192,18 +229,58 @@ export default class App extends Component {
   } 
 
   _onClick = event => {
-    if (this._getMap().getZoom() <= 5) {
-      console.log('event', event);
-      let [longitude, latitude] = event.lngLat;
-      this._onViewportChange({
-        longitude, 
-        latitude,
-        zoom: 6,
-        transitionInterpolator: new FlyToInterpolator(),
-        transitionDuration: 3000
+    event.preventDefault();
+    const point = [event.center.x, event.center.y];
+    const map = this._getMap();
+    const cluster = map.queryRenderedFeatures(point, { layers: [CLUSTERS_LAYER] })[0];
+    
+    if (cluster) {
+      console.log('cluster', cluster);
+
+      const clusterId = cluster.properties.cluster_id;
+      console.log('clusterId', clusterId);
+      let that = this
+      map.getSource('clusters-source').getClusterExpansionZoom(clusterId, function (err, zoom) {
+        if (err)
+          return;
+        map.easeTo({
+          center: cluster.geometry.coordinates,
+          // around: cluster.geometry.coordinates,  
+          zoom: zoom,
+          duration: 1000
+        });
+        console.log('zoom', zoom);
+        // map.easeTo doesn't change viewport even if it zooms - strange. Perhaps, a bug
+          setTimeout(function(){
+            that._onViewportChange({
+              longitude: cluster.geometry.coordinates[0], 
+              latitude: cluster.geometry.coordinates[1],
+              zoom: zoom,
+              width: "100vw",
+              height: "100vh",
+              // transitionInterpolator: new FlyToInterpolator(),
+              // transitionDuration: 3000
+            });
+        }, 1000);
       });
+     
+      
+    } else {
+      const parametersLayer = map.queryRenderedFeatures(point, { layers: [PARAMETERS_LAYER] })[0];
+      if (parametersLayer) {
+      
+        console.log('parametersLayer', parametersLayer);
+        // setTimeout(function(){
+          (this.state.selectedStation && (parametersLayer.properties.id === this.state.selectedStation.id))
+          ? this.setSelectedStation(null) : this.setSelectedStationById(parametersLayer.properties.id);
+        // }, 100);
+      }
     }
   }
+
+  _getCursor = ({isHovering, isDragging}) => {
+    return isHovering ? 'pointer' : '';
+  };
   
   
   render () { 
@@ -217,9 +294,8 @@ export default class App extends Component {
           onViewportChange={this._onViewportChange}
           onClick={this._onClick}
           onLoad={this._onMapLoad}
-          onHover={_onHover(this._getMap)}
           getCursor={this._getCursor}
-          interactiveLayerIds={['countries-layer']}
+          interactiveLayerIds={[PARAMETERS_LAYER, CLUSTERS_LAYER]}
         >
           
           <div className="fullscreen" style={fullscreenControlStyle}>
@@ -228,7 +304,7 @@ export default class App extends Component {
           <div className="nav" style={navStyle}>
             <NavigationControl />
           </div>
-          { (this.state.currentLayer == null && this._getMap() && this._getMap().getZoom() > 5) ?
+          { (this.state.selectedLayer == MARKERS_LAYER && this._getMap() && this._getMap().getZoom() > 5) ?
             (
             this.state.stations.map(station => (
               <Marker
@@ -259,7 +335,7 @@ export default class App extends Component {
               </div>
             </Popup>
           ) : null}
-            {this.state.parameters ? 
+            {this.state.parameters && this.state.layers ? 
               <ControlPanel
               parameters={this.state.parameters}
               layers={this.state.layers}
