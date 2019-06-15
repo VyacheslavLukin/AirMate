@@ -1,22 +1,22 @@
 import {getParameterGeojson} from '../common/Utils';
 import {getMeasurementsFromAllStations} from '../common/Api';
 
-export const HEATMAP_SOURCE_ID = 'patameter_heatmap';
+const HEATMAP_SOURCE = 'heatmap-source';
 export const HEATMAP_LAYER = 'heatmap';
 
 export const heatmapOnParameter = (parameter, map) => {
     getMeasurementsFromAllStations(parameter).then(result => {    
       let stations = result.data;
       let geojson = getParameterGeojson(stations, parameter);
-      map.addSource(HEATMAP_SOURCE_ID, {type: 'geojson', data: geojson});
-      map.addLayer(heatmapLayer(HEATMAP_LAYER, HEATMAP_SOURCE_ID));
+      map.addSource(HEATMAP_SOURCE, {type: 'geojson', data: geojson});
+      map.addLayer(heatmapLayer(HEATMAP_LAYER, HEATMAP_SOURCE));
     });
   }
 
 export const removeHeatmap = map => {
     if (map.getLayer(HEATMAP_LAYER) != null){
         map.removeLayer(HEATMAP_LAYER);
-        map.removeSource(HEATMAP_SOURCE_ID);
+        map.removeSource(HEATMAP_SOURCE);
     }
 }
 
@@ -29,7 +29,7 @@ const heatmapLayer = (id, source) => {
       paint: {
         // increase weight as diameter breast height increases
         'heatmap-weight': {
-          property: 'paramater',
+          property: 'parameter',
           type: 'exponential',
           stops: [
             [1, 0],
