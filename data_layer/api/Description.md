@@ -144,3 +144,7 @@ Example based on 'so2':
     {...}//there may be many parameters
 ]
 ```
+#### GET /get_params_list - get the list of names of all parameters in more usable view
+```
+[ "o3", "no2", ...]
+```
