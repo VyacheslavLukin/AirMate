@@ -154,6 +154,8 @@ def get_stations_data_by_parameter(parameter):
     resp.headers['Access-Control-Allow-Credentials'] = True
     return resp
 
+
+# Return list of dicts [{"parameter": "o3"}, ...]
 @api.route('/get_parameters_list')
 def get_parameters_list():
     parameters = get_list_of_parameters()
@@ -163,6 +165,22 @@ def get_parameters_list():
     resp.headers['Access-Control-Allow-Headers'] = 'X-Requested-With,content-type'
     resp.headers['Access-Control-Allow-Credentials'] = True
     return resp
+
+# Return list of exists parameters: ["o3","no2", ...]
+@api.route('/get_params_list')
+def get_params_list():
+    params = []
+    parameters_dicts = get_list_of_parameters()
+    for dic in parameters_dicts:
+        params.append(dic["parameter"])
+    resp = Response(json.dumps(params), status=200, mimetype='application/json')
+    resp.headers['Access-Control-Allow-Origin'] = '*'
+    resp.headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS, PUT, PATCH, DELETE'
+    resp.headers['Access-Control-Allow-Headers'] = 'X-Requested-With,content-type'
+    resp.headers['Access-Control-Allow-Credentials'] = True
+    return resp
+
+
 
 def get_list_of_available_stations():
     stations = Station.query.all()
@@ -185,7 +203,7 @@ def get_list_of_stations_with_data(parameter):
             'latitude': station.latitude,
             'longitude': station.longitude,
             'last_txid': station.last_txid,
-            parameter: measurement['value'],
+             parameter: measurement['value'],
             'date': measurement['lastUpdated'],
             'unit': measurement['unit'],
             'sourceName': measurement['sourceName']
