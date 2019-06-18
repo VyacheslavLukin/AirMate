@@ -4,7 +4,7 @@ import {getStationInfoById, getStationsList, getParametersList} from './common/A
 import {fullscreenControlStyle, navStyle} from './MapStyles';
 
 import {heatmapOnParameter, removeHeatmap, HEATMAP_LAYER} from './layers/Heatmap';
-import {addCirclesLayer, CIRCLES_LAYER, removeCircles, CLUSTERS_LAYER} from './layers/Circles'
+import {addCirclesLayer, CIRCLES_LAYER, removeCircles, CLUSTERS_LAYER} from './layers/Clusters'
 
 import {MARKERS_LAYER} from './layers/Markers';
 
@@ -29,8 +29,8 @@ export default class App extends Component {
 
   state = {
     viewport: { //initial point is hardcoded
-      latitude: 52.54304, 
-      longitude: 13.349326,
+      latitude: 39.1175, 
+      longitude: -94.6356,
       width: "100vw",
       height: "100vh",
       zoom: 10
@@ -180,7 +180,12 @@ export default class App extends Component {
     } else if (this.state.selectedLayer === CIRCLES_LAYER) {
       //TODO there are ways to do it more efficiently
       removeCircles(this._getMap());
-      addCirclesLayer(parameter, this._getMap());
+      this.addClusters(parameter);
+      // removeCircles(this._getMap());
+      // addCirclesLayer(parameter, this._getMap());
+      // this.setState({
+      //   interactiveLayerIds: [CIRCLES_LAYER, CLUSTERS_LAYER]
+      // })
     }
     this.setState({
       selectedParameter: parameter
@@ -191,7 +196,7 @@ export default class App extends Component {
     if (this.state.selectedLayer == HEATMAP_LAYER){
       removeHeatmap(this._getMap());
     } else if (this.state.selectedLayer == CIRCLES_LAYER) {
-      removeCircles(this._getMap());
+      this.removeClusters()
     }
     this.setState({
       selectedLayer: layer
@@ -199,8 +204,22 @@ export default class App extends Component {
     if (layer === HEATMAP_LAYER) {
       this.toggleHeatmap(this.state.selectedParameter);
     } else if (layer === CIRCLES_LAYER) {
-      addCirclesLayer(this.state.selectedParameter, this._getMap());
+      this.addClusters[this.state.selectedParameter]
     }
+  }
+
+  addClusters = (parameter) => {
+    addCirclesLayer(parameter, this._getMap());
+    this.setState({
+      interactiveLayerIds: [CIRCLES_LAYER, CLUSTERS_LAYER]
+    })
+  }
+
+  removeClusters = () => {
+    this.setState({
+      interactiveLayerIds: null
+    });
+    removeCircles(this._getMap());
   }
 
   onMarkerClick = (e, station) => {
@@ -210,9 +229,19 @@ export default class App extends Component {
       ? this.setSelectedStation(null) : this.setSelectedStation(station)
   } 
 
-  _onClick = event => {
-    event.preventDefault();
-    const point = [event.center.x, event.center.y];
+  _onControlPanelClick = (e) =>{
+    // e.preventDefault();
+    e.stopPropagation();
+    e.persist();  
+    console.log('_onControlPanelClick', e);
+  }
+
+  _onClick = e => {
+    // e.preventDefault();
+    e.stopPropagation();
+    
+
+    const point = [e.center.x, e.center.y];
     const map = this._getMap();
     const cluster = map.queryRenderedFeatures(point, { layers: [CLUSTERS_LAYER] })[0];
     
@@ -256,14 +285,21 @@ export default class App extends Component {
   }
 
   _getCursor = ({isHovering, isDragging}) => {
-    return isHovering ? 'pointer' : '';
+    return isHovering ? 'pointer' : 'grab';
   };
+
+  _onControlPanelDrag = (e) => {
+    console.log('onControlPanelDrag', e);
+    e.preventDefault();
+    e.stopPropagation();
+  }
   
   
   render () { 
     return (
-      <div>
+      <div style={{pointerEvents: "auto"}}>
         <ReactMapGL
+          // 
           ref={this._mapRef}
           {...this.state.viewport}
           mapboxApiAccessToken={process.env.REACT_APP_MAPBOX_TOKEN}
@@ -272,7 +308,7 @@ export default class App extends Component {
           onClick={this._onClick}
           // onLoad={this._onMapLoad}
           getCursor={this._getCursor}
-          interactiveLayerIds={[CIRCLES_LAYER, CLUSTERS_LAYER]}
+          interactiveLayerIds={this.state.interactiveLayerIds}
         >
           
           <div className="fullscreen" style={fullscreenControlStyle}>
@@ -312,16 +348,15 @@ export default class App extends Component {
               </div>
             </Popup>
           ) : null}
-            {this.state.parameters && this.state.layers ? 
+        </ReactMapGL>
+        {this.state.parameters && this.state.layers ? 
               <ControlPanel
               parameters={this.state.parameters}
               layers={this.state.layers}
               changeLayer={this.changeLayer}
               changeParameter={this.changeParameter}
               />
-            : null}
-         
-        </ReactMapGL>
+          : null}
       </div>
     ); 
   }

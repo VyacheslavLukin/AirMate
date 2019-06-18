@@ -19,6 +19,7 @@ code {
 }
 
 .control-panel {
+  display: block;
   position: fixed;
   top: 0;
   right: 0;
@@ -32,4 +33,9 @@ code {
   color: #6b6b76;
   text-transform: uppercase;
   outline: none;
+  cursor: default;
+  /* user-select: none; */
 }
+
+
+

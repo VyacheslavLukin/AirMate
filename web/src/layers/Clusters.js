@@ -15,17 +15,17 @@ export const CIRCLES_LAYER = 'circles';
 export const CLUSTERS_COUNT_LAYER = 'clusters-count';
 export const PARAMETERS_LAYER = 'parameters';
 export const CLUSTERS_LAYER = 'clusters-layer';
-export const SOURCE = 'clusters-source';
+export const CLUSTERS_SOURCE = 'clusters-source';
 
 export const addCirclesLayer = (parameter, map) => {
     getMeasurementsFromAllStations(parameter).then(result => {    
         let stations = result.data;
         let geojson = getParameterGeojson(stations, parameter);
-        map.addSource(SOURCE, 
+        map.addSource(CLUSTERS_SOURCE, 
                 {
                     type: "geojson", data: geojson,
                     "cluster": true,
-                    "clusterRadius": 50,
+                    "clusterRadius": 45,
                     "clusterProperties": { // keep separate counts for each magnitude category in a cluster
                         "mag1": ["+", ["case", mag1, 1, 0]],
                         "mag2": ["+", ["case", mag2, 1, 0]],
@@ -53,7 +53,7 @@ export const removeCircles = map => {
         map.removeLayer(PARAMETERS_LAYER)
         map.removeLayer(CLUSTERS_LAYER)
         map.removeLayer(CLUSTERS_COUNT_LAYER);
-        map.removeSource(SOURCE);
+        map.removeSource(CLUSTERS_SOURCE);
     }
 }
 
@@ -61,7 +61,7 @@ const parametersLayer = () => {
     return {
         id: PARAMETERS_LAYER,
         type: "symbol",
-        source: SOURCE,
+        source: CLUSTERS_SOURCE,
         filter: ["!", ["has", "point_count"]],
         "layout": {
             "text-field": ["number-format", ["get", "parameter"], {"min-fraction-digits": 1, "max-fraction-digits": 1}],
@@ -78,7 +78,7 @@ const clustersCountLayer = () => {
     return {
         id: CLUSTERS_COUNT_LAYER,
         type: "symbol",
-        source: SOURCE,
+        source: CLUSTERS_SOURCE,
         filter: ["has", "point_count"],
         layout: {
             "text-field": "{point_count_abbreviated}",
@@ -92,7 +92,7 @@ const cicrclesLayer = () => {
     return {
       id: CIRCLES_LAYER,
       type: 'circle',
-      source: SOURCE,
+      source: CLUSTERS_SOURCE,
       // "filter": ["!=", "cluster", true],
       filter: ["!", ["has", "point_count"]],
       "paint": {
@@ -112,7 +112,7 @@ const clustersLayer = () => {
     return {
         id: CLUSTERS_LAYER,
         type: "circle",
-        source: SOURCE,
+        source: CLUSTERS_SOURCE,
         filter: ["has", "point_count"],
         "paint": {
                 "circle-color": "#51bbd6",
