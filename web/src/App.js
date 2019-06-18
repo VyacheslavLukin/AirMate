@@ -95,13 +95,13 @@ export default class App extends Component {
     });
 
     getParametersList().then(result => {
-      const parametersDict = result.data;
-      const parameters = [];
-      parametersDict.forEach(entry => {
-          parameters.push(entry.parameter);
-      });
-      parameters.push('-');
-      this.setState({ parameters });
+      // const parametersDict = result.data;
+      // const parameters = [];
+      // parametersDict.forEach(entry => {
+      //     parameters.push(entry.parameter);
+      // });
+      // parameters.push('-');
+      this.setState({ parameters: result.data });
     })
   }
 
