@@ -35,6 +35,24 @@
 }
 ```
 
+#### GET /get_station_aqi/<station_id> - get the air quality index of station
+```
+[
+    {
+        "id":"Station id",
+        
+        "latitude": 52.485813,
+        "longitude": 13.348775,
+        "last_txid": "ef0bf154be5482f5796a147599426a0458ec2e4965b0b3d8bd0c8fa943b4cefb",
+        "aqi":
+            {
+                "value": 15.12619380386676    //aqi value
+                "text": "Good"                //the meaning of value
+            }
+    }
+]
+```
+
 #### GET /get_station_history/<station_id> - get all transactions related to this station
 #### GET /get_data_by_date/<date> - get all transactions containing that date
 date example: 2019-05-22T10:00:00.000Z
@@ -108,10 +126,14 @@ Example based on 'so2':
             'latitude': station.latitude,
             'longitude': station.longitude,
             'last_txid': station.last_txid,     //id of the last related transaction
-            'so2': 12,
+            'so2': 0.001,
             'date': '2019-06-06T05:00:00.000Z',
             'unit': 'ppm',
-            'sourceName': 'AirNow'
+            'sourceName': 'AirNow',
+            'aqi':{
+                'value': 26,    //aqi value
+                'text': 'Good'  //the meaning of value
+            }
         }
         {...} //there may be many stations
 ```
