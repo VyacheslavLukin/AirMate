@@ -246,7 +246,7 @@ export default class App extends Component {
     const cluster = map.queryRenderedFeatures(point, { layers: [CLUSTERS_LAYER] })[0];
     
     if (cluster) {
-
+      console.log('cluster', cluster);
       const clusterId = cluster.properties.cluster_id;
       let that = this
       map.getSource('clusters-source').getClusterExpansionZoom(clusterId, function (err, zoom) {
