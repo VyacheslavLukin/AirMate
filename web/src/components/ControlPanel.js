@@ -1,20 +1,23 @@
 import style from '../App.css';
 import React, {PureComponent} from 'react';
 
-const defaultContainer = ({children}) => <div className={style['control-panel']}>{children}</div>;
+const onClick = e => {
+  e.stopPropagation();
+}
+
+const defaultContainer = ({children}) => <div onClick={onClick} className={style['control-panel']}>{children}</div>;
 
 export default class ControlPanel extends PureComponent {
   _renderParametersButton = (parameter, index) => {
     return (
-        //TODO check if there's an index
-      <div key={`btn-${index}`} className="input">
+      <div key={`btn-${index}`} className="input" 
+      >
         <input
           type="radio"
           name="parameter"
           id={`parameter-${index}`}
-          //TODO: perhaps better to render layers button differently
           defaultChecked={parameter === '-'}
-          onClick={() => this.props.changeParameter(parameter)}
+          onClick={() => {  this.props.changeParameter(parameter)} }
         />
         <label htmlFor={`parameter-${index}`}>{parameter}</label>
       </div>
@@ -23,15 +26,13 @@ export default class ControlPanel extends PureComponent {
 
   _renderLayersButton = (layer, index) => {
     return (
-        //TODO check if there's an index
       <div key={`btn-${index}`} className="input" >
         <input 
           type="radio"
           name="layer"
           id={`layer-${index}`}
-          //TODO: perhaps better to render layers button differently
           defaultChecked={layer === '-' || layer === 'circles'}
-          onClick={() => this.props.changeLayer(layer)}
+          onClick={() => { this.props.changeLayer(layer)} }
         />
         <label htmlFor={`layer-${index}`}>{layer}</label>
       </div>
