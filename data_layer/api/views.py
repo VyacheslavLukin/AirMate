@@ -23,6 +23,28 @@ def get_station_data(station_id):
     resp.headers['Access-Control-Allow-Credentials'] = True
     return resp
 
+@api.route('/get_station_aqi/<station_id>')
+def get_station_aqi(station_id):
+    station = Station.query.get(station_id)
+    if station is None:
+        abort(404)
+
+    aqi = get_aqi_of_station(json.loads(station.data)['measurements'])
+    data = [
+        {
+            'id': station.id,
+            'latitude': station.latitude,
+            'longitude': station.longitude,
+            'last_txid': station.last_txid,
+            'aqi': aqi[0]
+        }
+    ]
+    resp = Response(json.dumps(data), status=200, mimetype='application/json')
+    resp.headers['Access-Control-Allow-Origin'] = '*'
+    resp.headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS, PUT, PATCH, DELETE'
+    resp.headers['Access-Control-Allow-Headers'] = 'X-Requested-With,content-type'
+    resp.headers['Access-Control-Allow-Credentials'] = True
+    return resp
 
 @api.route('/get_station_history/<station_id>')
 def get_station_history(station_id):
@@ -192,7 +214,7 @@ def get_list_of_stations_with_data(parameter):
             'date': measurement['lastUpdated'],
             'unit': measurement['unit'],
             'sourceName': measurement['sourceName'],
-            'aqi': get_aqi_of_parameter(parameter, measurement['value'], measurement['unit'])
+            'aqi': get_aqi_of_parameter(parameter, measurement['value'], measurement['unit'])[0]
         }
         for station in stations
         for measurement in json.loads(station.data)['measurements']
@@ -321,7 +343,12 @@ def get_aqi_of_parameter(parameter, value, units):
         if units != 'ppm':
             value = round(convert_ugm3_to_ppm(parameter, value), 1)  # convert to ppm
     else:
-        pass
+        return [
+            {
+                "value": 0,
+                "text": "Undefined"
+            }
+        ]
 
     # define to which sector the concentration correspond to
     sector = 0
@@ -333,7 +360,7 @@ def get_aqi_of_parameter(parameter, value, units):
     i_high = i_bounds[sector][1]
     i_low = i_bounds[sector][0]
 
-    I = (i_high - i_low)/(c_high-c_low) * (value - c_low) + i_low
+    I = (i_high - i_low) / (c_high - c_low) * (value - c_low) + i_low
 
     return [
         {
@@ -341,3 +368,34 @@ def get_aqi_of_parameter(parameter, value, units):
             "text": i_meaning[sector]
         }
     ]
+
+
+def get_aqi_of_station(meaturements):
+    all_aqis = []
+    i_bounds = [[0, 50], [51, 100], [101, 150], [151, 200], [201, 300], [301, 400], [401, 500], [501, 999]]
+    i_meaning = ["Good", "Moderate", "Unhealthy for Sensitive Groups", "Unhealthy", "Very Unhealthy", "Hazardous",
+                 "Hazardous", "Hazardous"]
+
+    for measurement in meaturements:
+        if measurement['parameter'] != 'bc':
+            aqi = get_aqi_of_parameter(measurement['parameter'], measurement['value'], measurement['unit'])
+            all_aqis.append(aqi[0]['value'])
+    if len(all_aqis)> 0:
+        station_aqi = sum(all_aqis)/len(all_aqis)
+        sector = 0
+        while station_aqi > i_bounds[sector][1]:
+            sector += 1
+        return [
+            {
+                "value": station_aqi,
+                "text": i_meaning[sector]
+            }
+        ]
+    else:
+        return [
+            {
+                "value": 0,
+                "text": "Undefined"
+            }
+        ]
+
