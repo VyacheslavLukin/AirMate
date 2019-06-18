@@ -116,31 +116,7 @@ Example based on 'so2':
         {...} //there may be many stations
 ```
 
-#### GET //get_parameters_list - get the list of names of all parameters
-
+#### GET /get_params_list - get the list of names of all parameters in more usable view
 ```
-[
-    {
-        "parameter": "o3"
-    },
-    {
-        "parameter": "no2"
-    },
-    {
-        "parameter": "pm10"
-    },
-    {
-        "parameter": "co"
-    },
-    {
-        "parameter": "so2"
-    },
-    {
-        "parameter": "pm25"
-    },
-    {
-        "parameter": "bc"
-    }, 
-    {...}//there may be many parameters
-]
+[ "o3", "no2", ...]
 ```

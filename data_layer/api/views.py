@@ -154,15 +154,18 @@ def get_stations_data_by_parameter(parameter):
     resp.headers['Access-Control-Allow-Credentials'] = True
     return resp
 
-@api.route('/get_parameters_list')
-def get_parameters_list():
-    parameters = get_list_of_parameters()
-    resp = Response(json.dumps(parameters), status=200, mimetype='application/json')
+# Return list of exists parameters: ["o3","no2", ...]
+@api.route('/get_params_list')
+def get_params_list():
+    params = get_list_of_parameters()
+    resp = Response(json.dumps(params), status=200, mimetype='application/json')
     resp.headers['Access-Control-Allow-Origin'] = '*'
     resp.headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS, PUT, PATCH, DELETE'
     resp.headers['Access-Control-Allow-Headers'] = 'X-Requested-With,content-type'
     resp.headers['Access-Control-Allow-Credentials'] = True
     return resp
+
+
 
 def get_list_of_available_stations():
     stations = Station.query.all()
@@ -185,7 +188,7 @@ def get_list_of_stations_with_data(parameter):
             'latitude': station.latitude,
             'longitude': station.longitude,
             'last_txid': station.last_txid,
-            parameter: measurement['value'],
+             parameter: measurement['value'],
             'date': measurement['lastUpdated'],
             'unit': measurement['unit'],
             'sourceName': measurement['sourceName']
@@ -249,8 +252,5 @@ def get_list_of_parameters():
             if not (measurement['parameter'] in params):
                 params.append(measurement['parameter'])
     return [
-        {
-            'parameter': parameter
-        }
-        for parameter in params
+        parameter for parameter in params
     ]
