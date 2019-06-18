@@ -16,5 +16,5 @@ export const getMeasurementsFromAllStations = (parameter) =>{
 }
 
 export const getParametersList = () => {
-    return axios.get(`${URL}/get_parameters_list`);
+    return axios.get(`${URL}/get_params_list`);
 }
