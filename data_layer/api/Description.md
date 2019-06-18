@@ -108,10 +108,14 @@ Example based on 'so2':
             'latitude': station.latitude,
             'longitude': station.longitude,
             'last_txid': station.last_txid,     //id of the last related transaction
-            'so2': 12,
+            'so2': 0.001,
             'date': '2019-06-06T05:00:00.000Z',
             'unit': 'ppm',
-            'sourceName': 'AirNow'
+            'sourceName': 'AirNow',
+            'aqi':{
+                'value': 26,    //aqi value
+                'text': 'Good'  //the meaning of value
+            }
         }
         {...} //there may be many stations
 ```
