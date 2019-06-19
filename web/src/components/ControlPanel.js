@@ -5,7 +5,7 @@ const onClick = e => {
   e.stopPropagation();
 }
 
-const defaultContainer = ({children}) => <div onClick={onClick} className={style['control-panel']}>{children}</div>;
+const defaultContainer = ({children}) => <div onClick={onClick} className={style['card']}>{children}</div>;
 
 export default class ControlPanel extends PureComponent {
   _renderParametersButton = (parameter, index) => {
