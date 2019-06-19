@@ -7,8 +7,8 @@ from .bigchain import bdb_helper
 
 api = Blueprint('api', __name__)
 
-
-@api.route('/get_station_data/<station_id>')
+#<path: param > for handling "/" in param string
+@api.route('/get_station_data/<path:station_id>')
 def get_station_data(station_id):
     station = Station.query.get(station_id)
     if station is None:
