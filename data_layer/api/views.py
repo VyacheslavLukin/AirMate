@@ -194,9 +194,19 @@ def get_AQI_by_coordinates(latitude, longitude):
     if station is None:
         abort(404)
     transaction = bdb_helper.retrieve(station.last_txid)
-    params = []
 
-    resp = Response(json.dumps(params), status=200, mimetype='application/json')
+    aqi = get_aqi_of_station(json.loads(transaction['asset']['data']['station_data'])['measurements'])
+    data = [
+        {
+            'id': station.id,
+            'latitude': station.latitude,
+            'longitude': station.longitude,
+            'last_txid': station.last_txid,
+            'aqi': aqi[0]
+        }
+    ]
+
+    resp = Response(json.dumps(data), status=200, mimetype='application/json')
     resp.headers['Access-Control-Allow-Origin'] = '*'
     resp.headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS, PUT, PATCH, DELETE'
     resp.headers['Access-Control-Allow-Headers'] = 'X-Requested-With,content-type'
