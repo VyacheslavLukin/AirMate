@@ -7,7 +7,7 @@ export const getParameterGeojson = (stations, parameter) => {
           "properties": {
             "id": station.id,
             "parameter": station[parameter],
-            "test": "this info is just to test if I can see it"
+            "sum": 0
           },
           "geometry": {
             "type": "Point",
