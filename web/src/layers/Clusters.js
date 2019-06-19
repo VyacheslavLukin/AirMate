@@ -1,22 +1,29 @@
 import {getParameterGeojson} from '../common/Utils';
 import {getMeasurementsFromAllStations} from '../common/Api';
 
-const mag1 = ["<", ["get", "parameter"], 20];
-const mag2 = ["all", [">=", ["get", "parameter"], 20], ["<", ["get", "parameter"], 30]];
-const mag3 = ["all", [">=", ["get", "parameter"], 30], ["<", ["get", "parameter"], 40]];
-const mag4 = ["all", [">=", ["get", "parameter"], 40], ["<", ["get", "parameter"], 50]];
-const mag5 = [">=", ["get", "parameter"], 50];
+const getAqi = ["get", "aqi"]
+const getAvgAqi = ["/", ["get", "aqi_sum"], ["get", "point_count"]]
 
-const cluterMag1 = ["<", ["/", ["get", "sum"], ["get", "point_count"]], 20];
-const cluterMag2 = ["all", [">=", ["/", ["get", "sum"], ["get", "point_count"]], 20], ["<", ["/", ["get", "sum"], ["get", "point_count"]], 30]];
-const cluterMag3 = ["all", [">=", ["/", ["get", "sum"], ["get", "point_count"]], 30], ["<", ["/", ["get", "sum"], ["get", "point_count"]], 40]];
-const cluterMag4 = ["all", [">=", ["/", ["get", "sum"], ["get", "point_count"]], 40], ["<", ["/", ["get", "sum"], ["get", "point_count"]], 50]];
-const cluterMag5 = [">=", ["/", ["get", "sum"], ["get", "point_count"]], 50];
+const mag1 = ["<=", getAqi, 50]; 
+const mag2 = ["all", [">", getAqi, 50], ["<=", getAqi, 100]];
+const mag3 = ["all", [">", getAqi, 100], ["<=", getAqi, 150]];
+const mag4 = ["all", [">", getAqi, 150], ["<=", getAqi, 200]];
+const mag5 = ["all", [">", getAqi, 200], ["<=", getAqi, 300]];
+const mag6 = [">", getAqi, 300];
+
+const clusterMag1 = ["<=", getAvgAqi, 50]; 
+const clusterMag2 = ["all", [">", getAvgAqi, 50], ["<=", getAvgAqi, 100]];
+const clusterMag3 = ["all", [">", getAvgAqi, 100], ["<=", getAvgAqi, 150]];
+const clusterMag4 = ["all", [">", getAvgAqi, 150], ["<=", getAvgAqi, 200]];
+const clusterMag5 = ["all", [">", getAvgAqi, 200], ["<=", getAvgAqi, 300]];
+const clusterMag6 = [">", getAvgAqi, 300];
+
 
 
 // colors to use for the categories
 // TODO: better to use different parameters for different colors (I guess)
-const colors = ['#fed976', '#feb24c', '#fd8d3c', '#fc4e2a', '#e31a1c'];
+// const colors = ['#fed976', '#feb24c', '#fd8d3c', '#fc4e2a', '#e31a1c'];
+const colors = ['#52B947', '#F3EC19', '#F57E1F', '#ED1C24', '#7F2B7E', '#480D27']
 
 export const CIRCLES_LAYER = 'circles';
 export const CLUSTERS_COUNT_LAYER = 'clusters-count';
@@ -24,7 +31,7 @@ export const PARAMETERS_LAYER = 'parameters';
 export const CLUSTERS_LAYER = 'clusters-layer';
 export const CLUSTERS_SOURCE = 'clusters-source';
 
-export const addCirclesLayer = (parameter, map) => {
+export const addCirclesLayer = (map, parameter) => {
     getMeasurementsFromAllStations(parameter).then(result => {    
         let stations = result.data;
         let geojson = getParameterGeojson(stations, parameter);
@@ -34,7 +41,8 @@ export const addCirclesLayer = (parameter, map) => {
                     "cluster": true,
                     "clusterRadius": 45,
                     "clusterProperties": { 
-                        "sum": ["+",  ["get", "parameter"]],
+                        "aqi_sum": ["+",  ["get", "aqi"]],
+                        // "sum": ["+", ["get", "parameter"]]
                     }
             });
         map.addLayer(cicrclesLayer());
@@ -62,7 +70,7 @@ const parametersLayer = () => {
         source: CLUSTERS_SOURCE,
         filter: ["!", ["has", "point_count"]],
         "layout": {
-            "text-field": ["number-format", ["get", "parameter"], {"min-fraction-digits": 1, "max-fraction-digits": 1}],
+            "text-field": ["number-format", ["get", "aqi"], {"min-fraction-digits": 1, "max-fraction-digits": 1}],
             "text-font": ["Open Sans Semibold", "Arial Unicode MS Bold"],
             "text-size": 15
             },
@@ -79,7 +87,7 @@ const clustersCountLayer = () => {
         source: CLUSTERS_SOURCE,
         filter: ["has", "point_count"],
         layout: {
-            "text-field":  ["number-format", ["/", ["get", "sum"], ["get", "point_count"]],  {"min-fraction-digits": 1, "max-fraction-digits": 1}],
+            "text-field":  ["number-format", ["/", ["get", "aqi_sum"], ["get", "point_count"]],  {"min-fraction-digits": 1, "max-fraction-digits": 1}],
             "text-font": ["DIN Offc Pro Medium", "Arial Unicode MS Bold"],
             "text-size": 12
             }
@@ -99,8 +107,9 @@ const cicrclesLayer = () => {
               mag2, colors[1],
               mag3, colors[2],
               mag4, colors[3], 
-              colors[4]],
-        "circle-opacity": 0.6,
+              mag5, colors[4],
+              colors[5]],
+        "circle-opacity": 0.8,
         "circle-radius": 20
         }
       }
@@ -112,19 +121,22 @@ const clustersLayer = () => {
         type: "circle",
         source: CLUSTERS_SOURCE,
         filter: ["has", "point_count"],
-        "paint": {
-            
-                "circle-color": "#51bbd6",
+        "paint": {           
+                // "circle-color": "#51bbd6",
+                "circle-opacity": 0.4,
+                // "circle-stroke-width": 4,
+                // "circle-stroke-color": "#216462",
                 "circle-color": ["case",
-                cluterMag1, colors[0],
-                cluterMag2, colors[1],
-                cluterMag3, colors[2],
-                cluterMag4, colors[3], 
-                    colors[4]],
+                    clusterMag1, colors[0],
+                    clusterMag2, colors[1],
+                    clusterMag3, colors[2],
+                    clusterMag4, colors[3], 
+                    clusterMag5, colors[4],
+                    colors[5]],
                 "circle-radius": [
                     "step",
                     ["get", "point_count"],
-                    20,
+                    22,
                     100,
                     30,
                     750,

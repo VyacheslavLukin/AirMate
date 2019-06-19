@@ -4,7 +4,9 @@ import {getMeasurementsFromAllStations} from '../common/Api';
 const HEATMAP_SOURCE = 'heatmap-source';
 export const HEATMAP_LAYER = 'heatmap';
 
-export const heatmapOnParameter = (parameter, map) => {
+const colors = ['#52B947', '#F3EC19', '#F57E1F', '#ED1C24', '#7F2B7E', '#480D27']
+
+export const addHeatmap = (map, parameter) => {
     getMeasurementsFromAllStations(parameter).then(result => {    
       let stations = result.data;
       let geojson = getParameterGeojson(stations, parameter);
@@ -25,11 +27,11 @@ const heatmapLayer = (id, source) => {
       id,
       type: 'heatmap',
       source,
-      maxzoom: 15,
+      // maxzoom: 15,
       paint: {
         // increase weight as diameter breast height increases
         'heatmap-weight': {
-          property: 'parameter',
+          property: 'aqi',
           type: 'exponential',
           stops: [
             [1, 0],
@@ -48,16 +50,16 @@ const heatmapLayer = (id, source) => {
           'interpolate',
           ['linear'],
           ['heatmap-density'],
-          // 0, 'rgba(236,222,239,0)',
-          // 0.2, 'rgb(208,209,230)',
-          // 0.4, 'rgb(166,189,219)',
-          // 0.6, 'rgb(103,169,207)',
-          // 0.8, 'rgb(28,144,153)'
-          0, 'rgba(255,255,51,0)',
-          0.2, 'rgb(255,255,51)',
-          0.4, 'rgb(255,153,51)',
-          0.6, 'rgb(255,51,51)',
-          0.8, 'rgb(255,0,0)'
+          0, 'rgba(255,255,51,0)' ,
+          0.2, colors[1],
+          0.4, colors[2],
+          0.6, colors[3],
+          0.8, colors[4]
+          // 0, 'rgba(255,255,51,0)',
+          // 0.2, 'rgb(255,255,51)',
+          // 0.4, 'rgb(255,153,51)',
+          // 0.6, 'rgb(255,51,51)',
+          // 0.8, 'rgb(255,0,0)'
         ]
         ,
         // increase radius as zoom increases
