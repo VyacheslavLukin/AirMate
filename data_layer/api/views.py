@@ -7,8 +7,8 @@ from .bigchain import bdb_helper
 
 api = Blueprint('api', __name__)
 
-
-@api.route('/get_station_data/<station_id>')
+#<path: param > for handling "/" in param string
+@api.route('/get_station_data/<path:station_id>')
 def get_station_data(station_id):
     station = Station.query.get(station_id)
     if station is None:
@@ -182,6 +182,31 @@ def get_stations_data_by_parameter(parameter):
 def get_params_list():
     params = get_list_of_parameters()
     resp = Response(json.dumps(params), status=200, mimetype='application/json')
+    resp.headers['Access-Control-Allow-Origin'] = '*'
+    resp.headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS, PUT, PATCH, DELETE'
+    resp.headers['Access-Control-Allow-Headers'] = 'X-Requested-With,content-type'
+    resp.headers['Access-Control-Allow-Credentials'] = True
+    return resp
+
+@api.route('/get_aqi_by_coordinates/<latitude>/<longitude>')
+def get_AQI_by_coordinates(latitude, longitude):
+    station = get_nearest_station(latitude, longitude)
+    if station is None:
+        abort(404)
+    transaction = bdb_helper.retrieve(station.last_txid)
+
+    aqi = get_aqi_of_station(json.loads(transaction['asset']['data']['station_data'])['measurements'])
+    data = [
+        {
+            'id': station.id,
+            'latitude': station.latitude,
+            'longitude': station.longitude,
+            'last_txid': station.last_txid,
+            'aqi': aqi[0]
+        }
+    ]
+
+    resp = Response(json.dumps(data), status=200, mimetype='application/json')
     resp.headers['Access-Control-Allow-Origin'] = '*'
     resp.headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS, PUT, PATCH, DELETE'
     resp.headers['Access-Control-Allow-Headers'] = 'X-Requested-With,content-type'

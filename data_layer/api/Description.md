@@ -142,3 +142,18 @@ Example based on 'so2':
 ```
 [ "o3", "no2", ...]
 ```
+
+#### GET /get_aqi_by_coordinates/`<latitude>`/`<longitude>` - get AQI value at point on the map by coordinates
+```
+{
+"id": "DEBE056",
+"latitude": 52.447697,
+"longitude": 13.64705,
+"last_txid": "41f26e0def71e1f34b88a763a4129cba8ab16750f9f1afed39b58f4c54c8f21e",
+"aqi": {
+"value": 16.061728395061728,
+"text": "Good"
+}
+}
+
+```
