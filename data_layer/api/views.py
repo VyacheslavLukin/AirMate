@@ -180,6 +180,21 @@ def get_params_list():
     resp.headers['Access-Control-Allow-Credentials'] = True
     return resp
 
+@api.route('/get_aqi_by_coordinates/<latitude>/<longitude>')
+def get_AQI_by_coordinates(latitude, longitude):
+    station = get_nearest_station(latitude, longitude)
+    if station is None:
+        abort(404)
+    transaction = bdb_helper.retrieve(station.last_txid)
+    params = []
+
+    resp = Response(json.dumps(params), status=200, mimetype='application/json')
+    resp.headers['Access-Control-Allow-Origin'] = '*'
+    resp.headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS, PUT, PATCH, DELETE'
+    resp.headers['Access-Control-Allow-Headers'] = 'X-Requested-With,content-type'
+    resp.headers['Access-Control-Allow-Credentials'] = True
+    return resp
+
 
 
 def get_list_of_available_stations():
