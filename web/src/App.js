@@ -3,7 +3,7 @@ import ReactMapGL, {Marker, Popup, NavigationControl, FullscreenControl, FlyToIn
 import {getStationInfoById, getStationsList, getParametersList} from './common/Api';
 import {fullscreenControlStyle, navStyle} from './MapStyles';
 
-import {heatmapOnParameter, removeHeatmap, HEATMAP_LAYER} from './layers/Heatmap';
+import {addHeatmap, removeHeatmap, HEATMAP_LAYER} from './layers/Heatmap';
 import {addCirclesLayer, CIRCLES_LAYER, removeCircles, CLUSTERS_LAYER} from './layers/Clusters'
 
 import {MARKERS_LAYER} from './layers/Markers';
@@ -14,6 +14,10 @@ import ControlPanel from './components/ControlPanel';
 
 import style from './App.css';
 
+import AqiTable from './components/AqiTable';
+
+const interactiveLayerIdsClusters = [CIRCLES_LAYER, CLUSTERS_LAYER]
+
 export default class App extends Component {
 
   constructor(props){
@@ -21,8 +25,8 @@ export default class App extends Component {
     this._mapRef = React.createRef();
     this.setStartingViewport = this.setStartingViewport.bind(this);
     this.handleLocation = this.handleLocation.bind(this);
-    this.toggleHeatmap = this.toggleHeatmap.bind(this);
-    this.onCancelSearch = this.onCancelSearch.bind(this);
+    this.changeLayer = this.changeLayer.bind(this);
+    this.changeParameter = this.changeParameter.bind(this);
     this._onClick = this._onClick.bind(this);
     this.handleLocation();
   }
@@ -38,9 +42,11 @@ export default class App extends Component {
     selectedStation: null,
     stations: [],
     selectedLayer: CIRCLES_LAYER,
+    interactiveLayerIds: null,
     parameters: null,
     layers: [MARKERS_LAYER, HEATMAP_LAYER, CIRCLES_LAYER],
-    selectedParameter: null
+    selectedParameter: '-',
+    aqiTableIsShown: false
   }
   
   _onViewportChange = viewport => this.setState({viewport});
@@ -48,6 +54,7 @@ export default class App extends Component {
   setStations = stations => this.setState({stations});
 
   setSelectedStationById = id => {
+    // TODO: try memoization?
     getStationInfoById(id).then(result => {
       const stationInfo = result.data;
       stationInfo.id = id;
@@ -95,13 +102,7 @@ export default class App extends Component {
     });
 
     getParametersList().then(result => {
-      // const parametersDict = result.data;
-      // const parameters = [];
-      // parametersDict.forEach(entry => {
-      //     parameters.push(entry.parameter);
-      // });
-      // parameters.push('-');
-      this.setState({ parameters: result.data });
+      this.setState({ parameters: [...result.data, '-'] });
     })
   }
 
@@ -116,6 +117,7 @@ export default class App extends Component {
   }
 
   getStationPopupText = (id) => {
+    //TODO: may extract this method to another file
     const currentItem = this.getStationFromStateById(id);
     if (currentItem == null) {
       return "No info";
@@ -141,85 +143,43 @@ export default class App extends Component {
     return popupContent;
   }
 
-  _getMap = () => {
-    return this._mapRef.current ? this._mapRef.current.getMap() : null;
-  };  
-
-  // supposed to be only for heatmap for now
-  onCancelSearch = () => {
-    if (this.state.selectedLayer == HEATMAP_LAYER) {
-      removeHeatmap(this._getMap());
-      this.setState({
-        selectedLayer: null
-      });
-    }
-  }
-
-  toggleHeatmap = parameter => {
-    if (parameter === '') {
-      this.onCancelSearch();
-      return;
-    }
-    this.setState({
-      selectedLayer: HEATMAP_LAYER
-    });
-
-    const map = this._getMap();
-    removeHeatmap(map);
-    heatmapOnParameter(parameter, map);
-  }
+  _getMap = () => {return this._mapRef.current ? this._mapRef.current.getMap() : null;}
 
   changeParameter = (parameter) => {
-    //TODO: make switch case
-    if (this.state.selectedLayer === HEATMAP_LAYER){
-      if (parameter === '-'){
-        this.onCancelSearch();
-      } else {
-        this.toggleHeatmap(parameter);
-      }
-    } else if (this.state.selectedLayer === CIRCLES_LAYER) {
-      //TODO there are ways to do it more efficiently
-      removeCircles(this._getMap());
-      this.addClusters(parameter);
-      // removeCircles(this._getMap());
-      // addCirclesLayer(parameter, this._getMap());
-      // this.setState({
-      //   interactiveLayerIds: [CIRCLES_LAYER, CLUSTERS_LAYER]
-      // })
-    }
+    this.toggleLayerAndParameter(this.state.selectedLayer, parameter);
     this.setState({
       selectedParameter: parameter
     });
   }
 
   changeLayer = (layer) => {
-    if (this.state.selectedLayer == HEATMAP_LAYER){
-      removeHeatmap(this._getMap());
-    } else if (this.state.selectedLayer == CIRCLES_LAYER) {
-      this.removeClusters()
-    }
     this.setState({
       selectedLayer: layer
     });
-    if (layer === HEATMAP_LAYER) {
-      this.toggleHeatmap(this.state.selectedParameter);
-    } else if (layer === CIRCLES_LAYER) {
-      this.addClusters[this.state.selectedParameter]
+    this.toggleLayerAndParameter(layer, this.state.selectedParameter);
+  }
+
+  toggleLayerAndParameter = (layer, parameter) => {
+    if (this.state.selectedLayer === HEATMAP_LAYER){
+      removeHeatmap(this._getMap());
+    } else if (this.state.selectedLayer === CIRCLES_LAYER) {
+      removeCircles(this._getMap());
+      if (layer !== CIRCLES_LAYER) {
+        this.setState({
+          interactiveLayerIds: null
+        })
+      }
     }
-  }
-
-  addClusters = (parameter) => {
-    addCirclesLayer(parameter, this._getMap());
-    this.setState({
-      interactiveLayerIds: [CIRCLES_LAYER, CLUSTERS_LAYER]
-    })
-  }
-
-  removeClusters = () => {
-    this.setState({
-      interactiveLayerIds: null
-    });
-    removeCircles(this._getMap());
+    if (parameter !== '-') {
+      if (layer === HEATMAP_LAYER) {
+        addHeatmap(this._getMap(), parameter);
+      } else if (layer === CIRCLES_LAYER) {
+        addCirclesLayer(this._getMap(), parameter);
+        this.setState({
+          interactiveLayerIds: interactiveLayerIdsClusters
+        })
+      }
+    }
   }
 
   onMarkerClick = (e, station) => {
@@ -229,17 +189,8 @@ export default class App extends Component {
       ? this.setSelectedStation(null) : this.setSelectedStation(station)
   } 
 
-  _onControlPanelClick = (e) =>{
-    // e.preventDefault();
-    e.stopPropagation();
-    e.persist();  
-    console.log('_onControlPanelClick', e);
-  }
-
   _onClick = e => {
-    // e.preventDefault();
     e.stopPropagation();
-    
 
     const point = [e.center.x, e.center.y];
     const map = this._getMap();
@@ -254,10 +205,10 @@ export default class App extends Component {
           return;
         map.easeTo({
           center: cluster.geometry.coordinates,
-          // around: cluster.geometry.coordinates,  
           zoom: zoom,
           duration: 1000
         });
+        //TODO: try with flying and not easing
         // map.easeTo doesn't change viewport even if it zooms - strange. Perhaps, a bug
           setTimeout(function(){
             that._onViewportChange({
@@ -273,14 +224,27 @@ export default class App extends Component {
       });
      
       
+    } 
+    // else {
+    //   const cicrlesLayer = map.queryRenderedFeatures(point, { layers: [CIRCLES_LAYER] })[0];
+    //   if (cicrlesLayer) {  
+    //     console.log('cicrlesLayer', cicrlesLayer);
+    //     (this.state.selectedStation && (cicrlesLayer.properties.id === this.state.selectedStation.id))
+    //     ? this.setSelectedStation(null) : this.setSelectedStationById(cicrlesLayer.properties.id);
+    //   }
+    // }
+  }
+
+  _onHover = (e) => {
+    //TODO: for some reasons it flickers when moving the mouse fast
+    e.stopPropagation();
+    const point = [e.center.x, e.center.y];
+    const map = this._getMap();
+    const cicrlesLayer = map.queryRenderedFeatures(point, { layers: [CIRCLES_LAYER] })[0];
+    if (cicrlesLayer) {  
+      this.setSelectedStationById(cicrlesLayer.properties.id)
     } else {
-      const cicrlesLayer = map.queryRenderedFeatures(point, { layers: [CIRCLES_LAYER] })[0];
-      if (cicrlesLayer) {
-      
-        console.log('cicrlesLayer', cicrlesLayer);
-        (this.state.selectedStation && (cicrlesLayer.properties.id === this.state.selectedStation.id))
-        ? this.setSelectedStation(null) : this.setSelectedStationById(cicrlesLayer.properties.id);
-      }
+      this.setSelectedStation(null);
     }
   }
 
@@ -288,18 +252,30 @@ export default class App extends Component {
     return isHovering ? 'pointer' : 'grab';
   };
 
-  _onControlPanelDrag = (e) => {
-    console.log('onControlPanelDrag', e);
-    e.preventDefault();
-    e.stopPropagation();
+  _renderPopup() {
+    const {selectedStation} = this.state;
+    if (selectedStation) {
+      return (
+        <Popup
+          latitude={selectedStation.latitude}
+          longitude={selectedStation.longitude}
+          closeButton={false}
+          >
+          <div>
+            {this.getStationPopupText(selectedStation.id)}
+          </div>
+        </Popup>
+      );
+    }
+    return null;
   }
   
   
   render () { 
     return (
-      <div style={{pointerEvents: "auto"}}>
+      <div>
         <ReactMapGL
-          // 
+          key="map"
           ref={this._mapRef}
           {...this.state.viewport}
           mapboxApiAccessToken={process.env.REACT_APP_MAPBOX_TOKEN}
@@ -307,6 +283,7 @@ export default class App extends Component {
           onViewportChange={this._onViewportChange}
           onClick={this._onClick}
           // onLoad={this._onMapLoad}
+          onHover={this._onHover}
           getCursor={this._getCursor}
           interactiveLayerIds={this.state.interactiveLayerIds}
         >
@@ -334,7 +311,7 @@ export default class App extends Component {
               </Marker>)
             )) : null}
   
-          {this.state.selectedStation ? (
+          {/* {this.state.selectedStation ? (
             
             <Popup
               latitude={this.state.selectedStation.latitude}
@@ -347,16 +324,25 @@ export default class App extends Component {
                 {this.getStationPopupText(this.state.selectedStation.id)}
               </div>
             </Popup>
-          ) : null}
+          ) : null} */}
+          {this._renderPopup()}
+            
         </ReactMapGL>
-        {this.state.parameters && this.state.layers ? 
-              <ControlPanel
-              parameters={this.state.parameters}
-              layers={this.state.layers}
-              changeLayer={this.changeLayer}
-              changeParameter={this.changeParameter}
-              />
-          : null}
+        <div
+         key="panel" 
+        className={style['panel']}>
+          {this.state.parameters && this.state.layers ? 
+                <ControlPanel
+                parameters={this.state.parameters}
+                layers={this.state.layers}
+                changeLayer={this.changeLayer}
+                changeParameter={this.changeParameter}
+                />
+            : null}
+          
+        </div>
+        {(this.state.selectedLayer === CIRCLES_LAYER && this.state.selectedParameter !== '-') 
+          ? <AqiTable/> : null}
       </div>
     ); 
   }
