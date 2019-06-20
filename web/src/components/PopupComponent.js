@@ -69,7 +69,7 @@ export const getHistoryPopup = (id, parameters) => {
 const colors = ['#52B947', '#F3EC19', '#F57E1F', '#ED1C24', '#7F2B7E', '#480D27']
 
 const getAirQuilityDescription = (aqi) => {
-  let value = aqi.value;
+  let value = Math.round( aqi.value * 10 ) / 10;
   let text = aqi.text;
   let color;
   if (value > 0 && value <= 50){
