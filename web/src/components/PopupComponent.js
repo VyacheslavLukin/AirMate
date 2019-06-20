@@ -40,8 +40,16 @@ export const getStationPopupContent = (stationInfo) => {
                 </div>
               ) */}
               {/* : */}
-              <div className="aqi-scale"> {getAirQuilityDescription(aqi)} 
+             
+              <div className="aqi-scale"> 
+                General
+                {getAirQuilityDescription(aqi)} 
               </div> 
+              <div className="aqi-scale"> 
+                {stationInfo.parameter}
+                {getAirQuilityDescription(stationInfo.param_aqi)} 
+              </div> 
+              
               {/* } */}
               <br/>
               Updated: <spin style={{backgroundColor: 'red', opacity: 0.6}}> who knows when </spin>
@@ -78,6 +86,6 @@ const getAirQuilityDescription = (aqi) => {
     color = colors[5]
   }
   return <div > Air Quility Index: <span style={{backgroundColor:color}}>{value}</span> <br/>
-  <span style={{backgroundColor:colors}}>{text}</span>
+  <span style={{backgroundColor:color}}>{text}</span>
 </div>;
 }

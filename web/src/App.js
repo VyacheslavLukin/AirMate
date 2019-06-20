@@ -59,7 +59,7 @@ export default class App extends Component {
 
   setStations = stations => this.setState({stations});
 
-  setPopupStationInfoById = id => {
+  setPopupStationInfoByIdAndAqi = (id, param_aqi) => {
     // TODO: try memoization?
     getStationInfoById(id).then(result => {
       const stationInfo = result.data;
@@ -67,10 +67,13 @@ export default class App extends Component {
       stationInfo.latitude = stationInfo.coordinates.latitude;
       stationInfo.longitude = stationInfo.coordinates.longitude;
       delete stationInfo['coordinates'];
+      stationInfo.param_aqi = param_aqi;
+      stationInfo.parameter = this.state.selectedParameter;
       this.setState({
         popupStationInfo: stationInfo
       });
     });
+    
   }
 
   setPopupStationInfo(popupStationInfo) {
@@ -78,7 +81,7 @@ export default class App extends Component {
       this.setState({popupStationInfo}); //null
     } else {
       let id = popupStationInfo['id'];
-      this.setPopupStationInfoById(id);
+      this.setPopupStationInfoByIdAndAqi(id);
 
     }  
   }
@@ -123,7 +126,7 @@ export default class App extends Component {
   }
 
   getStationPopupContent = (id) => {
-
+    
     const currentItem = this.getStationFromStateById(id);
     if (!currentItem) {
       return "No info";
@@ -134,6 +137,7 @@ export default class App extends Component {
     station.id = currentItem.id; //?
     station.longitude = currentItem.longitude;
     station.latitude = currentItem.latitude;
+    // station.param_aqi = 
 
 
     return getStationPopupContent(station);
@@ -224,12 +228,12 @@ export default class App extends Component {
       if (cicrlesLayer) {  
         console.log('cicrlesLayer', cicrlesLayer);
         // (this.state.popupStationInfo && (cicrlesLayer.properties.id === this.state.popupStationInfo.id))
-        // ? this.setPopupStationInfo(null) : this.setPopupStationInfoById(cicrlesLayer.properties.id);
+        // ? this.setPopupStationInfo(null) : this.setPopupStationInfoByIdAndAqi(cicrlesLayer.properties.id);
         // this.setState({
         //   historyPopupIsShown: true
         // })
         // this.setPopupStationInfo(null);
-        // this.setPopupStationInfoById(cicrlesLayer.properties.id)
+        // this.setPopupStationInfoByIdAndAqi(cicrlesLayer.properties.id)
         this.setState({
           selectedStationId: null 
         });
@@ -252,13 +256,20 @@ export default class App extends Component {
   _onHover = (e) => {
     //TODO: for some reasons it flickers when moving the mouse fast
     e.stopPropagation();
+  
     const point = [e.center.x, e.center.y];
     const map = this._getMap();
     const cicrlesLayer = map.queryRenderedFeatures(point, { layers: [CIRCLES_LAYER] })[0];
     if (cicrlesLayer) {  
+      // console.log(cicrlesLayer);
       // this.setPopupStationInfo(null);
       // setTimeout(() => {
-        this.setPopupStationInfoById(cicrlesLayer.properties.id)
+        
+        let param_aqi = {
+          value: cicrlesLayer.properties.aqi,
+          text: cicrlesLayer.properties.aqi_text
+        }
+        this.setPopupStationInfoByIdAndAqi(cicrlesLayer.properties.id, param_aqi)
       // }, 200)
     } else {
       // setTimeout(() => {
