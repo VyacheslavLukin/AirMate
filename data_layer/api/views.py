@@ -15,8 +15,8 @@ def get_station_data(station_id):
         abort(404)
 
     transaction = bdb_helper.retrieve(station.last_txid)
-    data = transaction['asset']['data']['station_data']
-    aqi = get_aqi_of_station(json.loads(transaction['asset']['data']['station_data'])['measurements'])
+    data = json.loads(transaction['asset']['data']['station_data'])
+    aqi = get_aqi_of_station(data['measurements'])
     data["aqi"] = aqi[0]
 
     resp = Response(json.dumps(data), status=200, mimetype='application/json')
