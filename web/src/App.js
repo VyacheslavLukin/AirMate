@@ -111,7 +111,7 @@ export default class App extends Component {
     });
 
     getParametersList().then(result => {
-      this.setState({ parameters: [...result.data, '-'] });
+      this.setState({ parameters: [...result.data, 'average aqi', '-'] });
     })
   }
 
@@ -171,6 +171,9 @@ export default class App extends Component {
       }
     }
     if (parameter !== '-') {
+      if (parameter === 'average aqi') {
+        parameter = 'aqi'
+      }
       if (layer === HEATMAP_LAYER) {
         addHeatmap(this._getMap(), parameter);
       } else if (layer === CIRCLES_LAYER) {
@@ -226,7 +229,7 @@ export default class App extends Component {
     else {
       const cicrlesLayer = map.queryRenderedFeatures(point, { layers: [CIRCLES_LAYER] })[0];
       if (cicrlesLayer) {  
-        console.log('cicrlesLayer', cicrlesLayer);
+        // console.log('cicrlesLayer', cicrlesLayer);
         // (this.state.popupStationInfo && (cicrlesLayer.properties.id === this.state.popupStationInfo.id))
         // ? this.setPopupStationInfo(null) : this.setPopupStationInfoByIdAndAqi(cicrlesLayer.properties.id);
         // this.setState({
