@@ -1,18 +1,21 @@
+import style from './App.css';
+import mapboxStyle from '../public/css/mapbox-gl.css';
+import MarkerIcon from './marker-icon.png';
+
 import React, {Component} from 'react';
 import ReactMapGL, {Marker, Popup, NavigationControl, FullscreenControl, FlyToInterpolator} from 'react-map-gl';
+
 import {getStationInfoById, getStationsList, getParametersList} from './common/Api';
 import {fullscreenControlStyle, navStyle} from './MapStyles';
 
 import {addHeatmap, removeHeatmap, HEATMAP_LAYER} from './layers/Heatmap';
 import {addCirclesLayer, CIRCLES_LAYER, removeCircles, CLUSTERS_LAYER} from './layers/Clusters'
-
 import {MARKERS_LAYER} from './layers/Markers';
 
-import MarkerIcon from './marker-icon.png';
-
 import ControlPanel from './components/ControlPanel';
+import {getStationPopupContent} from './components/PopupComponent';
 
-import style from './App.css';
+
 
 import AqiTable from './components/AqiTable';
 
@@ -116,31 +119,19 @@ export default class App extends Component {
     return null;
   }
 
-  getStationPopupText = (id) => {
-    //TODO: may extract this method to another file
+  getStationPopupContent = (id) => {
+
     const currentItem = this.getStationFromStateById(id);
     if (currentItem == null) {
       return "No info";
     }
-    
-    let data = this.state.selectedStation;
 
-    let measurements = []
-    if (data.measurements){
-      data.measurements.forEach(measurement => {
-        measurements.push(<div key={measurement.parameter}> {measurement.parameter}: {measurement.value} {measurement.unit} </div>); 
-      });
-    }
-
-     let popupContent = 
-    <div key={currentItem.last_txid}>  
-      ID: {currentItem.id} <br/>
-      Transaction hash: ${currentItem.last_txid}<br/>
-      Latitude: {currentItem.latitude}<br/>
-      Longitude: {currentItem.longitude}<br/>
-      {measurements}
-    </div>
-    return popupContent;
+    let station = this.state.selectedStation
+    station.last_txid = currentItem.last_txid;
+    station.id = currentItem.id; //?
+    station.longitude = currentItem.longitude;
+    station.latitude = currentItem.latitude;
+    return getStationPopupContent(station);
   }
 
   _getMap = () => {return this._mapRef.current ? this._mapRef.current.getMap() : null;}
@@ -260,9 +251,10 @@ export default class App extends Component {
           latitude={selectedStation.latitude}
           longitude={selectedStation.longitude}
           closeButton={false}
+          // style={{opacity: 0.5}}
           >
           <div>
-            {this.getStationPopupText(selectedStation.id)}
+            {this.getStationPopupContent(selectedStation.id)}
           </div>
         </Popup>
       );
@@ -273,11 +265,11 @@ export default class App extends Component {
   
   render () { 
     return (
-      <div>
+      <div className={mapboxStyle['mapboxgl-canvas']}>
         <ReactMapGL
+          
           key="map"
           ref={this._mapRef}
-          {...this.state.viewport}
           mapboxApiAccessToken={process.env.REACT_APP_MAPBOX_TOKEN}
           mapStyle="mapbox://styles/reshreshus/cjwamfl3205ry1cpptvzeyq1e"
           onViewportChange={this._onViewportChange}
@@ -286,6 +278,7 @@ export default class App extends Component {
           onHover={this._onHover}
           getCursor={this._getCursor}
           interactiveLayerIds={this.state.interactiveLayerIds}
+          {...this.state.viewport}
         >
           
           <div className="fullscreen" style={fullscreenControlStyle}>
@@ -321,7 +314,7 @@ export default class App extends Component {
               }}
             >
               <div>
-                {this.getStationPopupText(this.state.selectedStation.id)}
+                {this.getStationPopupContent(this.state.selectedStation.id)}
               </div>
             </Popup>
           ) : null} */}
