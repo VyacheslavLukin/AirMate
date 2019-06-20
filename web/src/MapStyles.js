@@ -2,6 +2,7 @@ export const fullscreenControlStyle = {
   position: 'absolute',
   top: 0,
   left: 0,
+  // bottom: '80px'
   padding: '10px'
 };
 

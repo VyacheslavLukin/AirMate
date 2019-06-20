@@ -44,7 +44,7 @@ export default class App extends Component {
       height: "100vh",
       zoom: 10
     },
-    selectedStation: null,
+    popupStationInfo: null,
     stations: [],
     selectedLayer: CIRCLES_LAYER,
     interactiveLayerIds: null,
@@ -52,14 +52,14 @@ export default class App extends Component {
     layers: [MARKERS_LAYER, HEATMAP_LAYER, CIRCLES_LAYER],
     selectedParameter: '-',
     aqiTableIsShown: false,
-    historyPopupIsShown: false
+    selectedStationId: null
   }
   
   _onViewportChange = viewport => this.setState({viewport});
 
   setStations = stations => this.setState({stations});
 
-  setSelectedStationById = id => {
+  setPopupStationInfoById = id => {
     // TODO: try memoization?
     getStationInfoById(id).then(result => {
       const stationInfo = result.data;
@@ -68,17 +68,17 @@ export default class App extends Component {
       stationInfo.longitude = stationInfo.coordinates.longitude;
       delete stationInfo['coordinates'];
       this.setState({
-        selectedStation: stationInfo
+        popupStationInfo: stationInfo
       });
     });
   }
 
-  setSelectedStation(selectedStation) {
-    if (selectedStation == null) {
-      this.setState({selectedStation}); //null
+  setPopupStationInfo(popupStationInfo) {
+    if (popupStationInfo == null) {
+      this.setState({popupStationInfo}); //null
     } else {
-      let id = selectedStation['id'];
-      this.setSelectedStationById(id);
+      let id = popupStationInfo['id'];
+      this.setPopupStationInfoById(id);
 
     }  
   }
@@ -125,15 +125,17 @@ export default class App extends Component {
   getStationPopupContent = (id) => {
 
     const currentItem = this.getStationFromStateById(id);
-    if (currentItem == null) {
+    if (!currentItem) {
       return "No info";
     }
 
-    let station = this.state.selectedStation
+    let station = this.state.popupStationInfo
     station.last_txid = currentItem.last_txid;
     station.id = currentItem.id; //?
     station.longitude = currentItem.longitude;
     station.latitude = currentItem.latitude;
+
+
     return getStationPopupContent(station);
   }
 
@@ -179,8 +181,8 @@ export default class App extends Component {
   onMarkerClick = (e, station) => {
     e.preventDefault();
     // set selected station or close it if clicked for the 2nd time
-    (this.state.selectedStation && station.id === this.state.selectedStation.id) 
-      ? this.setSelectedStation(null) : this.setSelectedStation(station)
+    (this.state.popupStationInfo && station.id === this.state.popupStationInfo.id) 
+      ? this.setPopupStationInfo(null) : this.setPopupStationInfo(station)
   } 
 
   _onClick = e => {
@@ -191,7 +193,7 @@ export default class App extends Component {
     const cluster = map.queryRenderedFeatures(point, { layers: [CLUSTERS_LAYER] })[0];
     
     if (cluster) {
-      console.log('cluster', cluster);
+      // console.log('cluster', cluster);
       const clusterId = cluster.properties.cluster_id;
       let that = this
       map.getSource('clusters-source').getClusterExpansionZoom(clusterId, function (err, zoom) {
@@ -221,18 +223,27 @@ export default class App extends Component {
       const cicrlesLayer = map.queryRenderedFeatures(point, { layers: [CIRCLES_LAYER] })[0];
       if (cicrlesLayer) {  
         console.log('cicrlesLayer', cicrlesLayer);
-        // (this.state.selectedStation && (cicrlesLayer.properties.id === this.state.selectedStation.id))
-        // ? this.setSelectedStation(null) : this.setSelectedStationById(cicrlesLayer.properties.id);
+        // (this.state.popupStationInfo && (cicrlesLayer.properties.id === this.state.popupStationInfo.id))
+        // ? this.setPopupStationInfo(null) : this.setPopupStationInfoById(cicrlesLayer.properties.id);
         // this.setState({
         //   historyPopupIsShown: true
         // })
-        this.setSelectedStation(null);
-        this.setSelectedStationById(cicrlesLayer.properties.id)
+        // this.setPopupStationInfo(null);
+        // this.setPopupStationInfoById(cicrlesLayer.properties.id)
+        this.setState({
+          selectedStationId: null 
+        });
+        this.setState({
+          selectedStationId: cicrlesLayer.properties.id
+        });
       } else {
         // this.setState({
         //   historyPopupIsShown: false
         // })
-        this.setSelectedStation(null);
+        // this.setPopupStationInfo(null);
+        this.setState({
+          selectedStationId: null
+        });
       }
 
     }
@@ -245,10 +256,18 @@ export default class App extends Component {
     const map = this._getMap();
     const cicrlesLayer = map.queryRenderedFeatures(point, { layers: [CIRCLES_LAYER] })[0];
     if (cicrlesLayer) {  
-      
-      this.setSelectedStationById(cicrlesLayer.properties.id)
+      // this.setPopupStationInfo(null);
+      // setTimeout(() => {
+        this.setPopupStationInfoById(cicrlesLayer.properties.id)
+      // }, 200)
     } else {
-      this.setSelectedStation(null);
+      // setTimeout(() => {
+        // this.setPopupStationInfo(null);
+        this.setState({
+          popupStationInfo: null
+        })
+      // }, 300);
+      
     }
   }
 
@@ -257,21 +276,11 @@ export default class App extends Component {
   };
 
   _renderHistoryPopup() {
-    const {selectedStation} = this.state;
-    if (selectedStation) {
+    if (this.state.selectedStationId) {
+      // console.log("why");
       return (
-        // <Popup
-        //   latitude={selectedStation.latitude}
-        //   longitude={selectedStation.longitude}
-        //   closeButton={false}
-        //   // style={{opacity: 0.5}}
-        //   >
-        //   <div>
-        //     {getHistoryPopup(selectedStation.id)}
-        //   </div>
-        // </Popup>
         <div>
-        {getHistoryPopup(selectedStation.id, this.state.parameters)}
+        {getHistoryPopup(this.state.selectedStationId, this.state.parameters)}
       </div>
       );
     }
@@ -279,17 +288,17 @@ export default class App extends Component {
   }
 
   _renderPopup() {
-    const {selectedStation} = this.state;
-    if (selectedStation) {
+    const {popupStationInfo} = this.state;
+    if (popupStationInfo && !this.state.selectedStationId) {
+      
       return (
         <Popup
-          latitude={selectedStation.latitude}
-          longitude={selectedStation.longitude}
+          latitude={popupStationInfo.latitude}
+          longitude={popupStationInfo.longitude}
           closeButton={false}
-          // style={{opacity: 0.5}}
           >
           <div>
-            {this.getStationPopupContent(selectedStation.id)}
+            {this.getStationPopupContent(popupStationInfo.id)}
           </div>
         </Popup>
       );
@@ -310,7 +319,7 @@ export default class App extends Component {
           onViewportChange={this._onViewportChange}
           onClick={this._onClick}
           // onLoad={this._onMapLoad}
-          // onHover={this._onHover}
+          onHover={this._onHover}
           getCursor={this._getCursor}
           interactiveLayerIds={this.state.interactiveLayerIds}
           {...this.state.viewport}
@@ -340,21 +349,21 @@ export default class App extends Component {
               </Marker>)
             )) : null}
   
-          {/* {this.state.selectedStation ? (
+          {/* {this.state.popupStationInfo ? (
             
             <Popup
-              latitude={this.state.selectedStation.latitude}
-              longitude={this.state.selectedStation.longitude}
+              latitude={this.state.popupStationInfo.latitude}
+              longitude={this.state.popupStationInfo.longitude}
               onClose={() => {
-                this.setSelectedStation(null);
+                this.setPopupStationInfo(null);
               }}
             >
               <div>
-                {this.getStationPopupContent(this.state.selectedStation.id)}
+                {this.getStationPopupContent(this.state.popupStationInfo.id)}
               </div>
             </Popup>
           ) : null} */}
-          {/* {this._renderPopup()} */}
+          {this._renderPopup()}
          
             
         </ReactMapGL>

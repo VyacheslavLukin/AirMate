@@ -1,4 +1,5 @@
 import style from './Popup.css';
+import '../App.css';
 
 import PersonalChart from './PersonalChart';
 
@@ -11,74 +12,72 @@ export const getStationPopupContent = (stationInfo) => {
       });
     }
 
-     let popupContent = 
-    <div key={stationInfo.last_txid}>  
-      ID: {stationInfo.id} <br/>
-      Transaction hash: ${stationInfo.last_txid}<br/>
-      Latitude: {stationInfo.latitude}<br/>
-      Longitude: {stationInfo.longitude}<br/>
-      {measurements}
-    </div>
+    //  let popupContent = 
+    // <div key={stationInfo.last_txid}>  
+    //   ID: {stationInfo.id} <br/>
+    //   Transaction hash: ${stationInfo.last_txid}<br/>
+    //   Latitude: {stationInfo.latitude}<br/>
+    //   Longitude: {stationInfo.longitude}<br/>
+    //   {measurements}
+    // </div>
     // return popupContent;
-    // console.log('stationInfo', stationInfo);
-    popupContent = 
+    console.log('stationInfo', stationInfo);
+    let aqi = stationInfo.aqi ? stationInfo.aqi : {
+      value: 34.58,
+      text: 'Good'
+    }
+    let popupContent = 
         <div 
         // className={style['popup-container']}
         className='popup-container'
         >
-              {/* <h1> AirMate</h1> */}
               <h3>{stationInfo.city}, {stationInfo.country} | {stationInfo.id}</h3>
               <hr/>
-              {stationInfo.aqi ? (
+              {/* {stationInfo.aqi ? (
                 <div> 
                   <p>Air Quility Index: {stationInfo.aqi}</p>
-                  <p>{getAirQuilityDescription()}</p>
+                  <p>{getAirQuilityDescription(aqi)}</p>
                 </div>
-              )
-              : <div> Aqi: <spin style={{backgroundColor: 'green'}}> Good anyway </spin> </div>}
+              ) */}
+              {/* : */}
+              <div className="aqi-scale"> {getAirQuilityDescription(aqi)} 
+              </div> 
+              {/* } */}
               <br/>
-              updated: <spin style={{backgroundColor: 'red', opacity: 0.6}}> who knows when </spin> <br/>or wait we need to show when a particular parameter updated..
+              Updated: <spin style={{backgroundColor: 'red', opacity: 0.6}}> who knows when </spin>
               <hr/>
               Click for more information
               <hr/>
               {measurements}
-              {/* <div className={style["interior"]}>
-                  <a className={style["btn"]} href="#open-modal">👋 Basic CSS-Only Modal</a>
-              </div> */}
-      
-              {/* <div id="open-modal" className={style["modal-window"]}>
-                  <div>
-                      <a href="#" title="Close" className={style["modal-close"]}>Close</a>
-                      <h1>Voilà!</h1>
-                      <div>A CSS-only modal based on the :target pseudo-class. Hope you find it helpful.</div>
-                      <div><small>Sponsor</small></div>
-                      <a href="https://aminoeditor.com" target="_blank">👉 Amino: Live CSS Editor for Chrome</a>
-                  </div>
-              </div> */}
         </div>
     return popupContent;
   }
 
 
 export const getHistoryPopup = (id, parameters) => {
-  console.log('getHistoryPopup id', id);
-  // return (<LineGraph stationId={id} />);
   return (<PersonalChart stationId={id} parameters={parameters}/>);
 }
 
+const colors = ['#52B947', '#F3EC19', '#F57E1F', '#ED1C24', '#7F2B7E', '#480D27']
+
 const getAirQuilityDescription = (aqi) => {
-  switch (aqi) {
-    case (aqi > 0 && aqi <= 50):
-      return "Good";
-    case (aqi > 50 && aqi <= 100):
-      return "Moderate";
-    case (aqi > 100 && aqi <= 150):
-      return "Unhealthy for sensitive people";
-    case (aqi > 150 && aqi <= 200):
-      return "Unhealthy";
-    case (aqi > 200 && aqi <= 300):
-      return "Very Unhealthy";
-    case (aqi > 300):
-      return "Hazardous"
+  let value = aqi.value;
+  let text = aqi.text;
+  let color;
+  if (value > 0 && value <= 50){
+    color = colors[0]
+  } else if (value > 50 && value <= 100) {
+    color = colors[1]
+  } else if (value > 100 && value <= 150) {
+    color = colors[2]
+  } else if (value > 150 && value <= 200){
+    color = colors[3]
+  } else if (value > 200 && value <= 300){
+    color = colors[4]
+  } else if (value > 300){
+    color = colors[5]
   }
+  return <div > Air Quility Index: <span style={{backgroundColor:color}}>{value}</span> <br/>
+  <span style={{backgroundColor:colors}}>{text}</span>
+</div>;
 }
