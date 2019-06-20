@@ -176,6 +176,30 @@ def get_stations_data_by_parameter(parameter):
     resp.headers['Access-Control-Allow-Credentials'] = True
     return resp
 
+@api.route('/stations/aqi')
+def get_stations_aqi():
+    stations = Station.query.all()
+    data = []
+    step = 0
+    for station in stations:
+        transaction = bdb_helper.retrieve(station.last_txid)
+        aqi = get_aqi_of_station(json.loads(transaction['asset']['data']['station_data'])['measurements'])
+        data.append({
+            'id': station.id,
+            'latitude': station.latitude,
+            'longitude': station.longitude,
+            'aqi': aqi[0]
+        })
+        step+=1
+        print(step)
+
+    resp = Response(json.dumps(data), status=200, mimetype='application/json')
+    resp.headers['Access-Control-Allow-Origin'] = '*'
+    resp.headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS, PUT, PATCH, DELETE'
+    resp.headers['Access-Control-Allow-Headers'] = 'X-Requested-With,content-type'
+    resp.headers['Access-Control-Allow-Credentials'] = True
+    return resp
+
 
 # Return list of exists parameters: ["o3","no2", ...]
 @api.route('/get_params_list')
@@ -395,13 +419,13 @@ def get_aqi_of_parameter(parameter, value, units):
     ]
 
 
-def get_aqi_of_station(meaturements):
+def get_aqi_of_station(measurements):
     all_aqis = []
     i_bounds = [[0, 50], [51, 100], [101, 150], [151, 200], [201, 300], [301, 400], [401, 500], [501, 999]]
     i_meaning = ["Good", "Moderate", "Unhealthy for Sensitive Groups", "Unhealthy", "Very Unhealthy", "Hazardous",
                  "Hazardous", "Hazardous"]
 
-    for measurement in meaturements:
+    for measurement in measurements:
         if measurement['parameter'] != 'bc':
             aqi = get_aqi_of_parameter(measurement['parameter'], measurement['value'], measurement['unit'])
             all_aqis.append(aqi[0]['value'])
