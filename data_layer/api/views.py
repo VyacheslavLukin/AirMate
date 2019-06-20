@@ -201,6 +201,7 @@ def get_stations_aqi():
     return resp
 
 
+
 # Return list of exists parameters: ["o3","no2", ...]
 @api.route('/get_params_list')
 def get_params_list():
