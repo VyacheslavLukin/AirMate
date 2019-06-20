@@ -1,5 +1,7 @@
 import style from './Popup.css';
 
+import PersonalChart from './PersonalChart';
+
 
 export const getStationPopupContent = (stationInfo) => {
     let measurements = []
@@ -20,7 +22,10 @@ export const getStationPopupContent = (stationInfo) => {
     // return popupContent;
     // console.log('stationInfo', stationInfo);
     popupContent = 
-        <div className={style['popup-container']}>
+        <div 
+        // className={style['popup-container']}
+        className='popup-container'
+        >
               {/* <h1> AirMate</h1> */}
               <h3>{stationInfo.city}, {stationInfo.country} | {stationInfo.id}</h3>
               <hr/>
@@ -53,6 +58,13 @@ export const getStationPopupContent = (stationInfo) => {
         </div>
     return popupContent;
   }
+
+
+export const getHistoryPopup = (id, parameters) => {
+  console.log('getHistoryPopup id', id);
+  // return (<LineGraph stationId={id} />);
+  return (<PersonalChart stationId={id} parameters={parameters}/>);
+}
 
 const getAirQuilityDescription = (aqi) => {
   switch (aqi) {
