@@ -50,13 +50,14 @@ export const getStationPopupContent = (stationInfo) => {
                 {getAirQuilityDescription(stationInfo.param_aqi)} 
               </div> 
               
-              {/* } */}
+              {/* } */} 
               <br/>
               Updated: <spin style={{backgroundColor: 'red', opacity: 0.6}}> who knows when </spin>
               <hr/>
-              Click for more information
-              <hr/>
               {measurements}
+              <hr/>
+              Click for more information
+             
         </div>
     return popupContent;
   }
@@ -72,7 +73,7 @@ const getAirQuilityDescription = (aqi) => {
   let value = Math.round( aqi.value * 10 ) / 10;
   let text = aqi.text;
   let color;
-  if (value > 0 && value <= 50){
+  if (value >= 0 && value <= 50){
     color = colors[0]
   } else if (value > 50 && value <= 100) {
     color = colors[1]

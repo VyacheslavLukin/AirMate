@@ -34,6 +34,7 @@ export const CLUSTERS_SOURCE = 'clusters-source';
 export const addCirclesLayer = (map, parameter) => {
     getMeasurementsFromAllStations(parameter).then(result => {    
         let stations = result.data;
+        console.log("addCircleslayer stations", stations);
         let geojson = getParameterGeojson(stations, parameter);
         map.addSource(CLUSTERS_SOURCE, 
                 {
