@@ -20,8 +20,7 @@ def get_station_data(station_id):
     data["aqi"] = aqi[0]
 
     resp = Response(json.dumps(data), status=200, mimetype='application/json')
-    resp.headers['Access-Control-Allow-Origin' \
-                 ''] = '*'
+    resp.headers['Access-Control-Allow-Origin'] = '*'
     resp.headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS, PUT, PATCH, DELETE'
     resp.headers['Access-Control-Allow-Headers'] = 'X-Requested-With,content-type'
     resp.headers['Access-Control-Allow-Credentials'] = True
@@ -186,8 +185,8 @@ def get_stations_aqi():
     data = []
     step = 0
     for station in stations:
-        transaction = bdb_helper.retrieve(station.last_txid)
-        aqi = get_aqi_of_station(json.loads(transaction['asset']['data']['station_data'])['measurements'])
+        measurements = json.loads(station.data)['measurements']
+        aqi = get_aqi_of_station(measurements)
         data.append({
             'id': station.id,
             'latitude': station.latitude,
@@ -195,7 +194,7 @@ def get_stations_aqi():
             'aqi': aqi[0]
         })
         step+=1
-        print(step)
+        if (step % 100 == 0): print(step)
 
     resp = Response(json.dumps(data), status=200, mimetype='application/json')
     resp.headers['Access-Control-Allow-Origin'] = '*'
