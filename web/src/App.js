@@ -13,7 +13,9 @@ import {addCirclesLayer, CIRCLES_LAYER, removeCircles, CLUSTERS_LAYER} from './l
 import {MARKERS_LAYER} from './layers/Markers';
 
 import ControlPanel from './components/ControlPanel';
-import {getStationPopupContent} from './components/PopupComponent';
+import {getStationPopupContent, getHistoryPopup} from './components/PopupComponent';
+
+// import PersonalChart from './components/PersonalChart';
 
 
 
@@ -49,7 +51,8 @@ export default class App extends Component {
     parameters: null,
     layers: [MARKERS_LAYER, HEATMAP_LAYER, CIRCLES_LAYER],
     selectedParameter: '-',
-    aqiTableIsShown: false
+    aqiTableIsShown: false,
+    historyPopupIsShown: false
   }
   
   _onViewportChange = viewport => this.setState({viewport});
@@ -213,17 +216,26 @@ export default class App extends Component {
             });
         }, 1000);
       });
-     
-      
     } 
-    // else {
-    //   const cicrlesLayer = map.queryRenderedFeatures(point, { layers: [CIRCLES_LAYER] })[0];
-    //   if (cicrlesLayer) {  
-    //     console.log('cicrlesLayer', cicrlesLayer);
-    //     (this.state.selectedStation && (cicrlesLayer.properties.id === this.state.selectedStation.id))
-    //     ? this.setSelectedStation(null) : this.setSelectedStationById(cicrlesLayer.properties.id);
-    //   }
-    // }
+    else {
+      const cicrlesLayer = map.queryRenderedFeatures(point, { layers: [CIRCLES_LAYER] })[0];
+      if (cicrlesLayer) {  
+        console.log('cicrlesLayer', cicrlesLayer);
+        // (this.state.selectedStation && (cicrlesLayer.properties.id === this.state.selectedStation.id))
+        // ? this.setSelectedStation(null) : this.setSelectedStationById(cicrlesLayer.properties.id);
+        // this.setState({
+        //   historyPopupIsShown: true
+        // })
+        this.setSelectedStation(null);
+        this.setSelectedStationById(cicrlesLayer.properties.id)
+      } else {
+        // this.setState({
+        //   historyPopupIsShown: false
+        // })
+        this.setSelectedStation(null);
+      }
+
+    }
   }
 
   _onHover = (e) => {
@@ -233,6 +245,7 @@ export default class App extends Component {
     const map = this._getMap();
     const cicrlesLayer = map.queryRenderedFeatures(point, { layers: [CIRCLES_LAYER] })[0];
     if (cicrlesLayer) {  
+      
       this.setSelectedStationById(cicrlesLayer.properties.id)
     } else {
       this.setSelectedStation(null);
@@ -242,6 +255,28 @@ export default class App extends Component {
   _getCursor = ({isHovering, isDragging}) => {
     return isHovering ? 'pointer' : 'grab';
   };
+
+  _renderHistoryPopup() {
+    const {selectedStation} = this.state;
+    if (selectedStation) {
+      return (
+        // <Popup
+        //   latitude={selectedStation.latitude}
+        //   longitude={selectedStation.longitude}
+        //   closeButton={false}
+        //   // style={{opacity: 0.5}}
+        //   >
+        //   <div>
+        //     {getHistoryPopup(selectedStation.id)}
+        //   </div>
+        // </Popup>
+        <div>
+        {getHistoryPopup(selectedStation.id, this.state.parameters)}
+      </div>
+      );
+    }
+    return null;
+  }
 
   _renderPopup() {
     const {selectedStation} = this.state;
@@ -275,7 +310,7 @@ export default class App extends Component {
           onViewportChange={this._onViewportChange}
           onClick={this._onClick}
           // onLoad={this._onMapLoad}
-          onHover={this._onHover}
+          // onHover={this._onHover}
           getCursor={this._getCursor}
           interactiveLayerIds={this.state.interactiveLayerIds}
           {...this.state.viewport}
@@ -296,7 +331,8 @@ export default class App extends Component {
                 longitude={station.longitude}
               >
                 <button
-                  className={style["marker-btn"]}
+                  // className={style["marker-btn"]}
+                  className="marker-btn"
                   onClick={(e) => this.onMarkerClick(e, station)}
                 >
                   <img src={MarkerIcon} alt="marker icon" />
@@ -318,12 +354,16 @@ export default class App extends Component {
               </div>
             </Popup>
           ) : null} */}
-          {this._renderPopup()}
+          {/* {this._renderPopup()} */}
+         
             
         </ReactMapGL>
+        {this._renderHistoryPopup()}
         <div
          key="panel" 
-        className={style['panel']}>
+        // className={style['panel']}
+        className='panel'
+        >
           {this.state.parameters && this.state.layers ? 
                 <ControlPanel
                 parameters={this.state.parameters}

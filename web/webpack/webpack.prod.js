@@ -69,10 +69,10 @@ module.exports = {
   },
   plugins: [
     new CleanWebpackPlugin(),
-    new MiniCssExtractPlugin({
-      filename: `${commonPaths.cssFolder}/[name].css`,
-      chunkFilename: `${commonPaths.cssFolder}/[name].css`,
-    }),
+    // new MiniCssExtractPlugin({
+    //   filename: `${commonPaths.cssFolder}/[name].css`,
+    //   chunkFilename: `${commonPaths.cssFolder}/[name].css`,
+    // }),
   ],
   devtool: 'source-map',
 };
