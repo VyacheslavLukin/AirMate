@@ -7,7 +7,7 @@ from .bigchain import bdb_helper
 
 api = Blueprint('api', __name__)
 
-#<path: param > for handling "/" in param string
+#<path:param> for handling "/" in param string
 @api.route('/get_station_data/<path:station_id>')
 def get_station_data(station_id):
     station = Station.query.get(station_id)
@@ -23,7 +23,7 @@ def get_station_data(station_id):
     resp.headers['Access-Control-Allow-Credentials'] = True
     return resp
 
-@api.route('/get_station_aqi/<station_id>')
+@api.route('/get_station_aqi/<path:station_id>')
 def get_station_aqi(station_id):
     station = Station.query.get(station_id)
     if station is None:
@@ -46,7 +46,7 @@ def get_station_aqi(station_id):
     resp.headers['Access-Control-Allow-Credentials'] = True
     return resp
 
-@api.route('/get_station_history/<station_id>')
+@api.route('/get_station_history/<path:station_id>')
 def get_station_history(station_id):
     # get station from postgres
     station = Station.query.get(station_id)
@@ -89,7 +89,7 @@ def get_station_history(station_id):
     return resp
 
 
-@api.route('/get_station_history/<station_id>/<parameter>')
+@api.route('/get_station_history_filter/<path:station_id>/<parameter>')
 def get_station_history_of_parameter(station_id, parameter):
     # get station from postgres
     station = Station.query.get(station_id)

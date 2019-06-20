@@ -105,7 +105,7 @@ date example: 2019-05-22T10:00:00.000Z
 ]
 ```
 
-#### GET /get_station_history/<station_id>/<parameter> - get the history of parameter values at some station
+#### GET /get_station_history_filter/<station_id>/<parameter> - get the history of parameter values at some station
 ```
 [
     {
