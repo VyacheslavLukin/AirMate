@@ -30,10 +30,6 @@ module.exports = {
           'file-loader'
         ],
       },
-      // { 
-      //   test: /\.css$/, 
-      //   loader: "style-loader!css-loader" 
-      // },
       {
         test: /\.(woff2|ttf|woff|eot)$/,
         use: [
@@ -62,7 +58,7 @@ module.exports = {
     extensions: ['*', '.js', '.jsx', '.css', '.scss'],
   },
   plugins: [
-    // new webpack.ProgressPlugin(),
+    new webpack.ProgressPlugin(),
     new HtmlWebpackPlugin({
       template: commonPaths.templatePath,
     }),

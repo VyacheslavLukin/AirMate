@@ -27,21 +27,23 @@ code {
   right: 0;
   width: 320px;
   /* height: 100%; */
-  font-size: 13px;
+  font-size: 14.5px;
   line-height: 2;
   color: #6b6b76;
   outline: none;
   cursor: default;
+  
   /* user-select: none; */
 }
 
 .card {
   background: #fff;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-    padding: 12px 24px;
-    margin: 20px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  padding: 12px 24px;
+  margin: 20px;
   text-transform: uppercase;
   position: relative;
+  line-height: 20px;
 }
 
 .aqi-table {
@@ -93,14 +95,16 @@ tbody tr
   position: absolute;
   height: 100%;
   width: 500px;
-  left: 10px;
+  left: 50px;
   top: 10px;
   z-index: 100; 
   background: rgba(255, 255, 255, 0.85);
 
   box-shadow: 0 2px 4px rgba(0,0,0,0.3);
   padding: 12px 24px;
-  margin-right: 10px;
+  height: 96%;
+  margin-bottom: 10px;
+
 }
 
 /* .detailed-popup canvas {
