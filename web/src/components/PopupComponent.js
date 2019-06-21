@@ -2,7 +2,7 @@ import style from './Popup.css';
 import '../App.css';
 
 import PersonalChart from './PersonalChart';
-
+import CommonCharts from './CommonCharts';
 
 export const getStationPopupContent = (stationInfo) => {
     let measurements = []
@@ -63,8 +63,9 @@ export const getStationPopupContent = (stationInfo) => {
   }
 
 
-export const getHistoryPopup = (id, parameters) => {
-  return (<PersonalChart stationId={id} parameters={parameters}/>);
+export const getHistoryPopup = (id, parameters, selectedParameter) => {
+  return (<PersonalChart stationId={id} parameters={parameters} selectedParameter={selectedParameter}/>);
+  // return (<CommonCharts stationId={id} parameters={parameters} selectedParameter={selectedParameter}/>);
 }
 
 const colors = ['#52B947', '#F3EC19', '#F57E1F', '#ED1C24', '#7F2B7E', '#480D27']
@@ -85,6 +86,8 @@ const getAirQuilityDescription = (aqi) => {
     color = colors[4]
   } else if (value > 300){
     color = colors[5]
+  } else {
+    color = colors[0]
   }
   return <div > Air Quility Index: <span style={{backgroundColor:color}}>{value}</span> <br/>
   <span style={{backgroundColor:color}}>{text}</span>
