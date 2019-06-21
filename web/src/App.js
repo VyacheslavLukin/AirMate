@@ -282,7 +282,7 @@ export default class App extends Component {
       // console.log("why");
       return (
         <div>
-        {getHistoryPopup(this.state.selectedStationId, this.state.parameters)}
+        {getHistoryPopup(this.state.selectedStationId, this.state.parameters, this.state.selectedParameter)}
       </div>
       );
     }
