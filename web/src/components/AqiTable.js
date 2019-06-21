@@ -40,7 +40,7 @@ export default function AqiTable() {
                         <td>201-300</td>
                         <td>Very Unhealthy</td>
                     </tr>
-                    <tr style={{backgroundColor: colors[5]}}>
+                    <tr style={{backgroundColor: colors[5], color:'white'}}>
                         <td>300+</td>
                         <td>Hazardous</td>
                     </tr>

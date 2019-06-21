@@ -2,7 +2,6 @@ import style from './Popup.css';
 import '../App.css';
 
 import PersonalChart from './PersonalChart';
-import CommonCharts from './CommonCharts';
 
 export const getStationPopupContent = (stationInfo) => {
     let measurements = []
@@ -11,17 +10,6 @@ export const getStationPopupContent = (stationInfo) => {
         measurements.push(<div key={measurement.parameter}> {measurement.parameter}: {measurement.value} {measurement.unit} </div>); 
       });
     }
-
-    //  let popupContent = 
-    // <div key={stationInfo.last_txid}>  
-    //   ID: {stationInfo.id} <br/>
-    //   Transaction hash: ${stationInfo.last_txid}<br/>
-    //   Latitude: {stationInfo.latitude}<br/>
-    //   Longitude: {stationInfo.longitude}<br/>
-    //   {measurements}
-    // </div>
-    // return popupContent;
-    // console.log('stationInfo', stationInfo);
     let aqi = stationInfo.aqi ? stationInfo.aqi : {
       value: 34.58,
       text: 'Good'
@@ -52,11 +40,9 @@ export const getStationPopupContent = (stationInfo) => {
               
               {/* } */} 
               <br/>
-              Updated: <spin style={{backgroundColor: 'red', opacity: 0.6}}> who knows when </spin>
+              {/* Updated: <span style={{backgroundColor: 'red', opacity: 0.6}}> who knows when </span> */}
               <hr/>
               {measurements}
-              <hr/>
-              Click for more information
              
         </div>
     return popupContent;
