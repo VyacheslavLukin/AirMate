@@ -21,7 +21,7 @@ export const getStationPopupContent = (stationInfo) => {
     //   {measurements}
     // </div>
     // return popupContent;
-    console.log('stationInfo', stationInfo);
+    // console.log('stationInfo', stationInfo);
     let aqi = stationInfo.aqi ? stationInfo.aqi : {
       value: 34.58,
       text: 'Good'

@@ -16,7 +16,23 @@ services:
     build: web
     restart: always
     ports:
-    - "80:8080"
+    - "80:3000"
+    environment:
+    - NODE_ENV=development
+    # Before you run this file for the first time, make sure 
+    # you remove node_modules/ folders in your host machine
+    command: 
+      >
+      sh -c '
+      if test -d node_modules;
+      then
+        echo node_modules_exists ;
+      else
+        cp -a /tmp/node_modules /usr/src/app/website;
+      fi && 
+      npm install && 
+      /usr/local/bin/node ./index.js
+      '
     depends_on:
     - airmate_api
     networks:
