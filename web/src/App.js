@@ -229,14 +229,6 @@ export default class App extends Component {
     else {
       const cicrlesLayer = map.queryRenderedFeatures(point, { layers: [CIRCLES_LAYER] })[0];
       if (cicrlesLayer) {  
-        // console.log('cicrlesLayer', cicrlesLayer);
-        // (this.state.popupStationInfo && (cicrlesLayer.properties.id === this.state.popupStationInfo.id))
-        // ? this.setPopupStationInfo(null) : this.setPopupStationInfoByIdAndAqi(cicrlesLayer.properties.id);
-        // this.setState({
-        //   historyPopupIsShown: true
-        // })
-        // this.setPopupStationInfo(null);
-        // this.setPopupStationInfoByIdAndAqi(cicrlesLayer.properties.id)
         this.setState({
           selectedStationId: null 
         });
@@ -244,10 +236,6 @@ export default class App extends Component {
           selectedStationId: cicrlesLayer.properties.id
         });
       } else {
-        // this.setState({
-        //   historyPopupIsShown: false
-        // })
-        // this.setPopupStationInfo(null);
         this.setState({
           selectedStationId: null
         });
