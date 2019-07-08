@@ -31,7 +31,10 @@ def stations_data():
     limit = -1
     if 'limit'in request.args:
         limit = int(request.args.get('limit'))
-    data = get_stations_data(aqi, parameters, coordinates, limit)
+    unit = None
+    if 'unit' in request.args:
+        unit = request.args.get('unit')
+    data = get_stations_data(aqi, parameters, unit, coordinates, limit)
     resp = Response(json.dumps(data), status=200, mimetype='application/json')
     return resp
 
