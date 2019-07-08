@@ -81,7 +81,7 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "http://localhost:5000/stations/data?aqi=true/false&latitude=float&longitude=float&parameter=string&limit=integer",
+					"raw": "http://localhost:5000/stations/data?aqi=true/false&latitude=float&longitude=float&parameter=string&limit=integer&unit=\"ppm\" or \"ug/m3\"",
 					"protocol": "http",
 					"host": [
 						"localhost"
@@ -116,6 +116,11 @@
 							"key": "limit",
 							"value": "integer",
 							"description": "Denotes the number of stations in response"
+						},
+						{
+							"key": "unit",
+							"value": "\"ppm\" or \"ug/m3\"",
+							"description": "If set to \"ppm\", all data returned in ppm units. Same for \"ug/m3\""
 						}
 					]
 				},
