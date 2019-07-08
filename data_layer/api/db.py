@@ -60,7 +60,7 @@ def get_station_data(id):
     return json.loads(station.data)
 
 
-def get_stations_data(aqi = False, parameters=[], coordinates = {}, limit = -1):
+def get_stations_data(aqi = False, parameters=[], unit=None, coordinates = {}, limit = -1):
     stations = Station.query.all()
     if 'latitude' in coordinates.keys() and 'longitude' in coordinates.keys():
         stations = sorted(stations,
@@ -74,18 +74,29 @@ def get_stations_data(aqi = False, parameters=[], coordinates = {}, limit = -1):
             'latitude': station.latitude,
             'longitude': station.longitude,
             'last_txid': station.last_txid,
-        }   
-        measurements = [
-            measurement
-            for measurement in json.loads(station.data)['measurements']
-            if measurement['parameter'] in parameters or len(parameters) == 0
-        ]
+        }
+        measurements = []
+        for measurement in json.loads(station.data)['measurements']:
+            if measurement['parameter'] in parameters or len(parameters) == 0:
+                if unit == None or \
+                    (measurement['unit'] == 'ppm' and unit == 'ppm') or \
+                        (measurement['unit'] != 'ppm' and unit == 'ug/m3') or \
+                        (unit != 'ppm' and unit != 'ug/m3'):
+                    measurements.append(measurement)
+                elif measurement['unit'] != 'ppm':
+                    measurement['value'] = convert_ugm3_to_ppm(measurement['parameter'], measurement['value'])
+                    measurement['unit'] = 'ppm'
+                    measurements.append(measurement)
+                else:
+                    measurement['value'] = convert_ppm_to_ugm3(measurement['parameter'], measurement['value'])
+                    measurement['unit'] = '\\u00b5g/m\\u00b3'
+                    measurements.append(measurement)
         if len(measurements) > 0:
             station_data['measurements'] = measurements
             if aqi:
                 station_data['aqi'] = get_aqi_of_station(measurements)
             data.append(station_data)
     
-    if limit >=0:
+    if limit >= 0:
         return data[:limit]
     return data
