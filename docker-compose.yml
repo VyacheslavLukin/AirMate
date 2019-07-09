@@ -2,6 +2,8 @@ version: '3'
 
 services:
   airmate_api:
+    volumes:
+      - airmate_api_logs:/data_layer/logs
     build: data_layer
     restart: always
     command: bash -c "FLASK_APP=api flask db upgrade && gunicorn --bind 0.0.0.0:5000 api.wsgi:app"
@@ -17,22 +19,6 @@ services:
     restart: always
     ports:
     - "80:3000"
-    environment:
-    - NODE_ENV=development
-    # Before you run this file for the first time, make sure 
-    # you remove node_modules/ folders in your host machine
-    command: 
-      >
-      sh -c '
-      if test -d node_modules;
-      then
-        echo node_modules_exists ;
-      else
-        cp -a /tmp/node_modules /usr/src/app/website;
-      fi && 
-      npm install && 
-      /usr/local/bin/node ./index.js
-      '
     depends_on:
     - airmate_api
     networks:
@@ -43,7 +29,7 @@ services:
     restart: always
     env_file: .env
     ports:
-    - "5432:5432"
+    - "5432"
     networks:
     - dev
 
@@ -56,15 +42,19 @@ services:
     networks:
     - dev
 
-  # minimax_watchdog:
-  #   build: data_layer
-  #   env_file: .env
-  #   restart: always
-  #   command: bash -c "cd third_party && python minimax_watchdog.py"
-  #   depends_on:
-  #   - db
-  #   networks:
-  #   - dev
+#  minimax_watchdog:
+#    build: data_layer
+#    env_file: .env
+#    restart: always
+#    command: bash -c "cd third_party && python minimax_watchdog.py"
+#    depends_on:
+#    - db
+#    networks:
+#    - dev
 
 networks:
   dev:
+
+volumes:
+  airmate_api_logs:
+    driver: local
