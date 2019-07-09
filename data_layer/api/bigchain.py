@@ -7,6 +7,8 @@ from .aqi import *
 import json
 import datetime
 
+import logging
+log = logging.getLogger('BigchainDB')
 
 class BigchainHelper:
     def __init__(self, bdb: BigchainDB) -> None:
@@ -38,23 +40,28 @@ class BigchainHelper:
         return self.bdb.assets.get(search=string)
     
     def filter_by_id(self, id):
+        log.info("Request for all records from station with id = %s" % (id))
         history = self.bdb.assets.get(search=id)
+        log.info("Result: %d records" % (len(history)))
         return  [
             json.loads(record['data']['station_data'])
             for record in history
             if json.loads(record['data']['station_data'])['location'] == id
         ]
 
-    def filter_data(self, id, aqi = False, parameters = [], date = {}, limit = -1):
+    def filter_data(self, id, aqi = False, parameters = [], date = None, limit = None):
+        log.info("Filters received:{ id: %s, aqi: %r, parameters: %s, date bounds: %s, limit: %s}" %
+                 (id, aqi, str(parameters), (json.dumps(date) or 'not defined'),
+                  (limit or 'not defined')))
         raw_data = self.filter_by_id(id)
         data = []
         for record in raw_data:
             measurements = [
                 measurement
                 for measurement in record['measurements']
-                if ((measurement['parameter'] in parameters or len(parameters) == 0 ) and (len(date) == 0 or
-                   (datetime.datetime.strptime(date['from'], '%Y-%m-%dT%H:%M:%S.%fZ') <= datetime.datetime.strptime(measurement['lastUpdated'], '%Y-%m-%dT%H:%M:%S.%fZ') and
-                   datetime.datetime.strptime(measurement['lastUpdated'], '%Y-%m-%dT%H:%M:%S.%fZ') <= datetime.datetime.strptime(date['to'], '%Y-%m-%dT%H:%M:%S.%fZ'))))
+                if ((measurement['parameter'] in parameters or len(parameters) == 0 ) and (date is None or
+                   ((not('from' in date) or datetime.datetime.strptime(date['from'], '%Y-%m-%dT%H:%M:%S.%fZ') <= datetime.datetime.strptime(measurement['lastUpdated'], '%Y-%m-%dT%H:%M:%S.%fZ')) and
+                    (not('to' in date) or datetime.datetime.strptime(measurement['lastUpdated'], '%Y-%m-%dT%H:%M:%S.%fZ') <= datetime.datetime.strptime(date['to'], '%Y-%m-%dT%H:%M:%S.%fZ')))))
             ]
             if len(measurements) > 0:
                 element = {
@@ -64,6 +71,7 @@ class BigchainHelper:
                     element['aqi'] = get_aqi_of_station(measurements)
                     
                 data.append(element)
+        log.info("After filters: %d records" % (len(data)))
         return data
             
 

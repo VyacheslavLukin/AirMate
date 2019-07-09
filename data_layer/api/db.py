@@ -2,8 +2,13 @@ import datetime
 import json
 
 from flask_sqlalchemy import SQLAlchemy
+
 from flask import abort
 from .aqi import *
+
+import logging
+log = logging.getLogger('Postgres')
+
 
 db = SQLAlchemy()
 
@@ -28,7 +33,11 @@ def station_exists(id):
 
 
 def get_list_of_stations():
-    stations = Station.query.all()
+    # stations = Station.query.all()
+    query = db.session.query(Station)
+    log.info("Query: %s" % (str(query)))
+    stations = query.all()
+    log.info("Result: %d stations" % (len(stations)))
     return [
         {
             'id': station.id,
@@ -47,22 +56,26 @@ def get_list_of_parameters():
         for measurement in json.loads(station.data)['measurements']:
             if not (measurement['parameter'] in params):
                 params.append(measurement['parameter'])
+    log.info("Result: %d parameters" % (len(params)))
     return [
         parameter for parameter in params
     ]
 
 
 def get_station_data(id):
+    log.info("Quering station with id = %s" % id)
     station = Station.query.get(id)
     if station is None:
+        log.error("No station with such id.")
         abort(404)
-
     return json.loads(station.data)
 
 
-def get_stations_data(aqi = False, parameters=[], unit=None, coordinates = {}, limit = -1):
+def get_stations_data(aqi = False, parameters=[], unit=None, coordinates = None, limit = None):
+    log.info("Filters received:{ aqi: %r, parameters: %s, unit: %s, coordinates: %s, limit: %s}" %
+             (aqi, str(parameters), (unit or 'not defined'), (json.dumps(coordinates) or 'not defined'), (limit or 'not defined')))
     stations = Station.query.all()
-    if 'latitude' in coordinates.keys() and 'longitude' in coordinates.keys():
+    if coordinates is not None and ('latitude' in coordinates.keys() and 'longitude' in coordinates.keys()):
         stations = sorted(stations,
                         key=lambda station:
                         pow(json.loads(station.data)['coordinates']['latitude'] - coordinates['latitude'], 2) +
@@ -96,7 +109,9 @@ def get_stations_data(aqi = False, parameters=[], unit=None, coordinates = {}, l
             if aqi:
                 station_data['aqi'] = get_aqi_of_station(measurements)
             data.append(station_data)
-    
-    if limit >= 0:
+
+    if limit is not None and limit >= 0:
+        log.info("Result: %d records" % limit)
         return data[:limit]
+    log.info("Result: %d records" % (len(data)))
     return data
