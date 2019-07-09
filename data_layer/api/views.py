@@ -64,7 +64,7 @@ def get_stations_aqi():
             'id': station.id,
             'latitude': station.latitude,
             'longitude': station.longitude,
-            'aqi': aqi[0]
+            'aqi': aqi
         })
     log.info("Result: %d records" % (len(data)))
     resp = Response(json.dumps(data), status=200, mimetype='application/json')
@@ -80,7 +80,7 @@ def station_data(id):
     data = get_station_data(id)
     if 'aqi' in request.args and request.args.get('aqi') == 'true':
         aqi = get_aqi_of_station(data['measurements'])
-        data["aqi"] = aqi[0]
+        data["aqi"] = aqi
 
     resp = Response(json.dumps(data), status=200, mimetype='application/json')
     log.info("Response: %s, %s seconds" % (resp.status, time.time() - start_time))

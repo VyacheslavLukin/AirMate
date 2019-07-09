@@ -85,18 +85,16 @@ def get_aqi_of_station(measurements):
         while station_aqi > i_bounds[sector]["up"]:
             sector += 1
         log.debug("Result: AQI = %4.3f %s" % (station_aqi, i_bounds[sector]["text"]))
-        return [
-            {
+        return {
                 "value": station_aqi,
                 "text": i_bounds[sector]["text"]
             }
-        ]
+
     else:
         log.debug("Result: AQI = Undefined")
-        return [
-            {
+        return{
                 "value": 0,
                 "text": "Undefined"
             }
-        ]
+
 
