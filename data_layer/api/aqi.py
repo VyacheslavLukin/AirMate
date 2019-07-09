@@ -82,9 +82,9 @@ def get_aqi_of_station(measurements):
     if len(all_aqis) > 0:
         station_aqi = sum(all_aqis) / len(all_aqis)
         sector = 0
-        while station_aqi > i_bounds[sector][1]:
+        while station_aqi > i_bounds[sector]["up"]:
             sector += 1
-        log.debug("Result: AQI = %4.3f %s" % (station_aqi,i_bounds[sector]["text"]))
+        log.debug("Result: AQI = %4.3f %s" % (station_aqi, i_bounds[sector]["text"]))
         return [
             {
                 "value": station_aqi,
