@@ -34,12 +34,25 @@ class BigchainHelper:
         return signed_tx['id']
 
     def retrieve(self, transaction_id):
+        """
+        :param transaction_id: The id of transaction in BigchainDB
+        :return: Transaction
+        """
         return self.bdb.transactions.retrieve(transaction_id)
 
     def search(self, string):
+        """
+        :param string: string to search
+        :return: all transactions containing such string
+        """
         return self.bdb.assets.get(search=string)
     
     def filter_by_id(self, id):
+        """
+        Fetch all transactions made by station
+        :param id: Station id
+        :return: Transactions where location = id
+        """
         log.info("Request for all records from station with id = %s" % (id))
         history = self.bdb.assets.get(search=id)
         log.info("Result: %d records" % (len(history)))
@@ -50,6 +63,15 @@ class BigchainHelper:
         ]
 
     def filter_data(self, id, aqi = False, parameters = [], date = None, limit = None):
+        """
+        Filter all transactions made by station
+        :param id: Station id
+        :param aqi: True/False if calculation needed, not required
+        :param parameters: List of strings, not required
+        :param date: Dict with 'from' and/or 'to' keys with values as 2019-07-04T09:00:00.000Z, not required
+        :param limit: The number of raws to return, not required
+        :return: All transactions which match defined filters
+        """
         log.info("Filters received:{ id: %s, aqi: %r, parameters: %s, date bounds: %s, limit: %s}" %
                  (id, aqi, str(parameters), (json.dumps(date) or 'not defined'),
                   (limit or 'not defined')))
