@@ -26,6 +26,11 @@ class Station(db.Model):
 
 
 def station_exists(id):
+    """
+    Check if station with given id exist in database
+    :param id: Station id
+    :return: True if it exists, False otherwise
+    """
     station = Station.query.get(id)
     if station is None:
         return False
@@ -33,6 +38,9 @@ def station_exists(id):
 
 
 def get_list_of_stations():
+    """
+    :return: List of dics with station names and coordinates
+    """
     # stations = Station.query.all()
     query = db.session.query(Station)
     log.info("Query: %s" % (str(query)))
@@ -50,6 +58,9 @@ def get_list_of_stations():
 
 
 def get_list_of_parameters():
+    """
+    :return: List of strings
+    """
     stations = Station.query.all()
     params = []
     for station in stations:
@@ -63,6 +74,10 @@ def get_list_of_parameters():
 
 
 def get_station_data(id):
+    """
+    :param id: Station id
+    :return: json object station.data stored in database
+    """
     log.info("Quering station with id = %s" % id)
     station = Station.query.get(id)
     if station is None:
@@ -72,6 +87,15 @@ def get_station_data(id):
 
 
 def get_stations_data(aqi = False, parameters=[], unit=None, coordinates = None, limit = None):
+    """
+    Filter the latest data from all stations
+    :param aqi: True/False if calculation needed, not required
+    :param parameters: List of strings, not required
+    :param unit: 'ppm' or 'ug/m3', all data returned in specified unit, not required
+    :param coordinates: dic with 'latitude' and 'longitude'
+    :param limit: The number of raws to return, not required
+    :return: All data which match defined filters
+    """
     log.info("Filters received:{ aqi: %r, parameters: %s, unit: %s, coordinates: %s, limit: %s}" %
              (aqi, str(parameters), (unit or 'not defined'), (json.dumps(coordinates) or 'not defined'), (limit or 'not defined')))
     stations = Station.query.all()
