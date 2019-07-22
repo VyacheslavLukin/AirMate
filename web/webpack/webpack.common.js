@@ -57,6 +57,10 @@ module.exports = {
     modules: ['src', 'node_modules'],
     extensions: ['*', '.js', '.jsx', '.css', '.scss'],
   },
+  devServer: {
+    port: 3000,
+    host: '0.0.0.0'
+  },
   plugins: [
     new webpack.ProgressPlugin(),
     new HtmlWebpackPlugin({
@@ -65,6 +69,7 @@ module.exports = {
     new ScriptExtHtmlWebpackPlugin({
       defaultAttribute: 'async',
     }),
+    
     new Dotenv({
       path: './.env', 
       safe: true
