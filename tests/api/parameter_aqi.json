@@ -1,0 +1,248 @@
+[
+  {
+    "parameter": "no2",
+    "value": 0.01,
+    "unit": "ppm",
+    "aqi":9,
+    "text":"Good"
+  },
+  {
+    "parameter": "no2",
+    "value": 0.07,
+    "unit": "ppm",
+    "aqi":68,
+    "text":"Moderate"
+  },
+  {
+    "parameter": "no2",
+    "value": 0.12,
+    "unit": "ppm",
+    "aqi":105,
+    "text":"Unhealthy for Sensitive Groups"
+  },
+  {
+    "parameter": "no2",
+    "value": 0.4,
+    "unit": "ppm",
+    "aqi":158,
+    "text":"Unhealthy"
+  },
+  {
+    "parameter": "no2",
+    "value": 0.7,
+    "unit": "ppm",
+    "aqi":209,
+    "text":"Very Unhealthy"
+  },
+  {
+    "parameter": "no2",
+    "value": 1.5,
+    "unit": "ppm",
+    "aqi":363,
+    "text":"Hazardous"
+  },
+   {
+    "parameter": "o3",
+    "value": 0.01,
+    "unit": "ppm",
+    "aqi":9,
+    "text":"Good"
+  },
+  {
+    "parameter": "o3",
+    "value": 0.07,
+    "unit": "ppm",
+    "aqi":100,
+    "text":"Moderate"
+  },
+  {
+    "parameter": "o3",
+    "value": 0.08,
+    "unit": "ppm",
+    "aqi":133,
+    "text":"Unhealthy for Sensitive Groups"
+  },
+  {
+    "parameter": "o3",
+    "value": 0.09,
+    "unit": "ppm",
+    "aqi":161,
+    "text":"Unhealthy"
+  },
+  {
+    "parameter": "o3",
+    "value": 0.11,
+    "unit": "ppm",
+    "aqi":205,
+    "text":"Very Unhealthy"
+  },
+
+  {
+    "parameter": "pm10",
+    "value": 7,
+    "unit": "ug/m3",
+    "aqi":6,
+    "text":"Good"
+  },
+  {
+    "parameter": "pm10",
+    "value": 78,
+    "unit": "ug/m3",
+    "aqi":62,
+    "text":"Moderate"
+  },
+  {
+    "parameter": "pm10",
+    "value": 170,
+    "unit": "ug/m3",
+    "aqi":108,
+    "text":"Unhealthy for Sensitive Groups"
+  },
+  {
+    "parameter": "pm10",
+    "value": 298,
+    "unit": "ug/m3",
+    "aqi":172,
+    "text":"Unhealthy"
+  },
+  {
+    "parameter": "pm10",
+    "value": 367,
+    "unit": "ug/m3",
+    "aqi":218,
+    "text":"Very Unhealthy"
+  },
+  {
+    "parameter": "pm10",
+    "value": 567,
+    "unit": "ug/m3",
+    "aqi":463,
+    "text":"Hazardous"
+  },
+  {
+    "parameter": "co",
+    "value": 1,
+    "unit": "ppm",
+    "aqi":11,
+    "text":"Good"
+  },
+  {
+    "parameter": "co",
+    "value": 6,
+    "unit": "ppm",
+    "aqi":66,
+    "text":"Moderate"
+  },
+  {
+    "parameter": "co",
+    "value": 11,
+    "unit": "ppm",
+    "aqi":126,
+    "text":"Unhealthy for Sensitive Groups"
+  },
+  {
+    "parameter": "co",
+    "value": 14,
+    "unit": "ppm",
+    "aqi":176,
+    "text":"Unhealthy"
+  },
+  {
+    "parameter": "co",
+    "value": 17,
+    "unit": "ppm",
+    "aqi":211,
+    "text":"Very Unhealthy"
+  },
+  {
+    "parameter": "co",
+    "value": 35,
+    "unit": "ppm",
+    "aqi":346,
+    "text":"Hazardous"
+  },
+  {
+    "parameter": "so2",
+    "value": 0.01,
+    "unit": "ppm",
+    "aqi":14,
+    "text":"Good"
+  },
+  {
+    "parameter": "so2",
+    "value": 0.04,
+    "unit": "ppm",
+    "aqi":56,
+    "text":"Moderate"
+  },
+  {
+    "parameter": "so2",
+    "value": 0.08,
+    "unit": "ppm",
+    "aqi":103,
+    "text":"Unhealthy for Sensitive Groups"
+  },
+  {
+    "parameter": "so2",
+    "value": 0.187,
+    "unit": "ppm",
+    "aqi":151,
+    "text":"Unhealthy"
+  },
+  {
+    "parameter": "so2",
+    "value": 0.307,
+    "unit": "ppm",
+    "aqi":202,
+    "text":"Very Unhealthy"
+  },
+  {
+    "parameter": "so2",
+    "value": 0.605,
+    "unit": "ppm",
+    "aqi":301,
+    "text":"Hazardous"
+  },
+  {
+    "parameter": "pm25",
+    "value": 1,
+    "unit": "ug/m3",
+    "aqi":4,
+    "text":"Good"
+  },
+  {
+    "parameter": "pm25",
+    "value": 13,
+    "unit": "ug/m3",
+    "aqi":53,
+    "text":"Moderate"
+  },
+  {
+    "parameter": "pm25",
+    "value": 50,
+    "unit": "ug/m3",
+    "aqi":137,
+    "text":"Unhealthy for Sensitive Groups"
+  },
+  {
+    "parameter": "pm25",
+    "value": 71,
+    "unit": "ug/m3",
+    "aqi":159,
+    "text":"Unhealthy"
+  },
+  {
+    "parameter": "pm25",
+    "value": 156,
+    "unit": "ug/m3",
+    "aqi":206,
+    "text":"Very Unhealthy"
+  },
+  {
+    "parameter": "pm25",
+    "value": 279,
+    "unit": "ug/m3",
+    "aqi":329,
+    "text":"Hazardous"
+  }
+]

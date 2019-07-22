@@ -1,0 +1,148 @@
+[
+  {
+    "parameter": "no2",
+    "ppm":1,
+    "ug/m3": 2053.81696429
+  },
+  {
+    "parameter": "no2",
+    "ppm":0,
+    "ug/m3": 0
+  },
+  {
+    "parameter": "no2",
+    "ppm":0.3567,
+    "ug/m3": 732.59651116
+  },
+  {
+    "parameter": "no2",
+    "ppm":24,
+    "ug/m3": 49291.60714286
+  },
+
+  {
+    "parameter": "o3",
+    "ppm":1,
+    "ug/m3": 2142.77678571
+  },
+  {
+    "parameter": "o3",
+    "ppm":0,
+    "ug/m3": 0
+  },
+  {
+    "parameter": "o3",
+    "ppm":0.3567,
+    "ug/m3": 764.32847946
+  },
+  {
+    "parameter": "o3",
+    "ppm":24,
+    "ug/m3": 51426.64285714
+  },
+
+  {
+    "parameter": "pm10",
+    "ppm":1,
+    "ug/m3": 64693.19151786
+  },
+  {
+    "parameter": "pm10",
+    "ppm":0,
+    "ug/m3": 0
+  },
+  {
+    "parameter": "pm10",
+    "ppm":0.3567,
+    "ug/m3": 23076.06141442
+  },
+  {
+    "parameter": "pm10",
+    "ppm":24,
+    "ug/m3": 1552636.59642857
+  },
+
+  {
+    "parameter": "co",
+    "ppm":1,
+    "ug/m3": 1250.44642857
+  },
+  {
+    "parameter": "co",
+    "ppm":0,
+    "ug/m3": 0
+  },
+  {
+    "parameter": "co",
+    "ppm":0.3567,
+    "ug/m3": 446.03424107
+  },
+  {
+    "parameter": "co",
+    "ppm":24,
+    "ug/m3": 30010.71428571
+  },
+
+  {
+    "parameter": "so2",
+    "ppm":1,
+    "ug/m3": 2860.08928571
+  },
+  {
+    "parameter": "so2",
+    "ppm":0,
+    "ug/m3": 0
+  },
+  {
+    "parameter": "so2",
+    "ppm":0.3567,
+    "ug/m3": 1020.19384821
+  },
+  {
+    "parameter": "so2",
+    "ppm":24,
+    "ug/m3": 68642.14285714
+  },
+
+  {
+    "parameter": "pm25",
+    "ppm":1,
+    "ug/m3": 161732.97879464
+  },
+  {
+    "parameter": "pm25",
+    "ppm":0,
+    "ug/m3": 0
+  },
+  {
+    "parameter": "pm25",
+    "ppm":0.3567,
+    "ug/m3": 57690.15353605
+  },
+  {
+    "parameter": "pm25",
+    "ppm":24,
+    "ug/m3": 3881591.49107143
+  },
+
+  {
+    "parameter": "bc",
+    "ppm":1,
+    "ug/m3": 536.20535714
+  },
+  {
+    "parameter": "bc",
+    "ppm":0,
+    "ug/m3": 0
+  },
+  {
+    "parameter": "bc",
+    "ppm":0.3567,
+    "ug/m3": 191.26445089
+  },
+  {
+    "parameter": "bc",
+    "ppm":24,
+    "ug/m3": 12868.92857143
+  }
+]
