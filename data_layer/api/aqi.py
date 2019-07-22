@@ -1,4 +1,4 @@
-from .converter import *
+# from .converter import *
 import json
 import logging
 
@@ -40,10 +40,12 @@ def get_aqi_of_parameter(measurement):
         i_bounds = bounds['aqi']
 
         # STEP 4: Convert value if needed
-        if parameter in bounds["ppm"] and units != "ppm":
+        if (parameter in bounds["ppm"] or parameter in bounds["ppb"])and units != "ppm":
             value = convert_ugm3_to_ppm(parameter, value)
         if parameter in bounds["ug/m3"] and units == "ppm":
             value = convert_ppm_to_ugm3(parameter, value)
+        if parameter in bounds["ppb"]:
+            value = value*1000
         value = round(value, bounds["rounding"][parameter])
 
         # STEP 5: define to which sector the value correspond to
@@ -56,7 +58,7 @@ def get_aqi_of_parameter(measurement):
         c_low = breakpoints[sector]["low"]
         i_high = i_bounds[sector]["up"]
         i_low = i_bounds[sector]["low"]
-        I = (i_high - i_low) / (c_high - c_low) * (value - c_low) + i_low
+        I = int(round((i_high - i_low) / (c_high - c_low) * (value - c_low), 0) + i_low)
 
         log.debug("Result: AQI = %4.3f" % I)
 
@@ -122,3 +124,4 @@ def get_aqi_of_station(measurements):
             }
 
 
+print(get_aqi_of_parameter({"parameter":"so2", "value": 0.6, "unit":"ppm"}))
