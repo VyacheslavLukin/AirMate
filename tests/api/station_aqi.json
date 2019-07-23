@@ -1,0 +1,48 @@
+[
+  {
+    "measurements": [],
+    "aqi": {
+      "value": 0,
+      "text": "Undefined"
+    }
+  },
+  {
+    "measurements":
+    [
+      {
+        "parameter": "no2",
+        "value": 0.07,
+        "unit": "ppm",
+        "aqi":68,
+        "text":"Moderate"
+      }
+    ],
+    "aqi": {
+      "value": 68,
+      "text": "Moderate"
+    }
+  },
+  {
+    "measurements":
+    [
+      {
+        "parameter": "no2",
+        "value": 0.01,
+        "unit": "ppm",
+        "aqi":9,
+        "text":"Good"
+      },
+      {
+        "parameter": "o3",
+        "value": 0.08,
+        "unit": "ppm",
+        "aqi":133,
+        "text":"Unhealthy for Sensitive Groups"
+      }
+    ],
+    "aqi": {
+      "value": 71,
+      "text": "Moderate"
+    }
+  }
+]

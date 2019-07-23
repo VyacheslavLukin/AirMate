@@ -1,0 +1,15 @@
+FROM python:3.7
+
+WORKDIR /airmate_tests
+
+
+COPY tests/api/parameter_aqi.json .
+COPY tests/api/station_aqi.json .
+COPY tests/api/ppm_and_ugm3.json .
+COPY data_layer/api/aqi.py .
+COPY data_layer/api/aqi_info.json .
+COPY data_layer/api/converter.py .
+COPY data_layer/api/molar_masses.json .
+COPY tests/api/ .
+
+CMD python -m unittest test_math.py
