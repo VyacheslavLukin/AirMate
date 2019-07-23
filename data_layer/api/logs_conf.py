@@ -11,37 +11,37 @@ log_conf = {
             'class': 'logging.StreamHandler',
             'formatter': 'detailed',
         },
-        # 'file': {
-        #     'class': 'logging.FileHandler',
-        #     'filename': 'data_layer/api/logs/airmate_api_logs.log',
-        #     'mode': 'w',
-        #     'formatter': 'detailed',
-        # },
+        'file': {
+            'class': 'logging.FileHandler',
+            'filename': 'airmate_api_logs.log',
+            'mode': 'w',
+            'formatter': 'detailed',
+        },
     },
     'loggers': {
         'Views': {
-            'handlers': [ 'console'],
+            'handlers': ['file', 'console'],
             'level': 'DEBUG'
         },
         'Postgres': {
-            'handlers': ['console'],
+            'handlers': ['file', 'console'],
             'level': 'DEBUG'
         },
         'BigchainDB': {
-            'handlers': ['console'],
+            'handlers': ['file', 'console'],
             'level': 'DEBUG'
         },
         'AqiCalculator': {
-            'handlers': ['console'],
+            'handlers': ['file', 'console'],
             'level': 'DEBUG'
         },
         'DataConverter': {
-            'handlers': ['console'],
+            'handlers': ['file', 'console'],
             'level': 'DEBUG'
         }
     },
     'root': {
         'level': 'DEBUG',
-        'handlers': ['console']
+        'handlers': ['console', 'file']
     },
 }
