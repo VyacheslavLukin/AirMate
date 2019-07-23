@@ -3,7 +3,7 @@ version: '3'
 services:
   airmate_api:
     volumes:
-      - airmate_api_logs:/data_layer/logs
+      - airmate_api_logs:/data_layer/api/logs
     build: data_layer
     restart: always
     command: bash -c "FLASK_APP=api flask db upgrade && gunicorn --bind 0.0.0.0:5000 api.wsgi:app"
