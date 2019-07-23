@@ -62,22 +62,19 @@ def get_aqi_of_parameter(measurement):
 
         log.debug("Result: AQI = %4.3f" % I)
 
-        return [
-            {
+        return {
                 "value": I,
                 "text": i_bounds[sector]["text"]
             }
-        ]
+
     else:
         log.debug("Parameter %s is not supported." % parameter)
         log.debug("Result: AQI = Undefined")
 
-        return [
-            {
+        return {
                 "value": 0,
                 "text": "Undefined"
             }
-        ]
 
 
 def get_aqi_of_station(measurements):
@@ -99,14 +96,14 @@ def get_aqi_of_station(measurements):
     for measurement in measurements:
         if measurement['parameter'] != 'bc':
             aqi = get_aqi_of_parameter(measurement)
-            all_aqis.append(aqi[0]['value'])
+            all_aqis.append(aqi['value'])
         else:
             log.debug("Measurement of 'bc' is not supported")
     log.debug("Calculated AQIs: %s " % (str(all_aqis)))
 
     # STEP 3: calculate station aqi
     if len(all_aqis) > 0:
-        station_aqi = sum(all_aqis) / len(all_aqis)
+        station_aqi = int(round(sum(all_aqis) / len(all_aqis), 0))
         sector = 0
         while station_aqi > i_bounds[sector]["up"]:
             sector += 1
@@ -122,6 +119,3 @@ def get_aqi_of_station(measurements):
                 "value": 0,
                 "text": "Undefined"
             }
-
-
-print(get_aqi_of_parameter({"parameter":"so2", "value": 0.6, "unit":"ppm"}))
