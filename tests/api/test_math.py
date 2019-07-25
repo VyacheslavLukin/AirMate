@@ -1,7 +1,7 @@
 import unittest
 import json
-from data_layer.api.converter import *
-from data_layer.api.aqi import *
+from converter import *
+from aqi import *
 
 
 class TestMathMethods(unittest.TestCase):
@@ -24,3 +24,10 @@ class TestMathMethods(unittest.TestCase):
         for test in tests:
             result = get_aqi_of_parameter(test)
             self.assertTrue(result['value'] == test['aqi'] and result['text'] == test['text'])
+
+    def test_station_aqi(self):
+        with open('station_aqi.json') as f:
+            tests = json.load(f)
+        for test in tests:
+            result = get_aqi_of_station(test['measurements'])
+            self.assertTrue(result['value'] == test['aqi']['value'] and result['text'] == test['aqi']['text'])

@@ -13,7 +13,7 @@ log_conf = {
         },
         'file': {
             'class': 'logging.FileHandler',
-            'filename': 'logs/airmate_api_logs.log',
+            'filename': 'airmate_api_logs.log',
             'mode': 'w',
             'formatter': 'detailed',
         },
