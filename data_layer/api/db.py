@@ -5,6 +5,7 @@ from flask_sqlalchemy import SQLAlchemy
 
 from flask import abort
 from .aqi import *
+from .converter import *
 
 import logging
 log = logging.getLogger('Postgres')
