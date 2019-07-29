@@ -28,9 +28,8 @@ export default class PersonalChart extends React.Component {
         return measurement.parameter
       })
         this.setState({
-          parameters: parameters,
+          parameters: parameters
         });
-        
     });
     
 
@@ -55,8 +54,10 @@ export default class PersonalChart extends React.Component {
     let selectedParameter = this.state.selectedParameter || '';
     console.log('selectedParameter', selectedParameter);
     getStationHistory(this.state.stationId).then(result => {
+        console.log("result.data stationHistory", result.data);
         result.data.forEach(str => {
-          history.push(JSON.parse(str));
+          // history.push(JSON.parse(str));
+          history.push(str);
         });
         
         history.forEach(el => {
@@ -76,12 +77,12 @@ export default class PersonalChart extends React.Component {
           }
         });
         
-        getStationAQI(this.props.stationId).then(resp => {
-          console.log('AQI', resp.data[0].aqi);
-          this.setState({ aqi: resp.data[0].aqi });
+        // getStationAQI(this.props.stationId).then(resp => {
+          // console.log('AQI', resp.data[0].aqi);
+          this.setState({ aqi: result.data[0].aqi });
 
           // select color for chart
-          let color = this.getColorBasedByAQI(resp.data[0].aqi.value);
+          let color = this.getColorBasedByAQI(result.data[0].aqi.value);
           console.log('CHART COLOR', color);
           
           console.log('ChartData', chartData);
@@ -108,7 +109,7 @@ export default class PersonalChart extends React.Component {
           this.setState({
             chart: myChart,
           });
-        });
+        // });
         
         
         this.setState({

@@ -6,7 +6,7 @@ export const getParameterGeojson = (stations, parameter) => {
           "type": "Feature",
           "properties": {
             "id": station.id,
-            "parameter": station[parameter],
+            "parameter": station.measurements.value,
             "sum": 0,
             "aqi": station["aqi"]["value"],
             "aqi_text": station["aqi"]["text"]
