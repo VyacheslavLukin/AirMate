@@ -1,21 +1,16 @@
 import React from 'react';
 import style from '../App.css';
-import classNames from 'classnames';
 
 export default function AqiTable() {
-    // const aqiClassNames = classNames(style['card'], style['aqi-table']);
-    const aqiClassNames = classNames('card', 'aqi-table');
     const colors = ['#52B947', '#F3EC19', '#F57E1F', '#ED1C24', '#7F2B7E', '#480D27']
     return (
         <div key="aqi" 
-        // className={aqiClassNames}
         className="aqi-table"
         >
              <table >
                 <thead>
                     <tr>
                     <th>AQI</th>
-                    {/* <th>Description</th> */}
                     <th></th>
                     </tr>
                 </thead>
