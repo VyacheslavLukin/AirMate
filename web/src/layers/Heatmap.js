@@ -27,7 +27,6 @@ const heatmapLayer = (id, source) => {
       id,
       type: 'heatmap',
       source,
-      // maxzoom: 15,
       paint: {
         // increase weight as diameter breast height increases
         'heatmap-weight': {
@@ -55,11 +54,6 @@ const heatmapLayer = (id, source) => {
           0.4, colors[2],
           0.6, colors[3],
           0.8, colors[4]
-          // 0, 'rgba(255,255,51,0)',
-          // 0.2, 'rgb(255,255,51)',
-          // 0.4, 'rgb(255,153,51)',
-          // 0.6, 'rgb(255,51,51)',
-          // 0.8, 'rgb(255,0,0)'
         ]
         ,
         // increase radius as zoom increases

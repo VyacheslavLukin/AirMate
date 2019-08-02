@@ -10,13 +10,9 @@ import {fullscreenControlStyle, navStyle} from './MapStyles';
 
 import {addHeatmap, removeHeatmap, HEATMAP_LAYER} from './layers/Heatmap';
 import {addCirclesLayer, CIRCLES_LAYER, removeCircles, CLUSTERS_LAYER} from './layers/Clusters'
-import {MARKERS_LAYER} from './layers/Markers';
 
 import ControlPanel from './components/ControlPanel';
 import {getStationPopupContent, getHistoryPopup} from './components/PopupComponent';
-
-// import PersonalChart from './components/PersonalChart';
-
 
 
 import AqiTable from './components/AqiTable';
@@ -49,7 +45,7 @@ export default class App extends Component {
     selectedLayer: CIRCLES_LAYER,
     interactiveLayerIds: null,
     parameters: null,
-    layers: [MARKERS_LAYER, HEATMAP_LAYER, CIRCLES_LAYER],
+    layers: [CIRCLES_LAYER],
     selectedParameter: '-',
     aqiTableIsShown: false,
     selectedStationId: null
@@ -137,8 +133,6 @@ export default class App extends Component {
     station.id = currentItem.id; //?
     station.longitude = currentItem.longitude;
     station.latitude = currentItem.latitude;
-    // station.param_aqi = 
-
 
     return getStationPopupContent(station);
   }
@@ -172,7 +166,7 @@ export default class App extends Component {
     }
     if (parameter !== '-') {
       if (parameter === 'average aqi') {
-        parameter = 'aqi'
+        parameter = 'aqi';
       }
       if (layer === HEATMAP_LAYER) {
         addHeatmap(this._getMap(), parameter);
@@ -200,7 +194,6 @@ export default class App extends Component {
     const cluster = map.queryRenderedFeatures(point, { layers: [CLUSTERS_LAYER] })[0];
     
     if (cluster) {
-      // console.log('cluster', cluster);
       const clusterId = cluster.properties.cluster_id;
       let that = this
       map.getSource('clusters-source').getClusterExpansionZoom(clusterId, function (err, zoom) {
@@ -211,7 +204,6 @@ export default class App extends Component {
           zoom: zoom,
           duration: 1000
         });
-        //TODO: try with flying and not easing
         // map.easeTo doesn't change viewport even if it zooms - strange. Perhaps, a bug
           setTimeout(function(){
             that._onViewportChange({
@@ -252,24 +244,15 @@ export default class App extends Component {
     const map = this._getMap();
     const cicrlesLayer = map.queryRenderedFeatures(point, { layers: [CIRCLES_LAYER] })[0];
     if (cicrlesLayer) {  
-      // console.log(cicrlesLayer);
-      // this.setPopupStationInfo(null);
-      // setTimeout(() => {
-        
         let param_aqi = {
           value: cicrlesLayer.properties.aqi,
           text: cicrlesLayer.properties.aqi_text
         }
         this.setPopupStationInfoByIdAndAqi(cicrlesLayer.properties.id, param_aqi)
-      // }, 200)
     } else {
-      // setTimeout(() => {
-        // this.setPopupStationInfo(null);
         this.setState({
           popupStationInfo: null
-        })
-      // }, 300);
-      
+        })  
     }
   }
 
@@ -279,7 +262,6 @@ export default class App extends Component {
 
   _renderHistoryPopup() {
     if (this.state.selectedStationId) {
-      // console.log("why");
       return (
         <div>
         {getHistoryPopup(this.state.selectedStationId, this.state.parameters, this.state.selectedParameter)}
@@ -320,7 +302,6 @@ export default class App extends Component {
           mapStyle="mapbox://styles/reshreshus/cjwamfl3205ry1cpptvzeyq1e"
           onViewportChange={this._onViewportChange}
           onClick={this._onClick}
-          // onLoad={this._onMapLoad}
           onHover={this._onHover}
           getCursor={this._getCursor}
           interactiveLayerIds={this.state.interactiveLayerIds}
@@ -333,38 +314,6 @@ export default class App extends Component {
           <div className="nav" style={navStyle}>
             <NavigationControl />
           </div>
-          { (this.state.selectedLayer == MARKERS_LAYER && this._getMap() && this._getMap().getZoom() > 5) ?
-            (
-            this.state.stations.map(station => (
-              <Marker
-                key={station.id}
-                latitude={station.latitude}
-                longitude={station.longitude}
-              >
-                <button
-                  // className={style["marker-btn"]}
-                  className="marker-btn"
-                  onClick={(e) => this.onMarkerClick(e, station)}
-                >
-                  <img src={MarkerIcon} alt="marker icon" />
-                </button>
-              </Marker>)
-            )) : null}
-  
-          {/* {this.state.popupStationInfo ? (
-            
-            <Popup
-              latitude={this.state.popupStationInfo.latitude}
-              longitude={this.state.popupStationInfo.longitude}
-              onClose={() => {
-                this.setPopupStationInfo(null);
-              }}
-            >
-              <div>
-                {this.getStationPopupContent(this.state.popupStationInfo.id)}
-              </div>
-            </Popup>
-          ) : null} */}
           {this._renderPopup()}
          
             
@@ -372,7 +321,6 @@ export default class App extends Component {
         {this._renderHistoryPopup()}
         <div
          key="panel" 
-        // className={style['panel']}
         className='panel'
         >
           {this.state.parameters && this.state.layers ? 

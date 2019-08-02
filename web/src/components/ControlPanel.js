@@ -6,7 +6,6 @@ const onClick = e => {
 }
 
 const defaultContainer = ({children}) => <div onClick={onClick} 
-// className={style['card']}
 className='card'
 >{children}</div>;
 
@@ -49,17 +48,7 @@ export default class ControlPanel extends PureComponent {
         <Container>
         <h3>Airmate</h3>
         <p>Choose a parameter and a layer</p>
-        {/* <div className="source-link">
-          <a
-            href="https://github.com/VyacheslavLukin/AirMate"
-            target="_new"
-          >
-            View Code ↗
-          </a>
-        </div> */}
         <hr />
-
-        {/* {CITIES.filter(city => city.state === 'California').map(this._renderButton)} */}
         <div style={{display:'flex'}}>
             <span>
                 {this.props.parameters ? this.props.parameters.map(this._renderParametersButton) : null}

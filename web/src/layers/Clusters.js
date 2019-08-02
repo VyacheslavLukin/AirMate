@@ -19,11 +19,7 @@ const clusterMag5 = ["all", [">", getAvgAqi, 200], ["<=", getAvgAqi, 300]];
 const clusterMag6 = [">", getAvgAqi, 300];
 
 
-
-// colors to use for the categories
-// TODO: better to use different parameters for different colors (I guess)
-// const colors = ['#fed976', '#feb24c', '#fd8d3c', '#fc4e2a', '#e31a1c'];
-const colors = ['#52B947', '#F3EC19', '#F57E1F', '#ED1C24', '#7F2B7E', '#480D27']
+const mapColors = ['#52B947', '#F3EC19', '#F57E1F', '#ED1C24', '#7F2B7E', '#480D27']
 
 export const CIRCLES_LAYER = 'circles';
 export const CLUSTERS_COUNT_LAYER = 'clusters-count';
@@ -42,7 +38,6 @@ export const addCirclesLayer = (map, parameter) => {
                     "clusterRadius": 45,
                     "clusterProperties": { 
                         "aqi_sum": ["+",  ["get", "aqi"]],
-                        // "sum": ["+", ["get", "parameter"]]
                     }
             });
         map.addLayer(cicrclesLayer());
@@ -53,7 +48,7 @@ export const addCirclesLayer = (map, parameter) => {
 }
 
 export const removeCircles = map => {
-    //TODO
+    // might want to check all layers
     if (map.getLayer(CIRCLES_LAYER) && map.getLayer(CLUSTERS_COUNT_LAYER)){
         map.removeLayer(CIRCLES_LAYER);
         map.removeLayer(PARAMETERS_LAYER)
@@ -73,10 +68,7 @@ const parametersLayer = () => {
             "text-field": ["number-format", ["get", "aqi"], {"min-fraction-digits": 1, "max-fraction-digits": 1}],
             "text-font": ["Open Sans Semibold", "Arial Unicode MS Bold"],
             "text-size": 15
-            },
-        // "paint": {
-        //     "text-color": ["case", ["<", ["get", "parameter"], 3], "black", "white"]
-        // }
+            }
     }   
 }
 
@@ -99,16 +91,15 @@ const cicrclesLayer = () => {
       id: CIRCLES_LAYER,
       type: 'circle',
       source: CLUSTERS_SOURCE,
-      // "filter": ["!=", "cluster", true],
       filter: ["!", ["has", "point_count"]],
       "paint": {
         "circle-color": ["case",
-              mag1, colors[0],
-              mag2, colors[1],
-              mag3, colors[2],
-              mag4, colors[3], 
-              mag5, colors[4],
-              colors[5]],
+              mag1, mapColors[0],
+              mag2, mapColors[1],
+              mag3, mapColors[2],
+              mag4, mapColors[3], 
+              mag5, mapColors[4],
+              mapColors[5]],
         "circle-opacity": 0.8,
         "circle-radius": 20
         }
@@ -122,17 +113,14 @@ const clustersLayer = () => {
         source: CLUSTERS_SOURCE,
         filter: ["has", "point_count"],
         "paint": {           
-                // "circle-color": "#51bbd6",
                 "circle-opacity": 0.4,
-                // "circle-stroke-width": 4,
-                // "circle-stroke-color": "#216462",
                 "circle-color": ["case",
-                    clusterMag1, colors[0],
-                    clusterMag2, colors[1],
-                    clusterMag3, colors[2],
-                    clusterMag4, colors[3], 
-                    clusterMag5, colors[4],
-                    colors[5]],
+                    clusterMag1, mapColors[0],
+                    clusterMag2, mapColors[1],
+                    clusterMag3, mapColors[2],
+                    clusterMag4, mapColors[3], 
+                    clusterMag5, mapColors[4],
+                    mapColors[5]],
                 "circle-radius": [
                     "step",
                     ["get", "point_count"],
