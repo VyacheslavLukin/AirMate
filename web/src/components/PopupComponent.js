@@ -20,9 +20,9 @@ export const getStationPopupContent = (stationInfo) => {
         className='popup-container'
         >
               <h3>{stationInfo.city}, {stationInfo.country} | {stationInfo.id}</h3>
-              <hr/>
+              <hr style={{marginBottom: 4, marginTop: 4 }} />
              
-              <div className="aqi-scale"> 
+              <div style={{display: "flex", flexDirection: "column"}} className="aqi-scale"> 
                 General
                 {getAirQuilityDescription(aqi)} 
               </div> 
@@ -62,7 +62,7 @@ const getAirQuilityDescription = (aqi) => {
   // } else {
   //   color = colors[0]
   // }
-  return <div > Air Quility Index: <span style={{backgroundColor:color}}>{value}</span> <br/>
-  <span style={{backgroundColor:color}}>{text}</span>
+  return <div> <div style={{marginBottom: 10}}> Air Quility Index: <span style={{backgroundColor:color}}>{value}</span> <br/> </div>
+  <span style={{backgroundColor: color, color: "white", paddingLeft: 5, paddingRight: 5}}>{text}</span>
 </div>;
 }
