@@ -23,11 +23,11 @@ export const getStationPopupContent = (stationInfo) => {
               <hr style={{marginBottom: 4, marginTop: 4 }} />
              
               <div style={{display: "flex", flexDirection: "column"}} className="aqi-scale"> 
-                General
+              <p>General</p>
                 {getAirQuilityDescription(aqi)} 
               </div> 
               <div className="aqi-scale"> 
-                {stationInfo.parameter}
+                <p>{stationInfo.parameter}</p>
                 {getAirQuilityDescription(stationInfo.param_aqi)} 
               </div> 
               <br/>

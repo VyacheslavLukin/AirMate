@@ -3,12 +3,16 @@
 Fixed:
 
 1. AQI table:
-   a. Position of the table, add some margin
+   a. Position of the table, add some margins
    b. Make some fonts white
    c. Change position of header
 
 2. Popup component:
    a. Highlight name of the parameter and General AQI index
+   b. Header of the component moved to the right place
+   c. 
+
+3. 
 
 *(Краткое описание списка изменений этого Merge Request'а)*
 
