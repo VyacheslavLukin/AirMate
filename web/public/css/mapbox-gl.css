@@ -30,7 +30,7 @@
     padding: 3px;
     border-radius: 3px 3px 0 0;
     font-weight: 700;
-    margin-top: -15px;
+    /* margin-top: -15px; */
   }
   
   .mapboxgl-popup-content h4 {
@@ -42,4 +42,12 @@
   
   .mapboxgl-popup-content div {
     padding: 2px;
+  }
+
+  .mapboxgl-popup-content p {
+    /* align-self: flex-start; */
+    font-weight: 600;
+    padding: 0;
+    margin-bottom: 0;
+    margin-top: 1rem;
   }

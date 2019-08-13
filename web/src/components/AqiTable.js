@@ -10,7 +10,7 @@ export default function AqiTable() {
              <table >
                 <thead>
                     <tr>
-                    <th>AQI</th>
+                    <th style={{paddingLeft: 10}}>AQI</th>
                     <th></th>
                     </tr>
                 </thead>
@@ -23,15 +23,15 @@ export default function AqiTable() {
                         <td>51-100</td>
                         <td>Moderate</td>
                     </tr>
-                    <tr style={{backgroundColor: colors[2]}}>
+                    <tr style={{backgroundColor: colors[2], color:'white'}}>
                         <td>101-150</td>
                         <td>Unhealthy for Sensitive Groups</td>
                     </tr>
-                    <tr style={{backgroundColor: colors[3]}}>
+                    <tr style={{backgroundColor: colors[3], color:'white'}}>
                         <td>151-200</td>
                         <td>Unhealthy</td>
                     </tr>
-                    <tr style={{backgroundColor: colors[4]}}>
+                    <tr style={{backgroundColor: colors[4], color:'white'}}>
                         <td>201-300</td>
                         <td>Very Unhealthy</td>
                     </tr>
