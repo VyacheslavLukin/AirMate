@@ -13,6 +13,7 @@ MongoDB and Tendermint.
 ## Install BigchainDB Server
 
 BigchainDB Server requires **Python 3.6+**, so make sure your system has it.
+
 Install the required OS-level packages:
 
 ```
@@ -21,14 +22,20 @@ sudo apt install -y python3-pip libssl-dev
 # Ubuntu 16.04, and other Linux distros, may require other packages or more packages
 ```
 
+BigchainDB Server requires [gevent](http://www.gevent.org/), and to install gevent, you must use pip 19 or later (as of 2019, because gevent now uses manylinux2010 wheels). Upgrade pip to the latest version:
+
+```
+sudo pip3 install -U pip
+```
+
 Now install the latest version of BigchainDB Server.
 You can find the latest version by going
 to the [BigchainDB project release history page on PyPI](https://pypi.org/project/BigchainDB/#history).
-For example, to install version 2.0.0b9, you would do:
+For example, to install version 2.0.0, you would do:
 
 ```
-# Change 2.0.0b9 to the latest version as explained above:
-sudo pip3 install bigchaindb==2.0.0b9
+# Change 2.0.0 to the latest version as explained above:
+sudo pip3 install bigchaindb==2.0.0
 ```
 
 Check that you installed the correct version of BigchainDB Server using `bigchaindb --version`.
@@ -84,13 +91,13 @@ Note that installing the official package _doesn't_ also start MongoDB.
 ## Install Tendermint
 
 The version of BigchainDB Server described in these docs only works well
-with Tendermint 0.22.8 (not a higher version number). Install that:
+with Tendermint 0.31.5 (not a higher version number). Install that:
 
 ```
 sudo apt install -y unzip
-wget https://github.com/tendermint/tendermint/releases/download/v0.22.8/tendermint_0.22.8_linux_amd64.zip
-unzip tendermint_0.22.8_linux_amd64.zip
-rm tendermint_0.22.8_linux_amd64.zip
+wget https://github.com/tendermint/tendermint/releases/download/v0.31.5/tendermint_v0.31.5_linux_amd64.zip
+unzip tendermint_v0.31.5_linux_amd64.zip
+rm tendermint_v0.31.5_linux_amd64.zip
 sudo mv tendermint /usr/local/bin
 ```
 
