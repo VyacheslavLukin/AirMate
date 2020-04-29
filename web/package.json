@@ -35,7 +35,7 @@
     "express": "^4.14.0",
     "heatmap.js": "^2.0.5",
     "history": "^4.7.2",
-    "jquery": "^3.2.1",
+    "jquery": "^3.5.0",
     "leaflet": "^1.2.0",
     "leaflet-heatmap": "^1.0.0",
     "node-noop": "^1.0.0",
